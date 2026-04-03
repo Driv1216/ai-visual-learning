@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+
+# Generated outputs
+media/
+generated/
+*.wav
+*.mp4
+
+# OS junk
+.DS_Store
+
+# VS Code
+.vscode/
