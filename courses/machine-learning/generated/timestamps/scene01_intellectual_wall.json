@@ -1,0 +1,65 @@
+[
+  {
+    "id": "n1",
+    "text": "For a long time, the way humans worked with computers was simple: we wrote the rules, and the computer followed them.",
+    "start": 0.0,
+    "end": 7.253,
+    "duration": 7.253
+  },
+  {
+    "id": "n2",
+    "text": "That is traditional programming. You tell the machine exactly what to do. If this happens, do that. If this condition is true, take this action. It is clear, precise, and very powerful.",
+    "start": 7.503,
+    "end": 18.17,
+    "duration": 10.667
+  },
+  {
+    "id": "n3",
+    "text": "But it also has a limit.",
+    "start": 18.42,
+    "end": 20.212,
+    "duration": 1.792
+  },
+  {
+    "id": "n4",
+    "text": "This approach assumes we already know the full rulebook. It assumes we can describe every case ahead of time. And for many real problems, that is not possible.",
+    "start": 20.462,
+    "end": 29.593,
+    "duration": 9.131
+  },
+  {
+    "id": "n5",
+    "text": "Take a simple example: recognizing a square in an image. At first, the rules seem easy. Four sides, equal length, right angles. But then the real world gets involved. The square is rotated. The image is blurred. The edges are uneven. The lighting is bad. Suddenly, the rule set grows and grows.",
+    "start": 29.843,
+    "end": 49.043,
+    "duration": 19.2
+  },
+  {
+    "id": "n6",
+    "text": "And this is the real problem. The difficulty is not just computation. It is description.",
+    "start": 49.293,
+    "end": 54.584,
+    "duration": 5.291
+  },
+  {
+    "id": "n7",
+    "text": "We can build rules for clean, simple cases. But once the problem becomes messy, the rules become too large, too fragile, and too hard to maintain.",
+    "start": 54.834,
+    "end": 64.306,
+    "duration": 9.472
+  },
+  {
+    "id": "n8",
+    "text": "That is where machine learning begins.",
+    "start": 64.556,
+    "end": 66.519,
+    "duration": 1.963
+  },
+  {
+    "id": "n9",
+    "text": "Instead of asking humans to write every rule by hand, we let the system learn patterns from data.",
+    "start": 66.769,
+    "end": 72.401,
+    "duration": 5.632
+  }
+]
