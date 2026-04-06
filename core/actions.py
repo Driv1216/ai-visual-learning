@@ -367,6 +367,8 @@ def make_square_stage_sequence(params, zone):
         ),
     )
     pressure_group = VGroup(pressure_square, pressure_specks, pressure_cards, pressure_lines)
+    pressure_group.scale(0.72)
+    pressure_group.shift(pressure_square.get_center() - pressure_group.get_center())
 
     wall_square = noisy.copy().set_fill(opacity=0.16).scale(0.9)
     wall_barrier = Rectangle(

@@ -409,19 +409,36 @@
       "offset": 0.0
     },
     {
+      "id": "v5h_clear",
+      "anchor": "n6a",
+      "action": "fade_out",
+      "zone": "center",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "replace": null,
+      "camera_scale": 1.0,
+      "params": {
+        "zones": [
+          "center"
+        ]
+      },
+      "offset": 0.0
+    },
+    {
       "id": "v6center",
-      "anchor": "n6c",
+      "anchor": "n6b",
       "action": "show_text",
       "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
+      "replace": null,
       "camera_scale": 0.94,
       "params": {
         "text": "description becomes the bottleneck"
       },
-      "offset": 0.0
+      "offset": 0.5
     },
     {
       "id": "v6a",
@@ -451,17 +468,35 @@
       "params": {
         "text": "It is description."
       },
-      "offset": 0.0
+      "offset": 0.5
+    },
+    {
+      "id": "v6_clear",
+      "anchor": "n7b",
+      "action": "fade_out",
+      "zone": "center",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "replace": null,
+      "camera_scale": 1.0,
+      "params": {
+        "zones": [
+          "center",
+          "bottom"
+        ]
+      },
+      "offset": 0.5
     },
     {
       "id": "v7",
       "anchor": "n7d",
       "action": "square_stage_sequence",
       "zone": "center",
-      "transition_in": "transform",
+      "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
+      "replace": null,
       "camera_scale": 0.88,
       "params": {
         "stage": "wall"
