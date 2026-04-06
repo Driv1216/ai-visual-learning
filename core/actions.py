@@ -12,10 +12,19 @@ TEXT_SUB = GREY_A
 
 ZONE_POSITIONS = {
     "title": UP * 3.15,
+    "top": UP * 3.0,
     "center": ORIGIN,
     "bottom": DOWN * 2.45,
     "left": LEFT * 4.4,
     "right": RIGHT * 4.4,
+    "full": ORIGIN,
+    "center_left": LEFT * 4.1,
+    "center_mid_left": LEFT * 2.2,
+    "center_mid_right": RIGHT * 2.2,
+    "center_right": RIGHT * 4.1,
+    "center_band": ORIGIN,
+    "center_left_center": LEFT * 1.4,
+    "center_span": ORIGIN,
 }
 
 
@@ -69,11 +78,12 @@ def make_show_title(params, zone):
 def make_show_text(params, zone):
     text = make_text_block(
         params["text"],
-        font_size=30,
-        color=TEXT_MAIN,
-        weight=MEDIUM,
+        font_size=params.get("font_size", 30),
+        color=params.get("color", TEXT_MAIN),
+        weight=params.get("weight", MEDIUM),
         max_width=10.6,
     )
+    text.set_opacity(params.get("opacity", 1.0))
     place_in_zone(text, zone)
     return text
 
@@ -151,11 +161,12 @@ def make_flow_diagram(params, zone):
 def make_transform_text(params, zone):
     obj = make_text_block(
         params["to"],
-        font_size=34,
-        color=PRIMARY,
-        weight=BOLD,
+        font_size=params.get("font_size", 34),
+        color=params.get("color", TEXT_MAIN),
+        weight=params.get("weight", BOLD),
         max_width=10.8,
     )
+    obj.set_opacity(params.get("opacity", 1.0))
     place_in_zone(obj, zone)
     return obj
 
@@ -424,7 +435,215 @@ def make_square_stage_sequence(params, zone):
     return group
 
 
+def _boxed_label(label: str, params):
+    font_size = params.get("font_size", 32)
+    box_width = params.get("box_width", 2.3)
+    box_height = params.get("box_height", 1.0)
+
+    txt = Text(label, font_size=font_size, weight=MEDIUM, color=TEXT_MAIN)
+    fit_to_width(txt, box_width - 0.45)
+
+    box = RoundedRectangle(
+        corner_radius=0.18,
+        width=max(box_width, txt.width + 0.6),
+        height=max(box_height, txt.height + 0.42),
+        stroke_color=params.get("stroke_color", PRIMARY),
+        stroke_width=params.get("stroke_width", 3),
+        fill_color=params.get("fill_color", "#151922"),
+        fill_opacity=params.get("fill_opacity", 1.0),
+    )
+    halo = RoundedRectangle(
+        corner_radius=0.22,
+        width=box.width + 0.12,
+        height=box.height + 0.12,
+        stroke_color=box.get_stroke_color(),
+        stroke_width=1.5,
+    ).set_opacity(0.18)
+    txt.move_to(box.get_center())
+
+    group = VGroup(halo, box, txt)
+    group.set_opacity(params.get("opacity", 1.0))
+    return group
+
+
+def make_show_box_label(params, zone):
+    group = _boxed_label(params["label"], params)
+    place_in_zone(group, zone)
+    return group
+
+
+def make_show_arrow(params, zone):
+    direction = params.get("direction", "right")
+    length = params.get("length", 2.0)
+    start = LEFT * (length / 2)
+    end = RIGHT * (length / 2)
+
+    if direction == "left":
+        start, end = end, start
+
+    arrow = Arrow(
+        start,
+        end,
+        buff=0.0,
+        stroke_width=params.get("stroke_width", 5),
+        color=params.get("color", TEXT_SUB),
+        max_stroke_width_to_length_ratio=12,
+    )
+    arrow.set_opacity(params.get("opacity", 1.0))
+    place_in_zone(arrow, zone)
+    return arrow
+
+
+def make_examples_grid(params, zone):
+    examples = params.get("examples", [])
+    rows = params.get("grid_rows", 2)
+    cols = params.get("grid_cols", 3)
+    cell_width = params.get("cell_width", 1.7)
+    cell_height = params.get("cell_height", 0.8)
+    font_size = params.get("font_size", 24)
+
+    cells = VGroup()
+    for example in examples:
+        label = Text(example, font_size=font_size, color=TEXT_MAIN, weight=MEDIUM)
+        fit_to_width(label, cell_width - 0.3)
+        cell = RoundedRectangle(
+            corner_radius=0.12,
+            width=max(cell_width, label.width + 0.28),
+            height=max(cell_height, label.height + 0.26),
+            stroke_color=SECONDARY,
+            stroke_width=2.2,
+            fill_color="#121925",
+            fill_opacity=0.96,
+        )
+        label.move_to(cell.get_center())
+        cells.add(VGroup(cell, label))
+
+    grid = cells.arrange_in_grid(rows=rows, cols=cols, buff=(0.24, 0.24))
+    place_in_zone(grid, zone)
+    return grid
+
+
+def make_pattern_object(params, zone):
+    label_text = params.get("label", "Pattern")
+    font_size = params.get("font_size", 28)
+
+    panel = RoundedRectangle(
+        corner_radius=0.2,
+        width=2.8,
+        height=1.85,
+        stroke_color=HIGHLIGHT,
+        stroke_width=3,
+        fill_color="#121925",
+        fill_opacity=0.98,
+    )
+    axes = VGroup(
+        Line(panel.get_corner(DL) + RIGHT * 0.35 + UP * 0.3, panel.get_corner(UL) + RIGHT * 0.35 + DOWN * 0.3, color=TEXT_SUB, stroke_width=2),
+        Line(panel.get_corner(DL) + RIGHT * 0.35 + UP * 0.3, panel.get_corner(DR) + LEFT * 0.35 + UP * 0.3, color=TEXT_SUB, stroke_width=2),
+    )
+    curve = VMobject(color=HIGHLIGHT, stroke_width=4)
+    curve.set_points_smoothly(
+        [
+            panel.get_corner(DL) + RIGHT * 0.55 + UP * 0.45,
+            panel.get_center() + LEFT * 0.15 + DOWN * 0.05,
+            panel.get_center() + RIGHT * 0.2 + UP * 0.15,
+            panel.get_corner(UR) + LEFT * 0.45 + DOWN * 0.45,
+        ]
+    )
+    label = Text(label_text, font_size=font_size, color=TEXT_MAIN, weight=MEDIUM)
+    fit_to_width(label, panel.width - 0.45)
+    label.next_to(panel, DOWN, buff=0.22)
+    group = VGroup(panel, axes, curve, label)
+    place_in_zone(group, zone)
+    return group
+
+
+def make_links(params, from_obj, to_obj):
+    link_count = max(1, params.get("link_count", 3))
+    stroke_width = params.get("stroke_width", 3)
+    stroke_opacity = params.get("stroke_opacity", 0.55)
+
+    sources = from_obj.submobjects if len(from_obj.submobjects) >= link_count else [from_obj] * link_count
+    lines = VGroup()
+    for index in range(link_count):
+        source = sources[min(index, len(sources) - 1)]
+        source_point = source.get_right() if hasattr(source, "get_right") else from_obj.get_right()
+        target_point = to_obj.get_left() + UP * (0.35 - index * 0.35)
+        line = Line(source_point, target_point, color=TEXT_SUB, stroke_width=stroke_width)
+        line.set_opacity(stroke_opacity)
+        lines.add(line)
+    return lines
+
+
+def make_split_comparison(params, zone):
+    font_size = params.get("font_size", 24)
+
+    divider = Line(UP * 2.2, DOWN * 2.2, color=TEXT_SUB, stroke_width=2).set_opacity(0.6)
+
+    left_title = Text(params.get("left_title", "Traditional"), font_size=font_size + 2, color=TEXT_MAIN, weight=BOLD)
+    left_steps = VGroup(
+        *[_boxed_label(label, {"box_width": 1.6, "box_height": 0.72, "font_size": font_size - 2, "stroke_color": PRIMARY}) for label in ("Step 1", "Step 2", "Step 3")]
+    ).arrange(DOWN, buff=0.24)
+    left_arrows = VGroup(
+        *[
+            Arrow(
+                left_steps[i].get_bottom(),
+                left_steps[i + 1].get_top(),
+                buff=0.08,
+                stroke_width=3,
+                color=TEXT_SUB,
+            )
+            for i in range(2)
+        ]
+    )
+    left_panel = VGroup(left_title, VGroup(left_steps, left_arrows))
+    left_title.next_to(left_steps, UP, buff=0.35)
+    left_panel.move_to(LEFT * 3.25)
+
+    right_title = Text(params.get("right_title", "Machine Learning"), font_size=font_size + 2, color=TEXT_MAIN, weight=BOLD)
+    right_examples = make_examples_grid(
+        {
+            "examples": ["x1 -> y1", "x2 -> y2", "x3 -> y3", "x4 -> y4"],
+            "grid_rows": 2,
+            "grid_cols": 2,
+            "font_size": font_size - 4,
+            "cell_width": 1.45,
+            "cell_height": 0.7,
+        },
+        "center",
+    )
+    right_pattern = make_pattern_object({"label": "Pattern", "font_size": font_size}, "center")
+    right_examples.move_to(RIGHT * 2.6 + LEFT * 0.45)
+    right_pattern.scale(0.78)
+    right_pattern.move_to(RIGHT * 4.2)
+    right_links = make_links({"link_count": 3, "stroke_width": 2.5, "stroke_opacity": 0.45}, right_examples, right_pattern)
+    right_title.move_to(RIGHT * 3.2 + UP * 1.8)
+    right_panel = VGroup(right_title, right_examples, right_pattern, right_links)
+
+    full = VGroup(divider, left_panel, right_panel)
+    full.left_steps = left_steps
+    full.left_arrows = left_arrows
+    full.right_panel = right_panel
+    place_in_zone(full, zone)
+    return full
+
+
+def make_clean_flow(params, zone):
+    left = _boxed_label(params.get("left_label", "Examples"), params)
+    right = make_pattern_object({"label": params.get("right_label", "Pattern"), "font_size": params.get("font_size", 30)}, "center")
+    right.scale(0.86)
+    arrow_length = params.get("arrow_length", 2.1)
+    arrow = Arrow(LEFT * (arrow_length / 2), RIGHT * (arrow_length / 2), buff=0.0, stroke_width=4, color=TEXT_SUB)
+    arrow_label = Text(params.get("arrow_label", "learns"), font_size=params.get("font_size", 30) - 8, color=ACCENT, weight=MEDIUM)
+    arrow_label.next_to(arrow, UP, buff=0.16)
+
+    group = VGroup(left, VGroup(arrow, arrow_label), right).arrange(RIGHT, buff=0.6)
+    place_in_zone(group, zone)
+    return group
+
+
 def transition_in_for(obj, transition_name: str):
+    if transition_name in {"none", "smooth"}:
+        return FadeIn(obj)
     if transition_name == "fade":
         return FadeIn(obj, shift=UP * 0.3, scale=0.96)
     if transition_name == "write":
@@ -442,6 +661,8 @@ def transition_out_for(obj, transition_name: str):
     if obj is None:
         return None
 
+    if transition_name in {"none", "smooth"}:
+        return FadeOut(obj)
     if transition_name == "fade":
         return FadeOut(obj, shift=DOWN * 0.08)
     if transition_name == "write":
@@ -477,6 +698,30 @@ def build_object(step_dict):
 
     if action == "square_stage_sequence":
         return make_square_stage_sequence(params, zone)
+
+    if action == "show_box_label":
+        return make_show_box_label(params, zone)
+
+    if action == "show_arrow":
+        return make_show_arrow(params, zone)
+
+    if action == "transform_box_label":
+        return make_show_box_label(params, zone)
+
+    if action == "transform_arrow":
+        return make_show_arrow(params, zone)
+
+    if action == "transform_group_to_examples":
+        return make_examples_grid(params, zone)
+
+    if action == "transform_box_to_pattern":
+        return make_pattern_object(params, zone)
+
+    if action == "show_split_comparison":
+        return make_split_comparison(params, zone)
+
+    if action == "transform_split_to_clean_flow":
+        return make_clean_flow(params, zone)
 
     if action == "fade_out":
         return None

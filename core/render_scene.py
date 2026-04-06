@@ -5,7 +5,28 @@ from pathlib import Path
 from manim import *
 from manim import ReplacementTransform
 from scene_schema import SceneSpec
-from actions import build_object, transition_in_for, transition_out_for, BG_COLOR
+from actions import (
+    ACCENT,
+    BG_COLOR,
+    ZONE_POSITIONS,
+    build_object,
+    make_links,
+    transition_in_for,
+    transition_out_for,
+)
+
+
+COMPOSITE_ZONES = {
+    "top",
+    "full",
+    "center_left",
+    "center_mid_left",
+    "center_mid_right",
+    "center_right",
+    "center_band",
+    "center_left_center",
+    "center_span",
+}
 
 
 def load_scene(scene_path: Path) -> SceneSpec:
@@ -101,15 +122,72 @@ class JsonDrivenScene(MovingCameraScene):
 
         current_time = 0.0
 
-        active_objects = {
-            "title": None,
-            "center": None,
-            "bottom": None,
-            "left": None,
-            "right": None,
-        }
+        active_objects = {zone: None for zone in ZONE_POSITIONS}
+        object_registry = {}
+        step_zone_map = {}
 
         default_frame_width = config.frame_width
+
+        def register_object(step_id, zone_name, obj):
+            if obj is None:
+                return
+            object_registry[step_id] = obj
+            step_zone_map[step_id] = zone_name
+            active_objects[zone_name] = obj
+
+        def clear_step(step_id):
+            obj = object_registry.pop(step_id, None)
+            zone_name = step_zone_map.pop(step_id, None)
+            if zone_name is not None and active_objects.get(zone_name) is obj:
+                active_objects[zone_name] = None
+            return obj
+
+        def forget_object(obj):
+            if obj is None:
+                return
+            for step_id, registered in list(object_registry.items()):
+                if registered is obj:
+                    clear_step(step_id)
+
+        def clear_zone(zone_name):
+            obj = active_objects.get(zone_name)
+            active_objects[zone_name] = None
+            if obj is not None:
+                forget_object(obj)
+
+        def unique_objects_from_ids(ids):
+            seen = set()
+            objects = []
+            for ref_id in ids:
+                obj = object_registry.get(ref_id)
+                if obj is None:
+                    continue
+                key = id(obj)
+                if key in seen:
+                    continue
+                seen.add(key)
+                objects.append(obj)
+            return objects
+
+        def focus_camera_on(obj, scale_override=None):
+            width = max(obj.width + 1.2, default_frame_width * (scale_override or 1.0))
+            return self.camera.frame.animate.move_to(obj.get_center()).set(width=width)
+
+        special_actions = {
+            "hold",
+            "highlight_group",
+            "dim_group",
+            "transform_box_label",
+            "transform_arrow",
+            "camera_focus",
+            "transform_group_to_examples",
+            "transform_box_to_pattern",
+            "show_links",
+            "show_split_comparison",
+            "animate_step_sequence",
+            "highlight_inference_side",
+            "transform_split_to_clean_flow",
+        }
 
         for idx, step in enumerate(visual_steps):
             scheduled_time = anchor_map[step.anchor] + step.offset
@@ -130,12 +208,239 @@ class JsonDrivenScene(MovingCameraScene):
                     obj = active_objects.get(zone_name)
                     if obj is not None:
                         anims.append(FadeOut(obj))
-                        active_objects[zone_name] = None
+                        clear_zone(zone_name)
 
                 if anims:
                     self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
                     current_time += run_time
                 continue
+
+            if step.action in special_actions:
+                handled = False
+
+                if step.action == "hold":
+                    current_obj = active_objects.get(step.zone)
+                    if current_obj is not None:
+                        object_registry[step.id] = current_obj
+                        step_zone_map[step.id] = step.zone
+                    handled = True
+
+                elif step.action in {"highlight_group", "highlight_inference_side"}:
+                    ref_ids = step.params.get("content", [])
+                    objs = unique_objects_from_ids(ref_ids)
+                    if not objs and step.action == "highlight_inference_side":
+                        full_obj = active_objects.get("full")
+                        if full_obj is not None and hasattr(full_obj, "right_panel"):
+                            objs = [full_obj.right_panel]
+                    if objs:
+                        scale_factor = step.params.get("pulse_scale", 1.03)
+                        anims = [Indicate(obj, scale_factor=scale_factor, color=None) for obj in objs]
+                        self.play(AnimationGroup(*anims, lag_ratio=0.08), run_time=run_time)
+                        current_time += run_time
+                    handled = True
+
+                elif step.action == "dim_group":
+                    objs = unique_objects_from_ids(step.params.get("content", []))
+                    if objs:
+                        target_opacity = step.params.get("target_opacity", 0.72)
+                        self.play(
+                            AnimationGroup(
+                                *[obj.animate.set_opacity(target_opacity) for obj in objs],
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                    handled = True
+
+                elif step.action in {"transform_box_label", "transform_arrow", "transform_box_to_pattern"}:
+                    source_id = step.params.get("source_id")
+                    source_obj = object_registry.get(source_id)
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": step.params,
+                            "zone": step.zone,
+                        }
+                    )
+                    if source_obj is not None:
+                        self.play(
+                            AnimationGroup(
+                                ReplacementTransform(source_obj, new_obj),
+                                focus_camera_on(new_obj, step.camera_scale),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                        forget_object(source_obj)
+                    else:
+                        self.play(
+                            AnimationGroup(
+                                transition_in_for(new_obj, step.transition_in),
+                                focus_camera_on(new_obj, step.camera_scale),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "camera_focus":
+                    objs = unique_objects_from_ids(step.params.get("content", []))
+                    if objs:
+                        focus_group = VGroup(*objs)
+                        scale = step.params.get("scale", step.camera_scale or 1.0)
+                        self.play(focus_camera_on(focus_group, scale), run_time=run_time)
+                        current_time += run_time
+                    handled = True
+
+                elif step.action == "transform_group_to_examples":
+                    content = step.params.get("content", {})
+                    from_ids = content.get("from_ids", [])
+                    new_params = dict(step.params)
+                    new_params.update(content)
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": new_params,
+                            "zone": step.zone,
+                        }
+                    )
+                    source_objs = unique_objects_from_ids(from_ids)
+                    if source_objs:
+                        source_group = VGroup(*source_objs)
+                        self.play(
+                            AnimationGroup(
+                                ReplacementTransform(source_group, new_obj),
+                                focus_camera_on(new_obj, step.camera_scale),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                        for obj in source_objs:
+                            forget_object(obj)
+                    else:
+                        self.play(
+                            AnimationGroup(
+                                transition_in_for(new_obj, step.transition_in),
+                                focus_camera_on(new_obj, step.camera_scale),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "show_links":
+                    content = step.params.get("content", {})
+                    from_obj = object_registry.get(content.get("from"))
+                    to_obj = object_registry.get(content.get("to"))
+                    if from_obj is not None and to_obj is not None:
+                        new_obj = make_links(step.params, from_obj, to_obj)
+                        self.play(transition_in_for(new_obj, step.transition_in), run_time=run_time)
+                        current_time += run_time
+                        register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "show_split_comparison":
+                    new_params = dict(step.params)
+                    new_params.update(step.params.get("content", {}))
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": new_params,
+                            "zone": step.zone,
+                        }
+                    )
+                    source_objs = [
+                        obj
+                        for zone_name, obj in active_objects.items()
+                        if obj is not None and zone_name not in {"title", "top", "bottom", "full"}
+                    ]
+                    if source_objs:
+                        self.play(
+                            AnimationGroup(
+                                ReplacementTransform(VGroup(*source_objs), new_obj),
+                                focus_camera_on(new_obj, step.camera_scale),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                        for obj in source_objs:
+                            forget_object(obj)
+                    else:
+                        self.play(
+                            AnimationGroup(
+                                transition_in_for(new_obj, step.transition_in),
+                                focus_camera_on(new_obj, step.camera_scale),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "animate_step_sequence":
+                    split_obj = active_objects.get("full")
+                    if split_obj is not None and hasattr(split_obj, "left_steps"):
+                        steps = list(split_obj.left_steps)
+                        anims = []
+                        for mob in steps:
+                            anims.append(Indicate(mob, scale_factor=1.02, color=None))
+                        if hasattr(split_obj, "left_arrows"):
+                            for arrow in split_obj.left_arrows:
+                                anims.append(Indicate(arrow, scale_factor=1.0, color=ACCENT))
+                        self.play(Succession(*anims), run_time=run_time)
+                        current_time += run_time
+                    handled = True
+
+                elif step.action == "transform_split_to_clean_flow":
+                    new_params = dict(step.params)
+                    new_params.update(step.params.get("content", {}))
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": new_params,
+                            "zone": step.zone,
+                        }
+                    )
+                    source_obj = active_objects.get("full")
+                    if source_obj is not None:
+                        self.play(
+                            AnimationGroup(
+                                ReplacementTransform(source_obj, new_obj),
+                                focus_camera_on(new_obj, step.camera_scale),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                        clear_zone("full")
+                    else:
+                        self.play(
+                            AnimationGroup(
+                                transition_in_for(new_obj, step.transition_in),
+                                focus_camera_on(new_obj, step.camera_scale),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                if handled:
+                    continue
 
             target_zone = step.zone
             new_obj = build_object(
@@ -164,13 +469,13 @@ class JsonDrivenScene(MovingCameraScene):
                 if existing is not None:
                     if step.transition_in == "transform":
                         incoming_anim = ReplacementTransform(existing, new_obj)
-                        # DON'T reassign new_obj — let it be the new object
-                        active_objects[replace_zone] = new_obj  # store the NEW obj
+                        forget_object(existing)
+                        active_objects[replace_zone] = new_obj
                     else:
                         out_anim = transition_out_for(existing, step.transition_out or "fade")
                         if out_anim is not None:
                             outgoing_anims.append(out_anim)
-                        active_objects[replace_zone] = None
+                        clear_zone(replace_zone)
 
             if (
                 incoming_anim is None
@@ -181,20 +486,19 @@ class JsonDrivenScene(MovingCameraScene):
                 out_anim = transition_out_for(existing, step.transition_out or "fade")
                 if out_anim is not None:
                     outgoing_anims.append(out_anim)
-                active_objects[target_zone] = None
+                clear_zone(target_zone)
 
             if incoming_anim is None:
                 incoming_anim = transition_in_for(new_obj, step.transition_in)
 
-            # dim other active zones slightly
-            for zone_name, obj in active_objects.items():
-                if obj is not None and zone_name != target_zone:
-                    focus_anims.append(obj.animate.set_opacity(0.25))
+            if target_zone not in COMPOSITE_ZONES:
+                for zone_name, obj in active_objects.items():
+                    if obj is not None and zone_name != target_zone and zone_name not in COMPOSITE_ZONES:
+                        focus_anims.append(obj.animate.set_opacity(0.25))
 
-            # restore target zone object if already there
-            existing_target = active_objects.get(target_zone)
-            if existing_target is not None:
-                focus_anims.append(existing_target.animate.set_opacity(1.0))
+                existing_target = active_objects.get(target_zone)
+                if existing_target is not None:
+                    focus_anims.append(existing_target.animate.set_opacity(1.0))
 
             # subtle camera movement
             camera_scale = step.camera_scale if step.camera_scale is not None else (
@@ -209,7 +513,7 @@ class JsonDrivenScene(MovingCameraScene):
                 run_time=run_time,
             )
             current_time += run_time
-            active_objects[target_zone] = new_obj
+            register_object(step.id, target_zone, new_obj)
 
             if not step.persist:
                 self.wait(0.1)
@@ -219,7 +523,7 @@ class JsonDrivenScene(MovingCameraScene):
                 if obj is not None:
                     self.play(FadeOut(obj), run_time=0.4)
                     current_time += 0.4
-                    active_objects[target_zone] = None
+                    clear_zone(target_zone)
 
         total_audio_duration = timestamps[-1]["end"]
 

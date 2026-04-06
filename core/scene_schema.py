@@ -13,11 +13,41 @@ AllowedAction = Literal[
     "square_stage_sequence",
     "transform_text",
     "pause",
-    "fade_out"
+    "fade_out",
+    "show_box_label",
+    "show_arrow",
+    "hold",
+    "highlight_group",
+    "dim_group",
+    "transform_box_label",
+    "transform_arrow",
+    "camera_focus",
+    "transform_group_to_examples",
+    "transform_box_to_pattern",
+    "show_links",
+    "show_split_comparison",
+    "animate_step_sequence",
+    "highlight_inference_side",
+    "transform_split_to_clean_flow",
 ]
 
-AllowedZone = Literal["title", "center", "bottom", "left", "right"]
-AllowedTransition = Literal["fade", "write", "create", "grow", "transform"]
+AllowedZone = Literal[
+    "title",
+    "top",
+    "center",
+    "bottom",
+    "left",
+    "right",
+    "full",
+    "center_left",
+    "center_mid_left",
+    "center_mid_right",
+    "center_right",
+    "center_band",
+    "center_left_center",
+    "center_span",
+]
+AllowedTransition = Literal["fade", "write", "create", "grow", "transform", "none", "smooth"]
 
 
 class VoiceConfig(BaseModel):
@@ -47,6 +77,37 @@ class VisualStep(BaseModel):
     duration: Optional[float] = None
     camera_scale: Optional[float] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_scene_two_format(cls, raw: Any):
+        if not isinstance(raw, dict):
+            return raw
+
+        data = dict(raw)
+        params = dict(data.get("params") or {})
+
+        if "content" in data:
+            params.setdefault("content", data["content"])
+        if "style" in data and isinstance(data["style"], dict):
+            params.update(data["style"])
+        if "notes" in data:
+            params.setdefault("notes", data["notes"])
+
+        action = data.get("action")
+        content = data.get("content")
+
+        if action == "show_text" and isinstance(content, str):
+            params.setdefault("text", content)
+        if action == "transform_text" and isinstance(content, str):
+            params.setdefault("to", content)
+        if action in {"show_box_label", "transform_box_label", "transform_box_to_pattern"} and isinstance(content, str):
+            params.setdefault("label", content)
+        if action in {"show_arrow", "transform_arrow"} and isinstance(content, str):
+            params.setdefault("direction", content)
+
+        data["params"] = params
+        return data
+
 
 class SceneNotes(BaseModel):
     tone: str
@@ -63,7 +124,7 @@ class SceneSpec(BaseModel):
     voice: VoiceConfig
     narration: List[NarrationSegment]
     visual_timeline: List[VisualStep]
-    notes: SceneNotes
+    notes: SceneNotes | List[str]
 
     @model_validator(mode="after")
     def validate_scene(self):

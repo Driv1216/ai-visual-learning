@@ -1,0 +1,534 @@
+{
+  "scene_id": "scene02_computational_inversion",
+  "video_title": "What Is Machine Learning?",
+  "scene_title": "The Computational Inversion",
+  "order": 2,
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s2_n1",
+      "text": "To understand machine learning, we have to change how we think about software."
+    },
+    {
+      "id": "s2_n2",
+      "text": "In traditional programming, we give the computer rules and data, and it gives us an answer."
+    },
+    {
+      "id": "s2_n3",
+      "text": "So the flow is: Rules plus Data gives Answer."
+    },
+    {
+      "id": "s2_n4",
+      "text": "In machine learning, the setup changes."
+    },
+    {
+      "id": "s2_n5",
+      "text": "We give the system data and the correct answers, and we ask it to learn the rules."
+    },
+    {
+      "id": "s2_n6",
+      "text": "So the flow becomes: Data plus Answers gives Rules."
+    },
+    {
+      "id": "s2_n7",
+      "text": "That is the key shift."
+    },
+    {
+      "id": "s2_n8",
+      "text": "We are no longer writing the logic directly. We are giving the machine examples and letting it find the pattern behind them."
+    },
+    {
+      "id": "s2_n9",
+      "text": "Think of it this way. In traditional programming, we explain the solution step by step. In machine learning, we show enough examples that the machine can infer the solution on its own."
+    },
+    {
+      "id": "s2_n10",
+      "text": "That is the basic idea behind the field."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v1_bridge_bg",
+      "anchor": "s2_n1",
+      "offset": 0.0,
+      "action": "show_text",
+      "zone": "top",
+      "content": "Traditional Programming",
+      "style": {
+        "font_size": 34,
+        "opacity": 0.75
+      },
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "duration": 0.45,
+      "persist": true,
+      "replace": "top",
+      "camera_scale": 1.0,
+      "notes": "Light heading only. Do not feel like a title card. This is a soft conceptual anchor."
+    },
+    {
+      "id": "v2_rules_box",
+      "anchor": "s2_n2",
+      "offset": 0.05,
+      "action": "show_box_label",
+      "zone": "center_left",
+      "content": "Rules",
+      "style": {
+        "box_width": 2.2,
+        "box_height": 1.0,
+        "font_size": 32
+      },
+      "transition_in": "fade",
+      "duration": 0.35,
+      "persist": true,
+      "replace": "center_left",
+      "notes": "This becomes one of the persistent objects for the inversion."
+    },
+    {
+      "id": "v3_plus_symbol",
+      "anchor": "s2_n2",
+      "offset": 0.35,
+      "action": "show_text",
+      "zone": "center_mid_left",
+      "content": "+",
+      "style": {
+        "font_size": 36,
+        "opacity": 0.85
+      },
+      "transition_in": "fade",
+      "duration": 0.2,
+      "persist": true,
+      "replace": "center_mid_left",
+      "notes": "Keep minimal and geometric."
+    },
+    {
+      "id": "v4_data_box",
+      "anchor": "s2_n2",
+      "offset": 0.5,
+      "action": "show_box_label",
+      "zone": "center",
+      "content": "Data",
+      "style": {
+        "box_width": 2.2,
+        "box_height": 1.0,
+        "font_size": 32
+      },
+      "transition_in": "fade",
+      "duration": 0.35,
+      "persist": true,
+      "replace": "center",
+      "notes": "Data box should feel visually compatible with Rules."
+    },
+    {
+      "id": "v5_arrow_traditional",
+      "anchor": "s2_n2",
+      "offset": 0.95,
+      "action": "show_arrow",
+      "zone": "center_mid_right",
+      "content": "right",
+      "style": {
+        "length": 2.0,
+        "stroke_width": 5
+      },
+      "transition_in": "grow",
+      "duration": 0.35,
+      "persist": true,
+      "replace": "center_mid_right",
+      "notes": "Arrow should emerge cleanly, not dramatically."
+    },
+    {
+      "id": "v6_answer_box",
+      "anchor": "s2_n2",
+      "offset": 1.25,
+      "action": "show_box_label",
+      "zone": "center_right",
+      "content": "Answer",
+      "style": {
+        "box_width": 2.4,
+        "box_height": 1.0,
+        "font_size": 32
+      },
+      "transition_in": "fade",
+      "duration": 0.35,
+      "persist": true,
+      "replace": "center_right",
+      "notes": "Traditional flow should now read clearly: Rules + Data → Answer."
+    },
+    {
+      "id": "v7_highlight_traditional_flow",
+      "anchor": "s2_n3",
+      "offset": 0.05,
+      "action": "highlight_group",
+      "zone": "center_band",
+      "content": [
+        "v2_rules_box",
+        "v3_plus_symbol",
+        "v4_data_box",
+        "v5_arrow_traditional",
+        "v6_answer_box"
+      ],
+      "style": {
+        "pulse_scale": 1.03,
+        "pulse_opacity": 1.0
+      },
+      "transition_in": "none",
+      "duration": 0.45,
+      "persist": false,
+      "notes": "Reinforce the flow without duplicating text. No extra sentence on screen."
+    },
+    {
+      "id": "v8_heading_shift",
+      "anchor": "s2_n4",
+      "offset": 0.0,
+      "action": "transform_text",
+      "zone": "top",
+      "content": "Machine Learning",
+      "style": {
+        "font_size": 34,
+        "opacity": 0.9
+      },
+      "transition_in": "transform",
+      "duration": 0.45,
+      "persist": true,
+      "replace": "top",
+      "notes": "Top label transforms, not disappears. This marks the conceptual flip."
+    },
+    {
+      "id": "v9_tension_dim",
+      "anchor": "s2_n4",
+      "offset": 0.05,
+      "action": "dim_group",
+      "zone": "center_band",
+      "content": [
+        "v2_rules_box",
+        "v3_plus_symbol",
+        "v4_data_box",
+        "v5_arrow_traditional",
+        "v6_answer_box"
+      ],
+      "style": {
+        "target_opacity": 0.72
+      },
+      "transition_in": "none",
+      "duration": 0.25,
+      "persist": false,
+      "notes": "Small tension beat only. No full fade out."
+    },
+    {
+      "id": "v10_data_stays_left",
+      "anchor": "s2_n5",
+      "offset": 0.0,
+      "action": "transform_box_label",
+      "zone": "center_left",
+      "content": "Data",
+      "style": {
+        "source_id": "v2_rules_box",
+        "box_width": 2.2,
+        "box_height": 1.0,
+        "font_size": 32
+      },
+      "transition_in": "transform",
+      "duration": 0.55,
+      "persist": true,
+      "replace": "center_left",
+      "notes": "Rules box becomes Data. This is part of the inversion. Avoid delete-and-recreate."
+    },
+    {
+      "id": "v11_plus_stays",
+      "anchor": "s2_n5",
+      "offset": 0.05,
+      "action": "hold",
+      "zone": "center_mid_left",
+      "content": "+",
+      "duration": 0.1,
+      "persist": true,
+      "notes": "The plus symbol remains to preserve continuity."
+    },
+    {
+      "id": "v12_answers_center",
+      "anchor": "s2_n5",
+      "offset": 0.18,
+      "action": "transform_box_label",
+      "zone": "center",
+      "content": "Answers",
+      "style": {
+        "source_id": "v4_data_box",
+        "box_width": 2.5,
+        "box_height": 1.0,
+        "font_size": 32
+      },
+      "transition_in": "transform",
+      "duration": 0.55,
+      "persist": true,
+      "replace": "center",
+      "notes": "Data box becomes Answers. Slight width expansion is okay."
+    },
+    {
+      "id": "v13_arrow_reverse",
+      "anchor": "s2_n5",
+      "offset": 0.4,
+      "action": "transform_arrow",
+      "zone": "center_mid_right",
+      "content": "right",
+      "style": {
+        "source_id": "v5_arrow_traditional",
+        "reverse_direction": false,
+        "same_direction_but_new_semantics": true,
+        "length": 2.0,
+        "stroke_width": 5
+      },
+      "transition_in": "transform",
+      "duration": 0.45,
+      "persist": true,
+      "replace": "center_mid_right",
+      "notes": "Keep arrow visually stable if your layout reads left-to-right in both cases. The meaning changes because Rules now emerge as output. If your engine supports directional reversal elegantly, use it. Otherwise keep left-to-right and let box positions carry the inversion."
+    },
+    {
+      "id": "v14_rules_emerge_right",
+      "anchor": "s2_n5",
+      "offset": 0.65,
+      "action": "transform_box_label",
+      "zone": "center_right",
+      "content": "Rules",
+      "style": {
+        "source_id": "v6_answer_box",
+        "box_width": 2.2,
+        "box_height": 1.0,
+        "font_size": 32
+      },
+      "transition_in": "transform",
+      "duration": 0.6,
+      "persist": true,
+      "replace": "center_right",
+      "notes": "Answer becomes Rules. This is the hero inversion beat."
+    },
+    {
+      "id": "v15_highlight_ml_flow",
+      "anchor": "s2_n6",
+      "offset": 0.05,
+      "action": "highlight_group",
+      "zone": "center_band",
+      "content": [
+        "v10_data_stays_left",
+        "v11_plus_stays",
+        "v12_answers_center",
+        "v13_arrow_reverse",
+        "v14_rules_emerge_right"
+      ],
+      "style": {
+        "pulse_scale": 1.04,
+        "pulse_opacity": 1.0
+      },
+      "transition_in": "none",
+      "duration": 0.45,
+      "persist": false,
+      "notes": "Again, reinforce with motion rather than duplicate explanatory text."
+    },
+    {
+      "id": "v16_key_shift_focus",
+      "anchor": "s2_n7",
+      "offset": 0.0,
+      "action": "camera_focus",
+      "zone": "center_band",
+      "content": [
+        "v10_data_stays_left",
+        "v12_answers_center",
+        "v14_rules_emerge_right"
+      ],
+      "style": {
+        "scale": 0.95
+      },
+      "transition_in": "smooth",
+      "duration": 0.4,
+      "persist": false,
+      "notes": "Tiny focus move only. Avoid gimmicky zoom."
+    },
+    {
+      "id": "v17_examples_replace_boxes",
+      "anchor": "s2_n8",
+      "offset": 0.0,
+      "action": "transform_group_to_examples",
+      "zone": "center_left_center",
+      "content": {
+        "from_ids": [
+          "v10_data_stays_left",
+          "v12_answers_center"
+        ],
+        "examples": [
+          "x1 → y1",
+          "x2 → y2",
+          "x3 → y3",
+          "x4 → y4",
+          "x5 → y5",
+          "x6 → y6"
+        ]
+      },
+      "style": {
+        "grid_rows": 2,
+        "grid_cols": 3,
+        "font_size": 24,
+        "cell_width": 1.7,
+        "cell_height": 0.8
+      },
+      "transition_in": "transform",
+      "duration": 0.75,
+      "persist": true,
+      "replace": "center_left_center",
+      "notes": "Do not suddenly pop in a new unrelated table. This should feel like Data + Answers resolving into concrete examples."
+    },
+    {
+      "id": "v18_rules_to_pattern",
+      "anchor": "s2_n8",
+      "offset": 0.55,
+      "action": "transform_box_to_pattern",
+      "zone": "center_right",
+      "content": "Pattern",
+      "style": {
+        "source_id": "v14_rules_emerge_right",
+        "pattern_type": "simple_curve_or_mapping",
+        "font_size": 28
+      },
+      "transition_in": "transform",
+      "duration": 0.65,
+      "persist": true,
+      "replace": "center_right",
+      "notes": "Rules become a pattern-like abstraction. Not full math yet. This is intentionally light."
+    },
+    {
+      "id": "v19_example_to_pattern_links",
+      "anchor": "s2_n8",
+      "offset": 0.95,
+      "action": "show_links",
+      "zone": "center_span",
+      "content": {
+        "from": "v17_examples_replace_boxes",
+        "to": "v18_rules_to_pattern"
+      },
+      "style": {
+        "link_count": 3,
+        "stroke_opacity": 0.55,
+        "stroke_width": 3
+      },
+      "transition_in": "grow",
+      "duration": 0.45,
+      "persist": true,
+      "notes": "Suggest inference. Avoid overcomplicated network imagery."
+    },
+    {
+      "id": "v20_split_compare",
+      "anchor": "s2_n9",
+      "offset": 0.05,
+      "action": "show_split_comparison",
+      "zone": "full",
+      "content": {
+        "left_title": "Traditional",
+        "left_visual": "step_by_step_rules",
+        "right_title": "Machine Learning",
+        "right_visual": "examples_to_pattern"
+      },
+      "style": {
+        "left_width": 0.47,
+        "right_width": 0.53,
+        "font_size": 24
+      },
+      "transition_in": "transform",
+      "duration": 0.8,
+      "persist": true,
+      "replace": "full",
+      "notes": "Brief split-screen only. Left should feel rigid and procedural. Right should feel inferential and cleaner."
+    },
+    {
+      "id": "v21_left_step_arrows",
+      "anchor": "s2_n9",
+      "offset": 0.15,
+      "action": "animate_step_sequence",
+      "zone": "left",
+      "content": [
+        "Step 1",
+        "Step 2",
+        "Step 3"
+      ],
+      "style": {
+        "font_size": 22,
+        "arrow_style": "rigid"
+      },
+      "transition_in": "none",
+      "duration": 0.9,
+      "persist": true,
+      "notes": "Make this simple and slightly stiff. It is a contrast device, not the star."
+    },
+    {
+      "id": "v22_right_example_pulse",
+      "anchor": "s2_n9",
+      "offset": 0.5,
+      "action": "highlight_inference_side",
+      "zone": "right",
+      "content": [
+        "v17_examples_replace_boxes",
+        "v18_rules_to_pattern",
+        "v19_example_to_pattern_links"
+      ],
+      "style": {
+        "pulse_scale": 1.03
+      },
+      "transition_in": "none",
+      "duration": 0.55,
+      "persist": false,
+      "notes": "Right side gets emphasis when narration says the machine can infer the solution."
+    },
+    {
+      "id": "v23_resolve_to_final_ml_flow",
+      "anchor": "s2_n10",
+      "offset": 0.0,
+      "action": "transform_split_to_clean_flow",
+      "zone": "center",
+      "content": {
+        "left_label": "Examples",
+        "arrow_label": "learns",
+        "right_label": "Pattern"
+      },
+      "style": {
+        "font_size": 30,
+        "box_width": 2.4,
+        "box_height": 1.0,
+        "arrow_length": 2.1
+      },
+      "transition_in": "transform",
+      "duration": 0.85,
+      "persist": true,
+      "replace": "center",
+      "notes": "This is the clean summary state. Not text-heavy. No abrupt collapse."
+    },
+    {
+      "id": "v24_final_caption",
+      "anchor": "s2_n10",
+      "offset": 0.7,
+      "action": "show_text",
+      "zone": "bottom",
+      "content": "Machine learning learns rules from examples.",
+      "style": {
+        "font_size": 28,
+        "opacity": 0.9
+      },
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "duration": 0.4,
+      "persist": true,
+      "replace": "bottom",
+      "notes": "Optional final caption. Keep only if bottom zone is not cluttered and narration timing supports it."
+    }
+  ],
+  "notes": [
+    "Scene 2 must preserve Scene 1 grammar: transform-first, low clutter, no slide behavior, no blank center gaps.",
+    "The hero moment is the inversion from Rules + Data → Answer into Data + Answers → Rules.",
+    "Do not overbuild the pattern section. This scene is about the computational inversion, not yet full model fitting.",
+    "The examples section should feel like a natural evolution of Data + Answers, not a brand-new chart slide.",
+    "Keep one dominant focal system in the center through the full scene.",
+    "Avoid repeated on-screen textual restatement of narration.",
+    "Use -qh and --flush_cache --disable_caching during refinement."
+  ]
+}

@@ -20,7 +20,7 @@ The repository name chosen for this system is:
 `ai-visual-learning`
 
 ### Purpose and vision
-The vision is to create educational content that feels closer to premium intuition-first explainers rather than standard tutorial slides. The user wants the final videos to be visually intelligent, conceptually elegant, and engaging enough to hold attention.
+The vision is to create educational content that feels closer to premium intuition-first explainers rather than standard tutorial slides. The intended output should feel visually intelligent, conceptually elegant, tightly synchronized, and engaging enough to sustain attention over entire lessons.
 
 The larger goal is to create an extensible framework that allows multiple courses to be built under one system, with reusable core logic and course-specific content assets.
 
@@ -60,6 +60,7 @@ There are two layers of success here:
 - viewers stay engaged
 - visuals evolve conceptually rather than appearing as disconnected slide elements
 - narration and visuals support each other tightly
+- the project develops a consistent visual grammar that carries from scene to scene
 
 ### Type of content being created
 The active project is a foundational Machine Learning course video.
@@ -67,8 +68,11 @@ The active project is a foundational Machine Learning course video.
 Current active video:
 - **What Is Machine Learning?**
 
-Current active scene:
+Latest completed reference scene:
 - **Scene 1: The Intellectual Wall**
+
+Current active development target:
+- **Scene 2**
 
 The broader curriculum plan includes:
 - Machine Learning
@@ -91,7 +95,7 @@ The desired teaching style is:
 - inspired by 3Blue1Brown in clarity and visual intelligence
 
 Important nuance:
-The user does not want a literal imitation of 3Blue1Brown. The request is for the same level of conceptual beauty, smooth visual reasoning, and seriousness of presentation.
+The goal is not literal imitation. The target is the same level of conceptual beauty, smooth visual reasoning, and seriousness of presentation.
 
 ### Balance between theory and implementation
 The broader course philosophy is balanced:
@@ -104,7 +108,7 @@ The broader course philosophy is balanced:
 The video content should feel academically serious, but not intimidating.
 
 ### Visual storytelling approach
-The user wants animation to explain ideas, not merely display labels.
+The system should use animation to explain ideas, not merely display labels.
 
 That means visuals should:
 - evolve
@@ -114,16 +118,16 @@ That means visuals should:
 - maintain hierarchy
 - use motion intentionally
 
-The conversation repeatedly rejected output that felt:
+The project explicitly rejects output that feels:
 - slide-like
 - static
 - generic
 - cluttered
 - PowerPoint-like
 - visually uninteresting
-- poor for viewer retention
+- weak in viewer retention
 
-The preferred visual storytelling pattern is closer to:
+The preferred storytelling pattern is:
 - one idea appears
 - it evolves into the next
 - previous context may dim or transform
@@ -135,9 +139,20 @@ rather than:
 - replace it
 - hold
 - fade
-## CURRENT BOTTLENECK
 
-Scene quality is limited by weak visual direction, motion design, and scene intelligence — not by engineering or pipeline issues.
+## CURRENT QUALITY FOCUS
+
+The primary bottleneck is no longer engineering. The pipeline is already functionally real.
+
+The current quality focus is:
+- visual direction
+- motion design
+- pacing
+- visual hierarchy
+- transition continuity
+- scene intelligence
+- preserving a premium visual language across future scenes
+
 ---
 
 ## 4. Tech Stack and Tools
@@ -238,7 +253,7 @@ Then the narration is broken into:
 - scenes
 - scene-level narration segments
 
-The conversation established that one large narration block is too hard to sync well. Segmenting the narration is necessary.
+The project has already established that one large narration block is too hard to sync well. Segmenting the narration is necessary.
 
 #### Stage 3 — scene specification
 Each scene is represented as structured JSON containing:
@@ -265,7 +280,7 @@ The scene JSON is meant to be the single source of truth for scene behavior.
 #### Stage 4 — audio generation
 Audio is generated **per narration segment**, not as one monolithic clip.
 
-Benefits established in the conversation:
+Benefits established in the project:
 - easier retries
 - easier debugging
 - easier re-generation of only changed lines
@@ -331,7 +346,7 @@ Not fully built yet, but intended:
 - eventually handle full course assembly
 
 ### Core architectural principle
-This principle was repeated multiple times and is central:
+This principle is central:
 
 **Content is data. Rendering is code.**
 
@@ -342,7 +357,7 @@ Scene logic should not be hardcoded inside bespoke scene classes unless absolute
 ## 6. Coding Workflow (Critical)
 
 ### What GPT was used for
-During this conversation, GPT was used for:
+GPT has been used for:
 - system architecture
 - repo structure design
 - workflow design
@@ -352,6 +367,8 @@ During this conversation, GPT was used for:
 - refinement planning
 - explanation of failures
 - directing iterative visual refinement
+- helping define visual quality standards
+- helping preserve continuity across scenes
 
 ### What implementation-oriented coding tools like Codex should handle
 Codex or similar tools should be used for:
@@ -362,6 +379,7 @@ Codex or similar tools should be used for:
 - debugging file mismatches
 - maintaining consistency across the codebase
 - evolving the Manim engine
+- applying precise scoped scene updates without breaking the stable pipeline
 
 ### Why Codex is useful here
 This project has many tightly coupled files:
@@ -384,6 +402,7 @@ Future coding tools need:
 - file coordination rules
 - known working pipeline
 - known current weak points
+- the current visual standard expected of new scenes
 
 They must be told not to:
 - regress from WAV back to MP3
@@ -391,6 +410,7 @@ They must be told not to:
 - change timestamp file shape without updating renderer
 - produce slide-like visuals
 - run ffmpeg after failed renders
+- redesign architecture when the real issue is scene craft
 
 ### How context should be described
 The best prompt framing for future coding work is:
@@ -398,6 +418,7 @@ The best prompt framing for future coding work is:
 - what is failing
 - what the intended visual effect is
 - what architectural principles must not be violated
+- what current scene grammar should be preserved
 
 ---
 
@@ -471,9 +492,27 @@ This reduces chaos during debugging and lets each layer improve deliberately.
 ### Decision: use cache-flush and no-caching during refinement
 **Decision:** During active iteration, render with:
 `--flush_cache --disable_caching`
+
 **Reasoning:**  
 Prevents stale render confusion and false conclusions about whether changes actually took effect.
 
+### Decision: lock Scene 1 as the reference scene instead of endlessly reworking it
+**Decision:** Stop casually reopening Scene 1 once it becomes stable enough, and use it as the reference grammar for later scenes.
+
+**Reasoning:**  
+A project like this cannot scale if the first scene is endlessly relitigated. Once Scene 1 reached a stable, satisfactory level, it became more valuable as a style anchor than as an infinite refinement target.
+
+### Decision: move forward to Scene 2 while preserving Scene 1 grammar
+**Decision:** Advance to Scene 2 rather than continuing to spend project energy only on Scene 1.
+
+**Reasoning:**  
+The next major challenge is consistency across scenes, not isolated optimization of one scene. The project now needs to prove that the visual language can carry forward.
+
+### Decision: treat future scene work as extension, not rescue
+**Decision:** Assume the pipeline already works and that new scene work should focus on structure, pacing, and elegance.
+
+**Reasoning:**  
+This changes the working posture from “make the engine survive” to “make scenes feel premium.”
 
 ## DO NOT TOUCH (STABLE SYSTEMS)
 
@@ -481,6 +520,8 @@ Prevents stale render confusion and false conclusions about whether changes actu
 - Timestamp generation logic
 - JSON-driven scene architecture
 - Schema-action-renderer contract
+- segment-wise narration workflow
+- environment-variable-based scene selection
 
 Unless there is a clear, critical failure.
 
@@ -488,19 +529,22 @@ Unless there is a clear, critical failure.
 
 All improvements follow:
 
-1. Isolate one visual segment (e.g., square sequence)
+1. Isolate one visual segment or one scene-level weakness
 2. Identify failure type:
    - pacing
    - motion
    - metaphor
    - hierarchy
+   - continuity
+   - timing
 3. Apply minimal targeted change
 4. Render with cache disabled
 5. Evaluate only that change
 
 Do NOT:
-- refactor entire scene per iteration
+- refactor entire scenes per iteration
 - change multiple subsystems at once
+- treat every dissatisfaction as an architecture problem
 
 ## SCENE COMPLETION CRITERIA
 
@@ -514,12 +558,9 @@ A scene is considered “production-ready” when:
 - viewer attention is guided naturally
 - no clutter or overlap
 - ending feels resolved (not abrupt)
+- the scene feels consistent with the established visual grammar of the project
 
 If any of the above fail → scene is not done
-
-
-
-
 
 ---
 
@@ -534,7 +575,7 @@ If any of the above fail → scene is not done
 - need to keep multiple coupled files consistent
 
 ### Style constraints
-The user does **not** want:
+The project does **not** want:
 - slide-deck feel
 - PowerPoint-like visuals
 - AI-slop
@@ -542,6 +583,7 @@ The user does **not** want:
 - weak, static diagrams
 - dead pauses
 - visually cheap or laggy output
+- flashy but meaningless movement
 
 ### Educational constraints
 The content must remain:
@@ -564,10 +606,11 @@ The following must remain aligned:
 
 ### Specific preferences to preserve
 - title should not remain on screen longer than useful
-- square example should feel like an evolving object, not static states
-- scene should not have long dead blank sections
+- the same idea should visually evolve when possible instead of being recreated
+- scenes should not have long dead blank sections
 - final videos should be visually interesting enough to retain attention
 - ambition should remain high; no settling for “good enough” basic output
+- future scenes should feel like they belong to the same project, not separate styles
 
 ---
 
@@ -590,106 +633,104 @@ The following must remain aligned:
 - scene rendering works
 - ffmpeg mux works
 
-#### Current scene
-Active scene:
+#### Scene 1 status
+Active reference scene:
 - `scene01_intellectual_wall.json`
 
-This scene has gone through multiple refinement attempts:
+This scene went through multiple refinement passes involving:
 - initial cluttered stacking
 - zone-based refinement
 - title removal improvement
 - square evolution sequence
-- camera / focus / context dimming attempt
+- pressure / thesis / wall / ML pacing fixes
+- removal of duplicate messaging
+- removal of blank center gaps
+- transition smoothing
+
+Current status of Scene 1:
+- stable enough to stop touching for now
+- no longer treated as a rescue problem
+- should now act as the reference grammar for later scenes
+- should only be reopened if there is a clear, meaningful reason
 
 ### In progress
-- improving pacing
-- improving motion quality
-- making transforms feel meaningful
-- making visuals feel less slide-like
-- raising render quality
-- making Scene 1 a reference-quality scene
+- moving to Scene 2
+- preserving Scene 1 visual grammar across new scenes
+- improving consistency of scene quality, not just isolated scene repair
+- strengthening motion quality and pacing in future scenes from the beginning
+- building a reusable premium visual language for the entire course
 
 ### Current truth
-The system is now **functionally real**, but the scene is still judged as:
-- poor
-- visually dead
-- too slide-like
-- not engaging enough
-- not close to the intended standard
+The system is now functionally real and stable enough to move forward.
 
-That is the current bottleneck.
+The project is no longer blocked by basic pipeline issues.
+
+The real challenge now is:
+- carrying quality from one scene into the next
+- maintaining continuity of style and scene logic
+- building scenes that feel premium from first pass structure onward
 
 ---
 
 ## 10. Open Problems / Gaps
 
-### 1. Visual quality is still not acceptable
-The user explicitly considers the result poor.
+### 1. Need to prove quality can scale beyond Scene 1
+Scene 1 is no longer the main bottleneck. The next test is whether Scene 2 and later scenes can match its clarity and continuity without drifting into slide behavior.
 
-### 2. Scene pacing is weak
-There are still:
-- dead holds
-- long pauses
-- moments where objects sit without meaningful evolution
+### 2. Visual grammar must remain consistent across scenes
+There is still a risk that later scenes may introduce conflicting pacing, density, motion style, or text behavior.
 
-### 3. Square sequence is not compelling enough
-Even after improvements, it still does not feel like a strong continuous visual argument.
+### 3. Motion design still needs maturation at the project level
+Even with Scene 1 improved, the broader engine and scene design practice still need richer, more deliberate choreography over time.
 
-### 4. Motion design is still immature
-The animation system currently uses transforms and fades, but it lacks:
-- richer choreography
-- premium motion feel
-- progressive reasoning-driven movement
+### 4. First-pass scene design must improve
+The project should reduce the pattern of getting a scene functionally built first and only later discovering major visual weaknesses. Future scenes should start with better scene intelligence from the outset.
 
-### 5. Perceived lag and cheapness
-Low render quality and conservative motion make the scene feel worse than it should.
+### 5. Need a reliable workflow for Scene 2 and beyond
+The project must now validate that the refinement doctrine, scene grammar, and quality checklist actually scale into a repeatable workflow.
 
-### 6. Slide-like composition remains
-Even after refinement passes, the visual language still tends toward:
-- appearing text
-- replacing text
-- holding objects
+### 6. Risk of architecture churn during later refinement
+Because the pipeline is already working, there is now a new danger: unnecessary refactoring triggered by scene dissatisfaction. That should be resisted unless a real engine limitation is exposed.
 
-rather than deep evolving explanation.
-
-### 7. Need for a gold-standard reference scene
-Scene 1 still needs to become the “template of excellence” for the rest of the project.
+### 7. Need stronger scene-to-scene continuity thinking
+The project must think beyond one isolated scene and begin designing transitions, pacing expectations, and visual tone at the video level.
 
 ---
 
 ## 11. Next Steps
 
 ### Immediate next steps
-1. Do a focused pacing pass.
-   - reduce stage offsets where necessary
-   - reduce run times for transforms
-   - shorten fade durations
-   - remove dead waits
-   - make square evolution tighter
+1. Begin Scene 2 design.
+   - use Scene 1 as the reference grammar
+   - preserve continuity of pacing and clarity
+   - avoid reinventing style unnecessarily
 
-2. Upgrade render quality.
-   - use `-qh` instead of `-ql`
-   - evaluate whether fps changes are needed later
+2. Keep Scene 2 first pass structurally clean.
+   - establish good focal hierarchy early
+   - keep density low
+   - prefer evolving visuals over slide replacement
+   - avoid overcomplication in initial build
 
-3. Rework the square sequence again.
-   - make it feel continuous, not staged
-   - reduce “stuck object” perception
-   - strengthen the conceptual point visually
+3. Apply refinement doctrine from the beginning.
+   - isolate weak segments early
+   - diagnose failure type precisely
+   - make minimal targeted fixes
 
-4. Reassess camera motion.
-   - decide whether current camera logic helps or hurts
-   - avoid gimmick movement
+4. Continue rendering with quality discipline.
+   - use `-qh`
+   - use `--flush_cache --disable_caching` during active refinement
+   - avoid stale conclusions
 
-5. Preserve working architecture while improving craft.
-   - no more architectural regression
-   - no giant rewrites that break coordination
+5. Preserve Scene 1 as a locked benchmark.
+   - use it to judge later scene quality
+   - do not casually reopen it just because later work feels difficult
 
 ### Medium-term next steps
-6. Make Scene 1 the gold-standard scene.
-7. Lock a strong visual language after Scene 1 works.
-8. Reuse those conventions across future scenes.
-9. Add more expressive action types if needed.
-10. Eventually move to the next scenes of the video after Scene 1 quality is acceptable.
+6. Make Scene 2 match or exceed Scene 1’s perceived intelligence.
+7. Establish a repeatable scene-construction pattern for future scenes.
+8. Strengthen project-wide motion language.
+9. Add expressive action types only if a real recurring scene need emerges.
+10. Eventually move from scene-level quality to video-level continuity and assembly.
 
 ---
 
@@ -702,7 +743,7 @@ The user intends this to become a serious long-term educational content system, 
 Future implementation may happen in Codex or similar code-focused tooling, so detailed handoff context is important.
 
 ### Assumption 3
-The current codebase already contains the working files referenced in this chat and should be evolved rather than restarted.
+The current codebase already contains the working files referenced here and should be evolved rather than restarted.
 
 ### Assumption 4
 The user prefers blunt technical honesty over false reassurance.
@@ -710,7 +751,11 @@ The user prefers blunt technical honesty over false reassurance.
 ### Assumption 5
 The desired final standard is “professionally engaging, conceptually beautiful technical explainer,” not generic educational animation.
 
+### Assumption 6
+The project is now strong enough that future failures are more likely to be about scene craft than about raw engine viability.
+
 ---
+
 ## 13. ENGINE CONTRACT (NON-NEGOTIABLE)
 
 The rendering engine MUST guarantee the following behaviors at all times.
@@ -739,7 +784,7 @@ No object should:
 ### 4. Replace Semantics
 If `"replace": "<zone>"` is used:
 - previous object MUST be removed BEFORE new object is added
-- transitions must be smooth (Transform preferred over FadeOut+FadeIn)
+- transitions must be smooth (Transform preferred over FadeOut+FadeIn when conceptually related)
 
 ### 5. Synchronization
 - Visual timing MUST match narration timing
@@ -758,6 +803,8 @@ Output MUST be identical (no randomness unless explicitly defined)
 - If timestamps are invalid → rendering must fail fast
 - If scene schema is invalid → validation must fail
 - No silent fallback behavior
+
+---
 
 ## 14. VISUAL STANDARD (QUALITY BAR)
 
@@ -809,7 +856,11 @@ NOT:
 - mechanical
 - script-driven
 
+### 9. Scene-to-scene consistency rule
+- Later scenes must feel like they belong to the same system
+- Changes in visual grammar should be intentional, not accidental drift
 
+---
 
 ## 15. COMMON FAILURE MODES
 
@@ -879,15 +930,15 @@ Fix:
 
 ---
 
-### 6. Object Drift (e.g., square moving upward)
+### 6. Object Drift
 Symptom:
-- objects slowly move off-screen
+- objects slowly move off-screen or feel accidentally displaced
 
 Cause:
 - repeated micro-motion shifts
 
 Fix:
-- disable micro-motion for transform steps
+- disable or control unnecessary micro-motion during transform-heavy sequences
 
 ---
 
@@ -902,8 +953,21 @@ Fix:
 - replace with:
   evolve → transform → resolve
 
+---
 
-  ## 16. PRE-RENDER QUALITY CHECKLIST
+### 8. Scene Grammar Drift
+Symptom:
+- later scenes feel like a different project
+
+Cause:
+- inconsistent pacing, density, or motion decisions
+
+Fix:
+- compare against Scene 1 reference grammar before accepting the scene
+
+---
+
+## 16. PRE-RENDER QUALITY CHECKLIST
 
 Before rendering any scene:
 
@@ -923,6 +987,8 @@ Before rendering any scene:
 - [ ] No unnecessary persistent elements
 - [ ] No long idle holds
 - [ ] Title removed after initial segment if not needed
+- [ ] No blank center gaps in active explanatory moments
+- [ ] No duplicate visual messaging without clear intent
 
 ### Engine Checks
 - [ ] No schema-action mismatch
@@ -935,8 +1001,9 @@ Before rendering any scene:
 ### Final Sanity
 - [ ] No stale cache artifacts
 - [ ] Scene progression feels continuous
+- [ ] Scene feels consistent with project visual grammar
 
-
+---
 
 ## 17. SCENE DESIGN RULES
 
@@ -946,7 +1013,7 @@ These define how scenes must be constructed conceptually.
 Each scene must answer ONE clear conceptual question.
 
 Example:
-"What is the limitation of rule-based systems?"
+“What is the limitation of rule-based systems?”
 
 ---
 
@@ -1018,6 +1085,18 @@ Never allow:
 Always aim for:
 - continuous flow
 
+---
+
+### 10. Preserve project grammar across scenes
+When designing a new scene:
+- compare it to the reference scene
+- match pacing philosophy
+- match density discipline
+- match transform-first reasoning where appropriate
+- only deviate intentionally
+
+---
+
 ## REFERENCE SCENE (LOCKED STANDARD)
 
 Scene 1 is the reference standard for:
@@ -1027,14 +1106,16 @@ Scene 1 is the reference standard for:
 - visual hierarchy
 - transition style
 - scene structure
+- how continuity is maintained inside one scene
 
 All future scenes MUST:
-- match or exceed this quality
-- follow the same visual grammar
-- not introduce conflicting styles
+- Exceed this quality
+- follow the same visual grammar unless there is a clear reason not to
+- not introduce conflicting styles by accident
 
 Any deviation must be intentional and justified.
 
+---
 
 ## 18. Reusable Instructions for Future Chats
 
@@ -1044,10 +1125,10 @@ Use this block in a new chat:
 This is an ongoing project. Do not restart from scratch or simplify the architecture.
 
 IMPORTANT:
-Use the attached project_context_document_detailed markdown file as the PRIMARY source of truth for this project.
+Use the attached Project Context Document markdown file as the PRIMARY source of truth for this project.
 All decisions, constraints, architecture, and standards are defined there.
 
-If anything in this message conflicts with the Project Brain, the Project Brain takes priority.
+If anything in this message conflicts with the Project Context Document, the Project Context Document takes priority.
 
 Project: ai-visual-learning
 
@@ -1081,12 +1162,11 @@ Current state:
 - scene WAV concat works
 - timestamp generation works
 - renderer works
+- Scene 1 is stable enough to act as the reference scene
+- active work is moving to Scene 2
 
 CURRENT BOTTLENECK:
-Scene quality is limited by visual direction, motion design, pacing, and scene intelligence — not by engineering.
-
-Current active scene:
-courses/machine-learning/scenes/scene01_intellectual_wall.json
+The bottleneck is scene quality, motion design, pacing, hierarchy, continuity, and preserving visual grammar across scenes — not basic engineering.
 
 Your role:
 - diagnose visual and motion problems
@@ -1100,11 +1180,12 @@ Focus on:
 - pacing
 - transformation quality
 - attention control
+- continuity with the reference scene
 
 Avoid:
 - unnecessary refactoring
 - breaking stable systems
 - overengineering
 
-We are refining Scene 1 into a reference-quality standard for the entire project.
+We are now extending the quality standard established by Scene 1 into Scene 2 and beyond.
 ```
