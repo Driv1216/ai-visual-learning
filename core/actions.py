@@ -231,6 +231,14 @@ def make_square_stage_sequence(params, zone):
     )
     measured_group = VGroup(measured, measured_ticks, measured_angles, measured_rules)
 
+    tension = base_square(PRIMARY, stroke_width=3.5).rotate(PI / 18)
+    tension_glow = tension.copy().set_stroke(color=HIGHLIGHT, width=8, opacity=0.12).set_fill(opacity=0.03)
+    tension_rules = VGroup(
+        rule_chip("real images complicate it", MUTED).next_to(tension, UP, buff=0.38),
+        rule_chip("clean rules start bending", TEXT_SUB).next_to(tension, RIGHT, buff=0.44),
+    )
+    tension_group = VGroup(tension_glow, tension, tension_rules)
+
     rotated = base_square(HIGHLIGHT).rotate(PI / 6)
     rotated_rules = VGroup(
         rule_chip("still a square?", HIGHLIGHT).next_to(rotated, UP, buff=0.38),
@@ -320,31 +328,17 @@ def make_square_stage_sequence(params, zone):
     )
     pressure_group = VGroup(pressure_square, pressure_specks, pressure_cards, pressure_lines)
 
-    wall_square = noisy.copy().set_fill(opacity=0.16).scale(0.92).shift(LEFT * 2.5)
-    wall = VGroup(
-        *[
-            RoundedRectangle(
-                corner_radius=0.08,
-                width=1.5,
-                height=0.56,
-                stroke_color=TEXT_SUB if i % 2 else WARNING,
-                stroke_width=2,
-                fill_color="#1a202c",
-                fill_opacity=0.96,
-            ).move_to(RIGHT * 0.95 + UP * (1.3 - i * 0.66))
-            for i in range(5)
-        ]
-    )
-    wall_labels = VGroup(
-        *[
-            Text(label, font_size=16, color=TEXT_MAIN, weight=MEDIUM).move_to(block.get_center())
-            for label, block in zip(
-                ["angles", "edges", "lighting", "noise", "rotation"],
-                wall,
-            )
-        ]
-    )
-    wall_barrier = VGroup(wall, wall_labels)
+    wall_square = noisy.copy().set_fill(opacity=0.16).scale(0.92).shift(LEFT * 2.45)
+    wall_barrier = RoundedRectangle(
+        corner_radius=0.12,
+        width=1.28,
+        height=3.42,
+        stroke_color=WARNING,
+        stroke_width=3,
+        fill_color="#1a202c",
+        fill_opacity=0.96,
+    ).move_to(RIGHT * 0.95)
+    wall_label = Text("too many rules", font_size=20, color=TEXT_MAIN, weight=MEDIUM).move_to(wall_barrier.get_center())
     blocked_arrow = Arrow(
         wall_square.get_right() + RIGHT * 0.1,
         wall_barrier.get_left() + LEFT * 0.08,
@@ -357,6 +351,7 @@ def make_square_stage_sequence(params, zone):
     wall_group = VGroup(
         wall_square,
         wall_barrier,
+        wall_label,
         blocked_arrow,
         blocked_cross,
         rule_chip("the rulebook becomes the wall", WARNING).next_to(wall_barrier, DOWN, buff=0.4),
@@ -365,6 +360,7 @@ def make_square_stage_sequence(params, zone):
     stage_map = {
         "clean": (clean, "clean case"),
         "measured": (measured_group, "write the rules"),
+        "tension": (tension_group, "then the real world intrudes"),
         "rotated": (rotated_group, "reality rotates it"),
         "distorted": (distorted_group, "then reality distorts it"),
         "noisy": (noisy_group, "the clean rule starts to wobble"),

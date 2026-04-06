@@ -212,6 +212,23 @@
       "offset": 0.0
     },
     {
+      "id": "v2clear",
+      "anchor": "n3",
+      "action": "fade_out",
+      "zone": "center",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "replace": null,
+      "camera_scale": 1.0,
+      "params": {
+        "zones": [
+          "center"
+        ]
+      },
+      "offset": 0.05
+    },
+    {
       "id": "v4",
       "anchor": "n4a",
       "action": "show_text",
@@ -303,6 +320,21 @@
     },
     {
       "id": "v5c",
+      "anchor": "n5d",
+      "action": "square_stage_sequence",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.87,
+      "params": {
+        "stage": "tension"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v5d",
       "anchor": "n5e",
       "action": "square_stage_sequence",
       "zone": "center",
@@ -317,7 +349,7 @@
       "offset": 0.0
     },
     {
-      "id": "v5d",
+      "id": "v5e",
       "anchor": "n5f",
       "action": "square_stage_sequence",
       "zone": "center",
@@ -332,7 +364,7 @@
       "offset": 0.0
     },
     {
-      "id": "v5e",
+      "id": "v5f",
       "anchor": "n5g",
       "action": "square_stage_sequence",
       "zone": "center",
@@ -347,7 +379,7 @@
       "offset": 0.0
     },
     {
-      "id": "v5f",
+      "id": "v5g",
       "anchor": "n5h",
       "action": "square_stage_sequence",
       "zone": "center",
@@ -362,7 +394,7 @@
       "offset": 0.0
     },
     {
-      "id": "v5g",
+      "id": "v5h",
       "anchor": "n5i",
       "action": "square_stage_sequence",
       "zone": "center",
