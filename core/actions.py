@@ -288,6 +288,20 @@ def make_square_stage_sequence(params, zone):
         rule_chip("shape ambiguity", MUTED).next_to(noisy, RIGHT, buff=0.42),
     )
 
+    lighting = noisy.copy().set_stroke(color=GREY_A, width=3).set_fill(GREY_D, opacity=0.14)
+    lighting_specks = VGroup(
+        *[
+            Dot(dot.get_center(), radius=0.04, color=GREY_B).set_opacity(0.55)
+            for dot in noisy_specks
+        ]
+    )
+    lighting_group = VGroup(
+        lighting,
+        lighting_specks,
+        rule_chip("bad lighting", MUTED).next_to(lighting, UP, buff=0.4),
+        rule_chip("edges get harder to read", MUTED).next_to(lighting, RIGHT, buff=0.42),
+    )
+
     pressure_square = noisy.copy().set_fill(opacity=0.2)
     pressure_specks = noisy_specks.copy()
     pressure_cards = VGroup(
@@ -354,6 +368,7 @@ def make_square_stage_sequence(params, zone):
         "rotated": (rotated_group, "reality rotates it"),
         "distorted": (distorted_group, "then reality distorts it"),
         "noisy": (noisy_group, "the clean rule starts to wobble"),
+        "lighting": (lighting_group, "visibility starts to fail"),
         "pressure": (pressure_group, "exceptions start surrounding it"),
         "wall": (wall_group, "description becomes the bottleneck"),
     }

@@ -348,6 +348,21 @@
     },
     {
       "id": "v5f",
+      "anchor": "n5h",
+      "action": "square_stage_sequence",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.84,
+      "params": {
+        "stage": "lighting"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v5g",
       "anchor": "n5i",
       "action": "square_stage_sequence",
       "zone": "center",
@@ -393,7 +408,7 @@
     },
     {
       "id": "v7",
-      "anchor": "n7c",
+      "anchor": "n7e",
       "action": "square_stage_sequence",
       "zone": "center",
       "transition_in": "transform",
@@ -419,23 +434,6 @@
       "params": {
         "from": "description becomes the bottleneck",
         "to": "Machine learning begins here."
-      },
-      "offset": 0.0
-    },
-    {
-      "id": "v9",
-      "anchor": "n9",
-      "action": "show_flow_diagram",
-      "zone": "center",
-      "transition_in": "create",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 0.92,
-      "params": {
-        "left": "Data",
-        "middle": "Learning System",
-        "right": "Patterns"
       },
       "offset": 0.0
     }
