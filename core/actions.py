@@ -389,20 +389,12 @@ def make_square_stage_sequence(params, zone):
         max_stroke_width_to_length_ratio=10,
     )
     blocked_cross = Cross(blocked_arrow, stroke_color=WARNING, stroke_width=5).scale(0.52)
-    wall_caption = Text(
-        "description becomes the bottleneck",
-        font_size=22,
-        color=TEXT_SUB,
-        weight=MEDIUM,
-    )
-    wall_caption.next_to(wall_pair, DOWN, buff=0.42)
     wall_group = VGroup(
         wall_square,
         wall_barrier,
         wall_label,
         blocked_arrow,
         blocked_cross,
-        wall_caption,
     )
 
     stage_map = {

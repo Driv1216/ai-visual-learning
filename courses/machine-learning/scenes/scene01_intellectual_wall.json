@@ -410,7 +410,7 @@
     },
     {
       "id": "v5clear",
-      "anchor": "n6a",
+      "anchor": "n7c",
       "action": "fade_out",
       "zone": "center",
       "transition_in": "fade",
