@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from manim import *
+from manim import ReplacementTransform
 from scene_schema import SceneSpec
 from actions import build_object, transition_in_for, transition_out_for, BG_COLOR
 
@@ -162,9 +163,9 @@ class JsonDrivenScene(MovingCameraScene):
                 existing = active_objects.get(replace_zone)
                 if existing is not None:
                     if step.transition_in == "transform":
-                        incoming_anim = Transform(existing, new_obj)
-                        new_obj = existing
-                        active_objects[replace_zone] = existing
+                        incoming_anim = ReplacementTransform(existing, new_obj)
+                        # DON'T reassign new_obj — let it be the new object
+                        active_objects[replace_zone] = new_obj  # store the NEW obj
                     else:
                         out_anim = transition_out_for(existing, step.transition_out or "fade")
                         if out_anim is not None:
