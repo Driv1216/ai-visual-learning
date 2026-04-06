@@ -11,32 +11,116 @@
   },
   "narration": [
     {
-      "id": "n1",
-      "text": "For a long time, the way humans worked with computers was simple: we wrote the rules, and the computer followed them."
+      "id": "n1a",
+      "text": "For a long time, the way humans worked with computers was simple:"
     },
     {
-      "id": "n2",
-      "text": "That is traditional programming. You tell the machine exactly what to do. If this happens, do that. If this condition is true, take this action. It is clear, precise, and very powerful."
+      "id": "n1b",
+      "text": "we wrote the rules, and the computer followed them."
+    },
+    {
+      "id": "n2a",
+      "text": "That is traditional programming."
+    },
+    {
+      "id": "n2b",
+      "text": "You tell the machine exactly what to do."
+    },
+    {
+      "id": "n2c",
+      "text": "If this happens, do that."
+    },
+    {
+      "id": "n2d",
+      "text": "If this condition is true, take this action."
+    },
+    {
+      "id": "n2e",
+      "text": "It is clear, precise, and very powerful."
     },
     {
       "id": "n3",
       "text": "But it also has a limit."
     },
     {
-      "id": "n4",
-      "text": "This approach assumes we already know the full rulebook. It assumes we can describe every case ahead of time. And for many real problems, that is not possible."
+      "id": "n4a",
+      "text": "This approach assumes we already know the full rulebook."
     },
     {
-      "id": "n5",
-      "text": "Take a simple example: recognizing a square in an image. At first, the rules seem easy. Four sides, equal length, right angles. But then the real world gets involved. The square is rotated. The image is blurred. The edges are uneven. The lighting is bad. Suddenly, the rule set grows and grows."
+      "id": "n4b",
+      "text": "It assumes we can describe every case ahead of time."
     },
     {
-      "id": "n6",
-      "text": "And this is the real problem. The difficulty is not just computation. It is description."
+      "id": "n4c",
+      "text": "And for many real problems, that is not possible."
     },
     {
-      "id": "n7",
-      "text": "We can build rules for clean, simple cases. But once the problem becomes messy, the rules become too large, too fragile, and too hard to maintain."
+      "id": "n5a",
+      "text": "Take a simple example: recognizing a square in an image."
+    },
+    {
+      "id": "n5b",
+      "text": "At first, the rules seem easy."
+    },
+    {
+      "id": "n5c",
+      "text": "Four sides, equal length, right angles."
+    },
+    {
+      "id": "n5d",
+      "text": "But then the real world gets involved."
+    },
+    {
+      "id": "n5e",
+      "text": "The square is rotated."
+    },
+    {
+      "id": "n5f",
+      "text": "The image is blurred."
+    },
+    {
+      "id": "n5g",
+      "text": "The edges are uneven."
+    },
+    {
+      "id": "n5h",
+      "text": "The lighting is bad."
+    },
+    {
+      "id": "n5i",
+      "text": "Suddenly, the rule set grows and grows."
+    },
+    {
+      "id": "n6a",
+      "text": "And this is the real problem."
+    },
+    {
+      "id": "n6b",
+      "text": "The difficulty is not just computation."
+    },
+    {
+      "id": "n6c",
+      "text": "It is description."
+    },
+    {
+      "id": "n7a",
+      "text": "We can build rules for clean, simple cases."
+    },
+    {
+      "id": "n7b",
+      "text": "But once the problem becomes messy,"
+    },
+    {
+      "id": "n7c",
+      "text": "the rules become too large,"
+    },
+    {
+      "id": "n7d",
+      "text": "too fragile,"
+    },
+    {
+      "id": "n7e",
+      "text": "and too hard to maintain."
     },
     {
       "id": "n8",
@@ -50,7 +134,7 @@
   "visual_timeline": [
     {
       "id": "v1",
-      "anchor": "n1",
+      "anchor": "n1a",
       "action": "show_title",
       "zone": "title",
       "transition_in": "fade",
@@ -61,11 +145,11 @@
       "params": {
         "text": "The Intellectual Wall"
       },
-      "offset": -0.25
+      "offset": -0.15
     },
     {
       "id": "v1b",
-      "anchor": "n1",
+      "anchor": "n1b",
       "action": "fade_out",
       "zone": "title",
       "transition_in": "fade",
@@ -74,24 +158,41 @@
       "replace": null,
       "camera_scale": 1.0,
       "params": {
-        "zones": ["title"]
+        "zones": [
+          "title"
+        ]
       },
-      "offset": 0.8
+      "offset": 0.15
     },
     {
       "id": "v2",
-      "anchor": "n2",
+      "anchor": "n1b",
       "action": "show_flow_diagram",
       "zone": "center",
       "transition_in": "create",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "camera_scale": 0.92,
+      "camera_scale": 0.94,
       "params": {
         "left": "Rules",
         "middle": "Computer",
         "right": "Output"
+      },
+      "offset": 0.3
+    },
+    {
+      "id": "v2b",
+      "anchor": "n2e",
+      "action": "highlight_text",
+      "zone": "bottom",
+      "transition_in": "write",
+      "transition_out": "fade",
+      "persist": false,
+      "replace": "bottom",
+      "camera_scale": 1.0,
+      "params": {
+        "text": "Clear. Precise. Powerful."
       },
       "offset": 0.0
     },
@@ -112,7 +213,37 @@
     },
     {
       "id": "v4",
-      "anchor": "n4",
+      "anchor": "n4a",
+      "action": "show_text",
+      "zone": "center",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.96,
+      "params": {
+        "text": "Assumption: we can write the full rulebook in advance."
+      },
+      "offset": 0.1
+    },
+    {
+      "id": "v4b",
+      "anchor": "n4c",
+      "action": "highlight_text",
+      "zone": "bottom",
+      "transition_in": "write",
+      "transition_out": "fade",
+      "persist": false,
+      "replace": "bottom",
+      "camera_scale": 1.0,
+      "params": {
+        "text": "For many real problems, that assumption breaks."
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v5intro",
+      "anchor": "n5a",
       "action": "show_text",
       "zone": "center",
       "transition_in": "fade",
@@ -121,28 +252,43 @@
       "replace": "center",
       "camera_scale": 0.95,
       "params": {
-        "text": "Assumption: we can describe every case in advance."
+        "text": "Example problem: recognize a square in an image."
       },
-      "offset": 0.12
+      "offset": 0.0
     },
     {
       "id": "v5a",
-      "anchor": "n5",
+      "anchor": "n5b",
       "action": "square_stage_sequence",
       "zone": "center",
       "transition_in": "create",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "camera_scale": 0.88,
+      "camera_scale": 0.9,
       "params": {
         "stage": "clean"
       },
-      "offset": 0.1
+      "offset": 0.0
     },
     {
       "id": "v5b",
-      "anchor": "n5",
+      "anchor": "n5c",
+      "action": "square_stage_sequence",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.88,
+      "params": {
+        "stage": "measured"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v5c",
+      "anchor": "n5e",
       "action": "square_stage_sequence",
       "zone": "center",
       "transition_in": "transform",
@@ -151,13 +297,13 @@
       "replace": "center",
       "camera_scale": 0.86,
       "params": {
-        "stage": "measured"
+        "stage": "rotated"
       },
-      "offset": 0.8
+      "offset": 0.0
     },
     {
-      "id": "v5c",
-      "anchor": "n5",
+      "id": "v5d",
+      "anchor": "n5f",
       "action": "square_stage_sequence",
       "zone": "center",
       "transition_in": "transform",
@@ -166,84 +312,84 @@
       "replace": "center",
       "camera_scale": 0.84,
       "params": {
-        "stage": "rotated"
-      },
-      "offset": 1.6
-    },
-    {
-      "id": "v5d",
-      "anchor": "n5",
-      "action": "square_stage_sequence",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 0.82,
-      "params": {
         "stage": "distorted"
       },
-      "offset": 2.4
+      "offset": 0.0
     },
     {
       "id": "v5e",
-      "anchor": "n5",
+      "anchor": "n5g",
       "action": "square_stage_sequence",
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "camera_scale": 0.82,
+      "camera_scale": 0.84,
       "params": {
         "stage": "noisy"
       },
-      "offset": 3.2
+      "offset": 0.0
     },
     {
-      "id": "v6",
-      "anchor": "n6",
+      "id": "v5f",
+      "anchor": "n5i",
+      "action": "square_stage_sequence",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.86,
+      "params": {
+        "stage": "pressure"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v6a",
+      "anchor": "n6b",
       "action": "highlight_text",
       "zone": "bottom",
       "transition_in": "write",
       "transition_out": "fade",
       "persist": false,
       "replace": "bottom",
-      "camera_scale": 0.95,
+      "camera_scale": 0.96,
       "params": {
-        "text": "The problem is not computation. It is description."
+        "text": "The difficulty is not just computation..."
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v6b",
+      "anchor": "n6c",
+      "action": "highlight_text",
+      "zone": "bottom",
+      "transition_in": "write",
+      "transition_out": "fade",
+      "persist": false,
+      "replace": "bottom",
+      "camera_scale": 0.96,
+      "params": {
+        "text": "It is description."
       },
       "offset": 0.0
     },
     {
       "id": "v7",
-      "anchor": "n7",
+      "anchor": "n7c",
       "action": "square_stage_sequence",
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "camera_scale": 0.84,
-      "params": {
-        "stage": "pressure"
-      },
-      "offset": 0.3
-    },
-    {
-      "id": "v7b",
-      "anchor": "n7",
-      "action": "square_stage_sequence",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 0.86,
+      "camera_scale": 0.88,
       "params": {
         "stage": "wall"
       },
-      "offset": 4.4
+      "offset": 0.0
     },
     {
       "id": "v8",
@@ -254,17 +400,34 @@
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "camera_scale": 0.92,
+      "camera_scale": 0.94,
       "params": {
         "from": "description becomes the bottleneck",
         "to": "Machine learning begins here."
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v9",
+      "anchor": "n9",
+      "action": "show_flow_diagram",
+      "zone": "center",
+      "transition_in": "create",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.92,
+      "params": {
+        "left": "Data",
+        "middle": "Learning System",
+        "right": "Patterns"
       },
       "offset": 0.0
     }
   ],
   "notes": {
     "tone": "calm, elegant, explanatory",
-    "pacing": "immediate opening, evolving square sequence, stronger focus by the description line, then a cleaner transition into machine learning",
+    "pacing": "split narration for tighter anchors, immediate opening, continuous square evolution, cleaner transition into machine learning",
     "animation_guidelines": "This scene should feel like one thought unfolding. The title arrives quickly and leaves. The square evolves continuously rather than appearing as disconnected states. Context dims when a new focus takes over."
   }
 }
