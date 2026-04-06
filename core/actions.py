@@ -312,19 +312,59 @@ def make_square_stage_sequence(params, zone):
 
     pressure_square = noisy.copy().set_fill(opacity=0.2)
     pressure_specks = noisy_specks.copy()
+    top_left_card = rule_chip("if edge broken...", WARNING).next_to(
+        pressure_square, UL, buff=0.38
+    )
+    top_right_card = rule_chip("if rotated...", HIGHLIGHT).next_to(
+        pressure_square, UR, buff=0.38
+    )
+    bottom_left_card = rule_chip("if blur > threshold...", MUTED).next_to(
+        pressure_square, DL, buff=0.38
+    )
+    bottom_right_card = rule_chip("if angle almost 90°...", ACCENT).next_to(
+        pressure_square, DR, buff=0.38
+    )
+    bottom_card = rule_chip("if shadow present...", WARNING).next_to(
+        pressure_square, DOWN, buff=0.54
+    )
     pressure_cards = VGroup(
-        rule_chip("if edge broken...", WARNING).shift(LEFT * 2.85 + UP * 1.18),
-        rule_chip("if rotated...", HIGHLIGHT).shift(RIGHT * 2.8 + UP * 1.14),
-        rule_chip("if blur > threshold...", MUTED).shift(LEFT * 2.95 + DOWN * 0.05),
-        rule_chip("if angle almost 90°...", ACCENT).shift(RIGHT * 3.0 + DOWN * 0.1),
-        rule_chip("if shadow present...", WARNING).shift(DOWN * 1.35),
+        top_left_card,
+        top_right_card,
+        bottom_left_card,
+        bottom_right_card,
+        bottom_card,
     )
     pressure_lines = VGroup(
-        Line(LEFT * 1.45 + UP * 0.8, LEFT * 2.2 + UP * 1.05, color=TEXT_SUB, stroke_width=2),
-        Line(RIGHT * 1.32 + UP * 0.88, RIGHT * 2.14 + UP * 1.02, color=TEXT_SUB, stroke_width=2),
-        Line(LEFT * 1.48 + DOWN * 0.12, LEFT * 2.25 + DOWN * 0.02, color=TEXT_SUB, stroke_width=2),
-        Line(RIGHT * 1.4 + DOWN * 0.08, RIGHT * 2.28 + DOWN * 0.02, color=TEXT_SUB, stroke_width=2),
-        Line(DOWN * 1.02, DOWN * 0.72, color=TEXT_SUB, stroke_width=2),
+        Line(
+            top_left_card.get_edge_center(DR),
+            pressure_square.get_edge_center(UL),
+            color=TEXT_SUB,
+            stroke_width=2,
+        ),
+        Line(
+            top_right_card.get_edge_center(DL),
+            pressure_square.get_edge_center(UR),
+            color=TEXT_SUB,
+            stroke_width=2,
+        ),
+        Line(
+            bottom_left_card.get_edge_center(UR),
+            pressure_square.get_edge_center(DL),
+            color=TEXT_SUB,
+            stroke_width=2,
+        ),
+        Line(
+            bottom_right_card.get_edge_center(UL),
+            pressure_square.get_edge_center(DR),
+            color=TEXT_SUB,
+            stroke_width=2,
+        ),
+        Line(
+            bottom_card.get_edge_center(UP),
+            pressure_square.get_edge_center(DOWN),
+            color=TEXT_SUB,
+            stroke_width=2,
+        ),
     )
     pressure_group = VGroup(pressure_square, pressure_specks, pressure_cards, pressure_lines)
 

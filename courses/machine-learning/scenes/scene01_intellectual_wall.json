@@ -209,7 +209,7 @@
       "params": {
         "text": "But it also has a limit."
       },
-      "offset": 0.0
+      "offset": 0.2
     },
     {
       "id": "v2clear",
@@ -226,7 +226,7 @@
           "center"
         ]
       },
-      "offset": 0.05
+      "offset": 0.0
     },
     {
       "id": "v4",
@@ -458,7 +458,7 @@
       "anchor": "n8",
       "action": "transform_text",
       "zone": "center",
-      "transition_in": "transform",
+      "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
