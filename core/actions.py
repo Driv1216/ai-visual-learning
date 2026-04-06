@@ -368,33 +368,41 @@ def make_square_stage_sequence(params, zone):
     )
     pressure_group = VGroup(pressure_square, pressure_specks, pressure_cards, pressure_lines)
 
-    wall_square = noisy.copy().set_fill(opacity=0.16).scale(0.92).shift(LEFT * 2.45)
-    wall_barrier = RoundedRectangle(
-        corner_radius=0.12,
-        width=1.28,
-        height=3.42,
+    wall_square = noisy.copy().set_fill(opacity=0.16).scale(0.9)
+    wall_barrier = Rectangle(
+        width=0.7,
+        height=3.4,
         stroke_color=WARNING,
         stroke_width=3,
         fill_color="#1a202c",
-        fill_opacity=0.96,
-    ).move_to(RIGHT * 0.95)
-    wall_label = Text("too many rules", font_size=20, color=TEXT_MAIN, weight=MEDIUM).move_to(wall_barrier.get_center())
+        fill_opacity=0.98,
+    )
+    wall_pair = VGroup(wall_square, wall_barrier).arrange(RIGHT, buff=1.0)
+    wall_label = Text("too many rules", font_size=21, color=TEXT_MAIN, weight=MEDIUM)
+    wall_label.next_to(wall_barrier, RIGHT, buff=0.28)
     blocked_arrow = Arrow(
-        wall_square.get_right() + RIGHT * 0.1,
-        wall_barrier.get_left() + LEFT * 0.08,
-        buff=0.05,
+        wall_square.get_right(),
+        wall_barrier.get_left(),
+        buff=0.12,
         stroke_width=4,
         color=WARNING,
         max_stroke_width_to_length_ratio=10,
     )
-    blocked_cross = Cross(blocked_arrow, stroke_color=WARNING, stroke_width=6).scale(0.6)
+    blocked_cross = Cross(blocked_arrow, stroke_color=WARNING, stroke_width=5).scale(0.52)
+    wall_caption = Text(
+        "description becomes the bottleneck",
+        font_size=22,
+        color=TEXT_SUB,
+        weight=MEDIUM,
+    )
+    wall_caption.next_to(wall_pair, DOWN, buff=0.42)
     wall_group = VGroup(
         wall_square,
         wall_barrier,
         wall_label,
         blocked_arrow,
         blocked_cross,
-        rule_chip("the rulebook becomes the wall", WARNING).next_to(wall_barrier, DOWN, buff=0.4),
+        wall_caption,
     )
 
     stage_map = {
