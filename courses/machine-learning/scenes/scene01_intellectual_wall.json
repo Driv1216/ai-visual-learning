@@ -409,19 +409,17 @@
       "offset": 0.0
     },
     {
-      "id": "v5clear",
-      "anchor": "n7c",
-      "action": "fade_out",
+      "id": "v6center",
+      "anchor": "n6c",
+      "action": "show_text",
       "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
-      "persist": false,
-      "replace": null,
-      "camera_scale": 1.0,
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.94,
       "params": {
-        "zones": [
-          "center"
-        ]
+        "text": "description becomes the bottleneck"
       },
       "offset": 0.0
     },

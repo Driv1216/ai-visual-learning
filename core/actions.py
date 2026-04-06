@@ -406,10 +406,14 @@ def make_square_stage_sequence(params, zone):
         "noisy": (noisy_group, "the clean rule starts to wobble"),
         "lighting": (lighting_group, "visibility starts to fail"),
         "pressure": (pressure_group, "exceptions start surrounding it"),
-        "wall": (wall_group, "description becomes the bottleneck"),
+        "wall": (wall_group, ""),
     }
 
     current, label_text = stage_map.get(stage, (clean, stage))
+    if not label_text:
+        place_in_zone(current, zone)
+        return current
+
     label = Text(label_text, font_size=24, color=TEXT_SUB)
     label.next_to(current, DOWN, buff=0.48)
 
