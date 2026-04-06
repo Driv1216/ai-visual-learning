@@ -65,7 +65,7 @@
     },
     {
       "id": "v1b",
-      "anchor": "n2",
+      "anchor": "n1",
       "action": "fade_out",
       "zone": "title",
       "transition_in": "fade",
@@ -76,7 +76,7 @@
       "params": {
         "zones": ["title"]
       },
-      "offset": 0.0
+      "offset": 0.8
     },
     {
       "id": "v2",
@@ -93,7 +93,7 @@
         "middle": "Computer",
         "right": "Output"
       },
-      "offset": 0.18
+      "offset": 0.0
     },
     {
       "id": "v3",
@@ -151,9 +151,9 @@
       "replace": "center",
       "camera_scale": 0.86,
       "params": {
-        "stage": "rotated"
+        "stage": "measured"
       },
-      "offset": 2.6
+      "offset": 0.8
     },
     {
       "id": "v5c",
@@ -166,9 +166,9 @@
       "replace": "center",
       "camera_scale": 0.84,
       "params": {
-        "stage": "distorted"
+        "stage": "rotated"
       },
-      "offset": 5.7
+      "offset": 1.6
     },
     {
       "id": "v5d",
@@ -181,9 +181,24 @@
       "replace": "center",
       "camera_scale": 0.82,
       "params": {
+        "stage": "distorted"
+      },
+      "offset": 2.4
+    },
+    {
+      "id": "v5e",
+      "anchor": "n5",
+      "action": "square_stage_sequence",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.82,
+      "params": {
         "stage": "noisy"
       },
-      "offset": 9.6
+      "offset": 3.2
     },
     {
       "id": "v6",
@@ -203,17 +218,32 @@
     {
       "id": "v7",
       "anchor": "n7",
-      "action": "show_text",
+      "action": "square_stage_sequence",
       "zone": "center",
-      "transition_in": "fade",
+      "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "camera_scale": 0.94,
+      "camera_scale": 0.84,
       "params": {
-        "text": "Messy reality breaks rigid rule systems."
+        "stage": "pressure"
       },
-      "offset": 0.1
+      "offset": 0.3
+    },
+    {
+      "id": "v7b",
+      "anchor": "n7",
+      "action": "square_stage_sequence",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 0.86,
+      "params": {
+        "stage": "wall"
+      },
+      "offset": 4.4
     },
     {
       "id": "v8",
@@ -226,27 +256,10 @@
       "replace": "center",
       "camera_scale": 0.92,
       "params": {
-        "from": "Messy reality breaks rigid rule systems.",
+        "from": "description becomes the bottleneck",
         "to": "Machine learning begins here."
       },
       "offset": 0.0
-    },
-    {
-      "id": "v9",
-      "anchor": "n9",
-      "action": "show_flow_diagram",
-      "zone": "center",
-      "transition_in": "create",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 0.9,
-      "params": {
-        "left": "Data",
-        "middle": "Learning System",
-        "right": "Patterns"
-      },
-      "offset": 0.18
     }
   ],
   "notes": {

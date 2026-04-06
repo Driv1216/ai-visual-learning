@@ -151,6 +151,7 @@ class JsonDrivenScene(MovingCameraScene):
                     "replace": step.replace,
                 }
             )
+            camera_target_center = new_obj.get_center()
 
             outgoing_anims = []
             incoming_anim = None
@@ -199,7 +200,7 @@ class JsonDrivenScene(MovingCameraScene):
                 0.9 if target_zone == "center" else 1.0
             )
             focus_anims.append(
-                self.camera.frame.animate.move_to(new_obj.get_center()).set(width=default_frame_width * camera_scale)
+                self.camera.frame.animate.move_to(camera_target_center).set(width=default_frame_width * camera_scale)
             )
 
             self.play(
@@ -208,14 +209,6 @@ class JsonDrivenScene(MovingCameraScene):
             )
             current_time += run_time
             active_objects[target_zone] = new_obj
-
-            # micro-motion: keep it alive
-            if active_objects.get(target_zone) is not None:
-                self.play(
-                    active_objects[target_zone].animate.shift(UP * 0.05),
-                    run_time=0.28
-                )
-                current_time += 0.28
 
             if not step.persist:
                 self.wait(0.1)
