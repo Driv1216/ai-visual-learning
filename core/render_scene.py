@@ -170,8 +170,10 @@ class JsonDrivenScene(MovingCameraScene):
             return objects
 
         def focus_camera_on(obj, scale_override=None):
-            width = max(obj.width + 1.2, default_frame_width * (scale_override or 1.0))
-            return self.camera.frame.animate.move_to(obj.get_center()).set(width=width)
+            width = default_frame_width * (scale_override or 1.0)
+            center = obj.get_center()
+            target = center if abs(center[0]) < 1.5 else ORIGIN
+            return self.camera.frame.animate.move_to(target).set(width=width)
 
         special_actions = {
             "hold",
@@ -457,7 +459,7 @@ class JsonDrivenScene(MovingCameraScene):
                     "replace": step.replace,
                 }
             )
-            camera_target_center = new_obj.get_center()
+            camera_target_center = ORIGIN
 
             outgoing_anims = []
             incoming_anim = None
@@ -505,7 +507,7 @@ class JsonDrivenScene(MovingCameraScene):
                 0.9 if target_zone == "center" else 1.0
             )
             focus_anims.append(
-                self.camera.frame.animate.move_to(camera_target_center).set(width=default_frame_width * camera_scale)
+                self.camera.frame.animate.move_to(ORIGIN).set(width=default_frame_width * camera_scale)
             )
 
             self.play(

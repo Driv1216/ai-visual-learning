@@ -12,18 +12,18 @@ TEXT_SUB = GREY_A
 
 ZONE_POSITIONS = {
     "title": UP * 3.15,
-    "top": UP * 3.0,
+    "top": UP * 2.6,
     "center": ORIGIN,
     "bottom": DOWN * 2.45,
     "left": LEFT * 4.4,
     "right": RIGHT * 4.4,
     "full": ORIGIN,
-    "center_left": LEFT * 4.1,
-    "center_mid_left": LEFT * 2.2,
-    "center_mid_right": RIGHT * 2.2,
-    "center_right": RIGHT * 4.1,
+    "center_left": LEFT * 3.2,
+    "center_mid_left": LEFT * 1.5,
+    "center_mid_right": RIGHT * 1.5,
+    "center_right": RIGHT * 3.2,
     "center_band": ORIGIN,
-    "center_left_center": LEFT * 1.4,
+    "center_left_center": LEFT * 1.0,
     "center_span": ORIGIN,
 }
 
@@ -78,7 +78,7 @@ def make_show_title(params, zone):
 def make_show_text(params, zone):
     text = make_text_block(
         params["text"],
-        font_size=params.get("font_size", 30),
+        font_size=params.get("font_size", 28 if zone == "top" else 30),
         color=params.get("color", TEXT_MAIN),
         weight=params.get("weight", MEDIUM),
         max_width=10.6,
@@ -597,7 +597,7 @@ def make_split_comparison(params, zone):
     )
     left_panel = VGroup(left_title, VGroup(left_steps, left_arrows))
     left_title.next_to(left_steps, UP, buff=0.35)
-    left_panel.move_to(LEFT * 3.25)
+    left_panel.move_to(LEFT * 2.8)
 
     right_title = Text(params.get("right_title", "Machine Learning"), font_size=font_size + 2, color=TEXT_MAIN, weight=BOLD)
     right_examples = make_examples_grid(
@@ -612,11 +612,11 @@ def make_split_comparison(params, zone):
         "center",
     )
     right_pattern = make_pattern_object({"label": "Pattern", "font_size": font_size}, "center")
-    right_examples.move_to(RIGHT * 2.6 + LEFT * 0.45)
+    right_examples.move_to(RIGHT * 1.8)
     right_pattern.scale(0.78)
-    right_pattern.move_to(RIGHT * 4.2)
+    right_pattern.move_to(RIGHT * 3.6)
     right_links = make_links({"link_count": 3, "stroke_width": 2.5, "stroke_opacity": 0.45}, right_examples, right_pattern)
-    right_title.move_to(RIGHT * 3.2 + UP * 1.8)
+    right_title.move_to(RIGHT * 2.7 + UP * 1.8)
     right_panel = VGroup(right_title, right_examples, right_pattern, right_links)
 
     full = VGroup(divider, left_panel, right_panel)
