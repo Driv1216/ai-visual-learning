@@ -581,6 +581,7 @@ def make_split_comparison(params, zone):
     font_size = params.get("font_size", 24)
 
     divider = Line(UP * 2.2, DOWN * 2.2, color=TEXT_SUB, stroke_width=2).set_opacity(0.6)
+    divider.shift(LEFT * 0.12)
 
     left_title = Text(params.get("left_title", "Traditional"), font_size=font_size + 2, color=TEXT_MAIN, weight=BOLD)
     left_steps = VGroup(
@@ -615,19 +616,15 @@ def make_split_comparison(params, zone):
         "center",
     )
     right_pattern = make_pattern_object({"label": "Pattern", "font_size": font_size}, "center")
-    right_examples.move_to(ORIGIN)
-    right_pattern.scale(0.78)
-    right_pattern.move_to(ORIGIN)
-    right_content = VGroup(right_examples, right_pattern).arrange(RIGHT, buff=0.78)
-    right_content.move_to(RIGHT * 3.1)
-    # Compute links AFTER positions are final
+    right_pattern.scale(0.64)
+    right_content = VGroup(right_examples, right_pattern).arrange(RIGHT, buff=0.85)
+    right_content.move_to(RIGHT * 2.95)
+    right_title.next_to(right_content, UP, buff=0.30)
     right_links = make_links(
         {"link_count": 3, "stroke_width": 2.5, "stroke_opacity": 0.45},
         right_examples, right_pattern
     )
-    right_title.move_to(right_content.get_top() + UP * 0.55)
     right_panel = VGroup(right_title, right_examples, right_pattern, right_links)
-    fit_to_width(right_panel, 6.5)
 
     full = VGroup(divider, left_panel, right_panel)
     full.left_steps = left_steps

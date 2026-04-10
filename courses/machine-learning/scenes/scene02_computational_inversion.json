@@ -71,6 +71,25 @@
       "notes": "Light heading only. Do not feel like a title card. This is a soft conceptual anchor."
     },
     {
+      "id": "v1b_intro_formula",
+      "anchor": "s2_n1",
+      "offset": 0.35,
+      "action": "show_text",
+      "zone": "center",
+      "content": "Rules + Data \u2192 Answer",
+      "style": {
+        "font_size": 30,
+        "opacity": 0.42
+      },
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "duration": 0.4,
+      "persist": true,
+      "replace": "center",
+      "camera_scale": 1.0,
+      "notes": "Soft conceptual preview only. Avoid blank opening without adding random boxes."
+    },
+    {
       "id": "v2_rules_box",
       "anchor": "s2_n2",
       "offset": 0.05,
