@@ -139,7 +139,7 @@ def make_flow_diagram(params, zone):
     arrow1 = Arrow(
         left.get_right(),
         middle.get_left(),
-        buff=0.14,
+        buff=0.22,
         stroke_width=4,
         color=TEXT_SUB,
         max_stroke_width_to_length_ratio=10,
@@ -147,13 +147,13 @@ def make_flow_diagram(params, zone):
     arrow2 = Arrow(
         middle.get_right(),
         right.get_left(),
-        buff=0.14,
+        buff=0.22,
         stroke_width=4,
         color=TEXT_SUB,
         max_stroke_width_to_length_ratio=10,
     )
 
-    full = VGroup(row, arrow1, arrow2)
+    full = VGroup(arrow1, arrow2, row)
     place_in_zone(full, zone)
     return full
 
@@ -562,12 +562,16 @@ def make_links(params, from_obj, to_obj):
     stroke_width = params.get("stroke_width", 3)
     stroke_opacity = params.get("stroke_opacity", 0.55)
 
-    sources = from_obj.submobjects if len(from_obj.submobjects) >= link_count else [from_obj] * link_count
+    subs = from_obj.submobjects if len(from_obj.submobjects) >= link_count else [from_obj] * link_count
+    stride = max(1, len(subs) // link_count)
+    sources = [subs[min(i * stride, len(subs) - 1)] for i in range(link_count)]
+    to_height = to_obj.height
+    spacing = to_height / (link_count + 1)
     lines = VGroup()
     for index in range(link_count):
-        source = sources[min(index, len(sources) - 1)]
+        source = sources[index]
         source_point = source.get_right() if hasattr(source, "get_right") else from_obj.get_right()
-        target_point = to_obj.get_left() + UP * (0.35 - index * 0.35)
+        target_point = to_obj.get_left() + UP * (to_height / 2 - spacing * (index + 1))
         line = Line(source_point, target_point, color=TEXT_SUB, stroke_width=stroke_width)
         line.set_opacity(stroke_opacity)
         lines.add(line)

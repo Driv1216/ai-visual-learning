@@ -258,11 +258,14 @@ class JsonDrivenScene(MovingCameraScene):
                 elif step.action in {"transform_box_label", "transform_arrow", "transform_box_to_pattern"}:
                     source_id = step.params.get("source_id")
                     source_obj = object_registry.get(source_id)
+                    new_params = dict(step.params)
+                    if step.action == "transform_box_to_pattern":
+                        new_params.update(step.params.get("style", {}))
                     new_obj = build_object(
                         {
                             "id": step.id,
                             "action": step.action,
-                            "params": step.params,
+                            "params": new_params,
                             "zone": step.zone,
                         }
                     )
@@ -304,6 +307,7 @@ class JsonDrivenScene(MovingCameraScene):
                     from_ids = content.get("from_ids", [])
                     new_params = dict(step.params)
                     new_params.update(content)
+                    new_params.update(step.params.get("style", {}))
                     new_obj = build_object(
                         {
                             "id": step.id,
@@ -343,16 +347,23 @@ class JsonDrivenScene(MovingCameraScene):
                     content = step.params.get("content", {})
                     from_obj = object_registry.get(content.get("from"))
                     to_obj = object_registry.get(content.get("to"))
-                    if from_obj is not None and to_obj is not None:
-                        new_obj = make_links(step.params, from_obj, to_obj)
-                        self.play(transition_in_for(new_obj, step.transition_in), run_time=run_time)
-                        current_time += run_time
-                        register_object(step.id, step.zone, new_obj)
+                    if from_obj is None or to_obj is None:
+                        print(
+                            f"[show_links] WARNING: from={content.get('from')} or to={content.get('to')} not found in registry. Skipping."
+                        )
+                        handled = True
+                        continue
+                    links_params = {**step.params, **step.params.get("style", {})}
+                    new_obj = make_links(links_params, from_obj, to_obj)
+                    self.play(transition_in_for(new_obj, step.transition_in), run_time=run_time)
+                    current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
                     handled = True
 
                 elif step.action == "show_split_comparison":
                     new_params = dict(step.params)
                     new_params.update(step.params.get("content", {}))
+                    new_params.update(step.params.get("style", {}))
                     new_obj = build_object(
                         {
                             "id": step.id,
@@ -408,6 +419,7 @@ class JsonDrivenScene(MovingCameraScene):
                 elif step.action == "transform_split_to_clean_flow":
                     new_params = dict(step.params)
                     new_params.update(step.params.get("content", {}))
+                    new_params.update(step.params.get("style", {}))
                     new_obj = build_object(
                         {
                             "id": step.id,
@@ -506,9 +518,7 @@ class JsonDrivenScene(MovingCameraScene):
             camera_scale = step.camera_scale if step.camera_scale is not None else (
                 0.9 if target_zone == "center" else 1.0
             )
-            focus_anims.append(
-                self.camera.frame.animate.move_to(ORIGIN).set(width=default_frame_width * camera_scale)
-            )
+            focus_anims.append(focus_camera_on(new_obj, camera_scale))
 
             self.play(
                 AnimationGroup(*outgoing_anims, incoming_anim, *focus_anims, lag_ratio=0.0),
