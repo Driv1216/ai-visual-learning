@@ -153,7 +153,7 @@ def make_flow_diagram(params, zone):
         max_stroke_width_to_length_ratio=10,
     )
 
-    full = VGroup(arrow1, arrow2, row)
+    full = VGroup(row, arrow1, arrow2)
     place_in_zone(full, zone)
     return full
 
@@ -490,7 +490,6 @@ def make_show_arrow(params, zone):
         max_stroke_width_to_length_ratio=12,
     )
     arrow.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(arrow, zone)
     return arrow
 
 
@@ -616,12 +615,19 @@ def make_split_comparison(params, zone):
         "center",
     )
     right_pattern = make_pattern_object({"label": "Pattern", "font_size": font_size}, "center")
-    right_examples.move_to(RIGHT * 1.8)
+    right_examples.move_to(ORIGIN)
     right_pattern.scale(0.78)
-    right_pattern.move_to(RIGHT * 3.6)
-    right_links = make_links({"link_count": 3, "stroke_width": 2.5, "stroke_opacity": 0.45}, right_examples, right_pattern)
-    right_title.move_to(RIGHT * 2.7 + UP * 1.8)
+    right_pattern.move_to(ORIGIN)
+    right_content = VGroup(right_examples, right_pattern).arrange(RIGHT, buff=0.5)
+    right_content.move_to(RIGHT * 2.7)
+    # Compute links AFTER positions are final
+    right_links = make_links(
+        {"link_count": 3, "stroke_width": 2.5, "stroke_opacity": 0.45},
+        right_examples, right_pattern
+    )
+    right_title.move_to(right_content.get_top() + UP * 0.45)
     right_panel = VGroup(right_title, right_examples, right_pattern, right_links)
+    fit_to_width(right_panel, 6.5)
 
     full = VGroup(divider, left_panel, right_panel)
     full.left_steps = left_steps

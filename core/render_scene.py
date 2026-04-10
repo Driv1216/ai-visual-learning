@@ -11,6 +11,7 @@ from actions import (
     ZONE_POSITIONS,
     build_object,
     make_links,
+    place_in_zone,
     transition_in_for,
     transition_out_for,
 )
@@ -172,7 +173,12 @@ class JsonDrivenScene(MovingCameraScene):
         def focus_camera_on(obj, scale_override=None):
             width = default_frame_width * (scale_override or 1.0)
             center = obj.get_center()
-            target = center if abs(center[0]) < 1.5 else ORIGIN
+            if abs(center[1]) > 2.0:
+                target = ORIGIN
+            elif abs(center[0]) < 1.5:
+                target = center
+            else:
+                target = ORIGIN
             return self.camera.frame.animate.move_to(target).set(width=width)
 
         special_actions = {
@@ -259,6 +265,13 @@ class JsonDrivenScene(MovingCameraScene):
                     source_id = step.params.get("source_id")
                     source_obj = object_registry.get(source_id)
                     new_params = dict(step.params)
+                    if isinstance(getattr(step, "content", None), str):
+                        new_params.setdefault("text", step.content)
+                        new_params.setdefault("label", step.content)
+                    elif isinstance(getattr(step, "content", None), dict):
+                        new_params.update(step.content)
+                    if isinstance(getattr(step, "style", None), dict):
+                        new_params.update(step.style)
                     if step.action == "transform_box_to_pattern":
                         new_params.update(step.params.get("style", {}))
                     new_obj = build_object(
@@ -269,24 +282,24 @@ class JsonDrivenScene(MovingCameraScene):
                             "zone": step.zone,
                         }
                     )
+                    obj_center = new_obj.get_center()
+                    should_focus = step.camera_scale is not None and abs(obj_center[1]) <= 2.0
                     if source_obj is not None:
+                        focus_parts = [ReplacementTransform(source_obj, new_obj)]
+                        if should_focus:
+                            focus_parts.append(focus_camera_on(new_obj, step.camera_scale))
                         self.play(
-                            AnimationGroup(
-                                ReplacementTransform(source_obj, new_obj),
-                                focus_camera_on(new_obj, step.camera_scale),
-                                lag_ratio=0.0,
-                            ),
+                            AnimationGroup(*focus_parts, lag_ratio=0.0),
                             run_time=run_time,
                         )
                         current_time += run_time
                         forget_object(source_obj)
                     else:
+                        focus_parts = [transition_in_for(new_obj, step.transition_in)]
+                        if should_focus:
+                            focus_parts.append(focus_camera_on(new_obj, step.camera_scale))
                         self.play(
-                            AnimationGroup(
-                                transition_in_for(new_obj, step.transition_in),
-                                focus_camera_on(new_obj, step.camera_scale),
-                                lag_ratio=0.0,
-                            ),
+                            AnimationGroup(*focus_parts, lag_ratio=0.0),
                             run_time=run_time,
                         )
                         current_time += run_time
@@ -418,6 +431,13 @@ class JsonDrivenScene(MovingCameraScene):
 
                 elif step.action == "transform_split_to_clean_flow":
                     new_params = dict(step.params)
+                    if isinstance(getattr(step, "content", None), str):
+                        new_params.setdefault("text", step.content)
+                        new_params.setdefault("label", step.content)
+                    elif isinstance(getattr(step, "content", None), dict):
+                        new_params.update(step.content)
+                    if isinstance(getattr(step, "style", None), dict):
+                        new_params.update(step.style)
                     new_params.update(step.params.get("content", {}))
                     new_params.update(step.params.get("style", {}))
                     new_obj = build_object(
@@ -430,16 +450,18 @@ class JsonDrivenScene(MovingCameraScene):
                     )
                     source_obj = active_objects.get("full")
                     if source_obj is not None:
+                        self.play(FadeOut(source_obj), run_time=run_time * 0.45)
+                        current_time += run_time * 0.45
+                        clear_zone("full")
                         self.play(
                             AnimationGroup(
-                                ReplacementTransform(source_obj, new_obj),
+                                transition_in_for(new_obj, "fade"),
                                 focus_camera_on(new_obj, step.camera_scale),
                                 lag_ratio=0.0,
                             ),
-                            run_time=run_time,
+                            run_time=run_time * 0.55,
                         )
-                        current_time += run_time
-                        clear_zone("full")
+                        current_time += run_time * 0.55
                     else:
                         self.play(
                             AnimationGroup(
@@ -457,12 +479,23 @@ class JsonDrivenScene(MovingCameraScene):
                     continue
 
             target_zone = step.zone
+
+            # Merge content and style into params for build_object (FIX 5/7)
+            merged_params = dict(step.params)
+            if isinstance(getattr(step, "content", None), str):
+                merged_params.setdefault("text", step.content)
+                merged_params.setdefault("label", step.content)
+            elif isinstance(getattr(step, "content", None), dict):
+                merged_params.update(step.content)
+            if isinstance(getattr(step, "style", None), dict):
+                merged_params.update(step.style)
+
             new_obj = build_object(
                 {
                     "id": step.id,
                     "anchor": step.anchor,
                     "action": step.action,
-                    "params": step.params,
+                    "params": merged_params,
                     "offset": step.offset,
                     "zone": step.zone,
                     "transition_in": step.transition_in,
@@ -471,6 +504,24 @@ class JsonDrivenScene(MovingCameraScene):
                     "replace": step.replace,
                 }
             )
+
+            # FIX 3: Reposition arrows between adjacent zone objects
+            if step.action in {"show_arrow", "transform_arrow"}:
+                zone_order = [
+                    "center_left", "center_mid_left", "center",
+                    "center_mid_right", "center_right"
+                ]
+                idx = zone_order.index(step.zone) if step.zone in zone_order else -1
+                if idx > 0 and idx < len(zone_order) - 1:
+                    left_obj = active_objects.get(zone_order[idx - 1])
+                    right_obj = active_objects.get(zone_order[idx + 1])
+                    if left_obj is not None and right_obj is not None:
+                        start = left_obj.get_right() + RIGHT * 0.15
+                        end = right_obj.get_left() + LEFT * 0.15
+                        new_obj.put_start_and_end_on(start, end)
+                else:
+                    place_in_zone(new_obj, step.zone)
+
             camera_target_center = ORIGIN
 
             outgoing_anims = []
@@ -514,11 +565,12 @@ class JsonDrivenScene(MovingCameraScene):
                 if existing_target is not None:
                     focus_anims.append(existing_target.animate.set_opacity(1.0))
 
-            # subtle camera movement
+            # subtle camera movement — skip at scene start (FIX 1)
             camera_scale = step.camera_scale if step.camera_scale is not None else (
                 0.9 if target_zone == "center" else 1.0
             )
-            focus_anims.append(focus_camera_on(new_obj, camera_scale))
+            if current_time > 0.0:
+                focus_anims.append(focus_camera_on(new_obj, camera_scale))
 
             self.play(
                 AnimationGroup(*outgoing_anims, incoming_anim, *focus_anims, lag_ratio=0.0),

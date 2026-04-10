@@ -103,7 +103,7 @@
       "transition_in": "fade",
       "duration": 0.35,
       "persist": true,
-      "replace": "center_left",
+      "replace": "center",
       "notes": "This becomes one of the persistent objects for the inversion."
     },
     {
@@ -499,6 +499,19 @@
       "notes": "Right side gets emphasis when narration says the machine can infer the solution."
     },
     {
+      "id": "v22b_hold_split",
+      "anchor": "s2_n9",
+      "offset": 1.2,
+      "action": "camera_focus",
+      "zone": "center_band",
+      "content": ["v10_data_stays_left", "v12_answers_center", "v14_rules_emerge_right"],
+      "style": { "scale": 1.0 },
+      "transition_in": "smooth",
+      "duration": 0.3,
+      "persist": false,
+      "notes": "Fills the dead hold before the final transition."
+    },
+    {
       "id": "v23_resolve_to_final_ml_flow",
       "anchor": "s2_n10",
       "offset": 0.0,
@@ -515,7 +528,7 @@
         "box_height": 1.0,
         "arrow_length": 2.1
       },
-      "transition_in": "transform",
+      "transition_in": "fade",
       "duration": 0.85,
       "persist": true,
       "replace": "center",
