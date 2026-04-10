@@ -71,24 +71,6 @@
       "notes": "Light heading only. Do not feel like a title card. This is a soft conceptual anchor."
     },
     {
-      "id": "v1b_intro_flow",
-      "anchor": "s2_n1",
-      "offset": 0.35,
-      "action": "show_flow_diagram",
-      "zone": "center",
-      "params": {
-        "left": "Rules",
-        "middle": "Data",
-        "right": "Answer"
-      },
-      "transition_in": "fade",
-      "duration": 0.65,
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 1.0,
-      "notes": "Gives the viewer something to look at during the opening sentence before the step-by-step build begins."
-    },
-    {
       "id": "v2_rules_box",
       "anchor": "s2_n2",
       "offset": 0.05,
@@ -380,14 +362,12 @@
           "x1 → y1",
           "x2 → y2",
           "x3 → y3",
-          "x4 → y4",
-          "x5 → y5",
-          "x6 → y6"
+          "x4 → y4"
         ]
       },
       "style": {
         "grid_rows": 2,
-        "grid_cols": 3,
+        "grid_cols": 2,
         "font_size": 24,
         "cell_width": 1.7,
         "cell_height": 0.8

@@ -173,9 +173,9 @@ class JsonDrivenScene(MovingCameraScene):
         def focus_camera_on(obj, scale_override=None):
             width = default_frame_width * (scale_override or 1.0)
             center = obj.get_center()
-            if abs(center[1]) > 2.0:
+            if abs(center[1]) > 2.4:
                 target = ORIGIN
-            elif abs(center[0]) < 1.5:
+            elif abs(center[0]) < 2.2:
                 target = center
             else:
                 target = ORIGIN
