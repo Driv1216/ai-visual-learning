@@ -283,17 +283,16 @@ class JsonDrivenScene(MovingCameraScene):
                         }
                     )
                     if step.action == "transform_arrow":
-                        left_zone = None
-                        right_zone = None
                         if step.zone == "center_mid_left":
-                            left_zone = "center_left"
-                            right_zone = "center"
+                            left_obj = active_objects.get("center_left")
+                            right_obj = active_objects.get("center")
                         elif step.zone == "center_mid_right":
-                            left_zone = "center"
-                            right_zone = "center_right"
+                            left_obj = active_objects.get("center")
+                            right_obj = active_objects.get("center_right")
+                        else:
+                            left_obj = None
+                            right_obj = None
 
-                        left_obj = active_objects.get(left_zone) if left_zone else None
-                        right_obj = active_objects.get(right_zone) if right_zone else None
                         if left_obj is not None and right_obj is not None:
                             start = left_obj.get_right() + RIGHT * 0.12
                             end = right_obj.get_left() + LEFT * 0.12
@@ -522,17 +521,16 @@ class JsonDrivenScene(MovingCameraScene):
             )
 
             if step.action == "show_arrow":
-                left_zone = None
-                right_zone = None
                 if step.zone == "center_mid_left":
-                    left_zone = "center_left"
-                    right_zone = "center"
+                    left_obj = active_objects.get("center_left")
+                    right_obj = active_objects.get("center")
                 elif step.zone == "center_mid_right":
-                    left_zone = "center"
-                    right_zone = "center_right"
+                    left_obj = active_objects.get("center")
+                    right_obj = active_objects.get("center_right")
+                else:
+                    left_obj = None
+                    right_obj = None
 
-                left_obj = active_objects.get(left_zone) if left_zone else None
-                right_obj = active_objects.get(right_zone) if right_zone else None
                 if left_obj is not None and right_obj is not None:
                     start = left_obj.get_right() + RIGHT * 0.12
                     end = right_obj.get_left() + LEFT * 0.12

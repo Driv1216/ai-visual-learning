@@ -71,23 +71,19 @@
       "notes": "Light heading only. Do not feel like a title card. This is a soft conceptual anchor."
     },
     {
-      "id": "v1b_intro_formula",
+      "id": "v1b_center_fade_in",
       "anchor": "s2_n1",
-      "offset": 0.35,
-      "action": "show_text",
+      "offset": 0.15,
+      "action": "camera_focus",
       "zone": "center",
-      "content": "Rules + Data \u2192 Answer",
+      "content": [],
       "style": {
-        "font_size": 30,
-        "opacity": 0.42
+      "scale": 1.0
       },
-      "transition_in": "fade",
-      "transition_out": "fade",
-      "duration": 0.4,
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 1.0,
-      "notes": "Soft conceptual preview only. Avoid blank opening without adding random boxes."
+      "transition_in": "smooth",
+      "duration": 0.3,
+      "persist": false,
+      "notes": "Subtle center activation. No text. Prevents dead blank feeling."
     },
     {
       "id": "v2_rules_box",
@@ -104,7 +100,7 @@
       "transition_in": "fade",
       "duration": 0.35,
       "persist": true,
-      "replace": "center",
+      "replace": "center_left",
       "notes": "This becomes one of the persistent objects for the inversion."
     },
     {
@@ -396,6 +392,21 @@
       "persist": true,
       "replace": "center_left_center",
       "notes": "Do not suddenly pop in a new unrelated table. This should feel like Data + Answers resolving into concrete examples."
+    },
+    {
+      "id": "v17b_cleanup_flow_symbols",
+      "anchor": "s2_n8",
+      "offset": 0.08,
+      "action": "fade_out",
+      "zone": "center_band",
+      "params": {
+        "zones": ["center_mid_left", "center_mid_right"]
+      },
+      "transition_in": "none",
+      "transition_out": "fade",
+      "duration": 0.22,
+      "persist": false,
+      "notes": "Removes the lingering plus and row arrow before the examples-to-pattern beat."
     },
     {
       "id": "v18_rules_to_pattern",
