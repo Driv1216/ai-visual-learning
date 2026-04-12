@@ -396,7 +396,7 @@
     {
       "id": "v17b_cleanup_flow_symbols",
       "anchor": "s2_n8",
-      "offset": 0.08,
+      "offset": 0.0,
       "action": "fade_out",
       "zone": "center_band",
       "params": {

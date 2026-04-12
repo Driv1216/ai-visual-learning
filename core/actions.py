@@ -23,7 +23,7 @@ ZONE_POSITIONS = {
     "center_mid_right": RIGHT * 1.5,
     "center_right": RIGHT * 3.2,
     "center_band": ORIGIN,
-    "center_left_center": LEFT * 1.0,
+    "center_left_center": LEFT * 1.8,
     "center_span": ORIGIN,
 }
 
