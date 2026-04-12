@@ -61,6 +61,17 @@ def make_text_block(
     return obj
 
 
+def make_math_block(
+    math: str,
+    font_size: int = 60,
+    color=TEXT_MAIN,
+    max_width: float = 10.8,
+):
+    obj = MathTex(math, font_size=font_size, color=color)
+    fit_to_width(obj, max_width)
+    return obj
+
+
 def make_show_title(params, zone):
     title = make_text_block(
         params["text"],
@@ -88,6 +99,18 @@ def make_show_text(params, zone):
     text.set_opacity(params.get("opacity", 1.0))
     place_in_zone(text, zone)
     return text
+
+
+def make_show_math(params, zone):
+    math = make_math_block(
+        params["math"],
+        font_size=params.get("font_size", 60),
+        color=params.get("color", TEXT_MAIN),
+        max_width=params.get("max_width", 10.8),
+    )
+    math.set_opacity(params.get("opacity", 1.0))
+    place_in_zone(math, zone)
+    return math
 
 
 def make_highlight_text(params, zone):
@@ -158,6 +181,70 @@ def make_flow_diagram(params, zone):
     full = VGroup(arrow1, arrow2, row)
     place_in_zone(full, zone)
     return full
+
+
+def make_show_function_flow(params, zone):
+    left = make_math_block(
+        params.get("left", "x"),
+        font_size=params.get("font_size", 58),
+        color=params.get("left_color", TEXT_MAIN),
+        max_width=2.2,
+    )
+    right = make_math_block(
+        params.get("right", "y"),
+        font_size=params.get("font_size", 58),
+        color=params.get("right_color", TEXT_MAIN),
+        max_width=2.2,
+    )
+
+    middle_math = make_math_block(
+        params.get("middle", "f"),
+        font_size=params.get("middle_font_size", params.get("font_size", 58) - 4),
+        color=params.get("middle_color", ACCENT),
+        max_width=1.2,
+    )
+    middle_box = RoundedRectangle(
+        corner_radius=0.18,
+        width=max(params.get("middle_box_width", 1.8), middle_math.width + 0.7),
+        height=max(params.get("middle_box_height", 1.2), middle_math.height + 0.55),
+        stroke_color=params.get("middle_box_color", ACCENT),
+        stroke_width=params.get("stroke_width", 3),
+        fill_color=params.get("middle_fill_color", "#151922"),
+        fill_opacity=params.get("middle_fill_opacity", 1.0),
+    )
+    middle_glow = RoundedRectangle(
+        corner_radius=0.22,
+        width=middle_box.width + 0.12,
+        height=middle_box.height + 0.12,
+        stroke_color=middle_box.get_stroke_color(),
+        stroke_width=1.2,
+    ).set_opacity(0.2)
+    middle_math.move_to(middle_box.get_center())
+    middle = VGroup(middle_glow, middle_box, middle_math)
+
+    row = VGroup(left, middle, right).arrange(RIGHT, buff=params.get("node_buff", 1.05))
+
+    arrow1 = Arrow(
+        left.get_right(),
+        middle.get_left(),
+        buff=0.16,
+        stroke_width=params.get("arrow_stroke_width", 4),
+        color=params.get("arrow_color", TEXT_SUB),
+        max_stroke_width_to_length_ratio=10,
+    )
+    arrow2 = Arrow(
+        middle.get_right(),
+        right.get_left(),
+        buff=0.16,
+        stroke_width=params.get("arrow_stroke_width", 4),
+        color=params.get("arrow_color", TEXT_SUB),
+        max_stroke_width_to_length_ratio=10,
+    )
+
+    group = VGroup(row, arrow1, arrow2)
+    group.set_opacity(params.get("opacity", 1.0))
+    place_in_zone(group, zone)
+    return group
 
 
 def make_transform_text(params, zone):
@@ -736,6 +823,181 @@ def make_clean_flow(params, zone):
     return group
 
 
+def make_show_plot(params, zone):
+    x_range = params.get("x_range", [0, 10, 2])
+    y_range = params.get("y_range", [0, 10, 2])
+    x_length = params.get("x_length", 7.2)
+    y_length = params.get("y_length", 4.2)
+
+    axes = Axes(
+        x_range=x_range,
+        y_range=y_range,
+        x_length=x_length,
+        y_length=y_length,
+        tips=False,
+        axis_config={
+            "color": params.get("axis_color", TEXT_SUB),
+            "stroke_width": params.get("axis_stroke_width", 3),
+            "include_numbers": False,
+            "include_ticks": params.get("show_ticks", False),
+        },
+    )
+
+    x_label = Text(
+        params.get("x_label", "x"),
+        font_size=params.get("label_font_size", 24),
+        color=params.get("label_color", TEXT_MAIN),
+        weight=MEDIUM,
+    )
+    fit_to_width(x_label, x_length * 0.42)
+    x_label.next_to(axes.x_axis, DOWN, buff=0.35)
+
+    y_label = Text(
+        params.get("y_label", "y"),
+        font_size=params.get("label_font_size", 24),
+        color=params.get("label_color", TEXT_MAIN),
+        weight=MEDIUM,
+    )
+    fit_to_width(y_label, y_length * 0.7)
+    y_label.rotate(PI / 2)
+    y_label.next_to(axes.y_axis, LEFT, buff=0.4)
+
+    points = params.get("points", [])
+    point_group = VGroup(
+        *[
+            Dot(
+                axes.c2p(*point),
+                radius=params.get("point_radius", 0.07),
+                color=params.get("point_color", SECONDARY),
+            )
+            for point in points
+        ]
+    )
+    point_group.set_opacity(params.get("point_opacity", 1.0))
+
+    fit_line_group = VGroup()
+    fit_line_data = params.get("fit_line")
+    if fit_line_data:
+        fit_line = Line(
+            axes.c2p(*fit_line_data["start"]),
+            axes.c2p(*fit_line_data["end"]),
+            color=fit_line_data.get("color", HIGHLIGHT),
+            stroke_width=fit_line_data.get("stroke_width", 4),
+        )
+        fit_line.set_opacity(fit_line_data.get("opacity", 1.0))
+        if fit_line_data.get("glow", True):
+            fit_glow = fit_line.copy().set_stroke(
+                width=fit_line_data.get("glow_width", 8),
+                opacity=fit_line_data.get("glow_opacity", 0.14),
+            )
+            fit_line_group.add(fit_glow)
+        fit_line_group.add(fit_line)
+
+    residual_group = VGroup()
+    residual_style = params.get("residual_style", {})
+    residual_indices = params.get("residual_indices", [])
+    if fit_line_data and residual_indices:
+        x1, y1 = fit_line_data["start"]
+        x2, y2 = fit_line_data["end"]
+        slope = 0 if x2 == x1 else (y2 - y1) / (x2 - x1)
+        for index in residual_indices:
+            if not 0 <= index < len(points):
+                continue
+            px, py = points[index]
+            predicted_y = y1 + slope * (px - x1)
+            start_point = axes.c2p(px, py)
+            end_point = axes.c2p(px, predicted_y)
+            residual = DashedLine(
+                start_point,
+                end_point,
+                dash_length=residual_style.get("dash_length", 0.08),
+                color=residual_style.get("color", ACCENT),
+                stroke_width=residual_style.get("stroke_width", 2.4),
+            )
+            residual.set_opacity(residual_style.get("opacity", 0.7))
+            residual_group.add(residual)
+
+    guide_group = VGroup()
+    for guide in params.get("prediction_guides", []):
+        actual = guide.get("actual")
+        predicted_y = guide.get("predicted_y")
+        if actual is None or predicted_y is None:
+            continue
+        px, py = actual
+        predicted_point = axes.c2p(px, predicted_y)
+        actual_point = axes.c2p(px, py)
+        guide_line = DashedLine(
+            predicted_point,
+            actual_point,
+            dash_length=guide.get("dash_length", 0.08),
+            color=guide.get("color", ACCENT),
+            stroke_width=guide.get("stroke_width", 2.2),
+        )
+        guide_line.set_opacity(guide.get("opacity", 0.62))
+        predicted_dot = Dot(
+            predicted_point,
+            radius=guide.get("dot_radius", 0.06),
+            color=guide.get("dot_color", HIGHLIGHT),
+        )
+        predicted_dot.set_opacity(guide.get("dot_opacity", 0.95))
+        guide_group.add(guide_line, predicted_dot)
+
+    parameter_group = VGroup()
+    for label_data in params.get("parameter_labels", []):
+        label = make_math_block(
+            label_data["text"],
+            font_size=label_data.get("font_size", 34),
+            color=label_data.get("color", ACCENT),
+            max_width=1.2,
+        )
+        label.move_to(axes.c2p(*label_data["point"]))
+        label.set_opacity(label_data.get("opacity", 0.95))
+        parameter_group.add(label)
+
+    equation_group = VGroup()
+    equation_text = params.get("equation")
+    if equation_text:
+        equation = make_math_block(
+            equation_text,
+            font_size=params.get("equation_font_size", 32),
+            color=params.get("equation_color", TEXT_MAIN),
+            max_width=x_length * 0.7,
+        )
+        equation.set_opacity(params.get("equation_opacity", 0.68))
+        equation.next_to(axes, UP, buff=0.38)
+        equation_group.add(equation)
+
+    caption_group = VGroup()
+    caption_text = params.get("caption")
+    if caption_text:
+        caption = make_text_block(
+            caption_text,
+            font_size=params.get("caption_font_size", 24),
+            color=params.get("caption_color", TEXT_SUB),
+            weight=params.get("caption_weight", MEDIUM),
+            max_width=x_length * 1.05,
+        )
+        caption.set_opacity(params.get("caption_opacity", 0.92))
+        caption.next_to(axes, DOWN, buff=0.42)
+        caption_group.add(caption)
+
+    plot = VGroup(
+        axes,
+        x_label,
+        y_label,
+        point_group,
+        fit_line_group,
+        residual_group,
+        guide_group,
+        parameter_group,
+        equation_group,
+        caption_group,
+    )
+    plot.set_opacity(params.get("opacity", 1.0))
+    plot.shift(ZONE_POSITIONS.get(zone, ORIGIN) - axes.get_center())
+    return plot
+
+
 def transition_in_for(obj, transition_name: str):
     if transition_name in {"none", "smooth"}:
         return FadeIn(obj)
@@ -782,11 +1044,17 @@ def build_object(step_dict):
     if action == "show_text":
         return make_show_text(params, zone)
 
+    if action == "show_math":
+        return make_show_math(params, zone)
+
     if action == "highlight_text":
         return make_highlight_text(params, zone)
 
     if action == "show_flow_diagram":
         return make_flow_diagram(params, zone)
+
+    if action == "show_function_flow":
+        return make_show_function_flow(params, zone)
 
     if action == "transform_text":
         return make_transform_text(params, zone)
@@ -817,6 +1085,9 @@ def build_object(step_dict):
 
     if action == "transform_split_to_clean_flow":
         return make_clean_flow(params, zone)
+
+    if action == "show_plot":
+        return make_show_plot(params, zone)
 
     if action == "fade_out":
         return None

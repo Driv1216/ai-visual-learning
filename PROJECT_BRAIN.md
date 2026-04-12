@@ -72,7 +72,7 @@ Latest completed reference scene:
 - **Scene 1: The Intellectual Wall**
 
 Current active development target:
-- **Scene 2**
+- **Scene 3**
 
 The broader curriculum plan includes:
 - Machine Learning
@@ -96,6 +96,18 @@ The desired teaching style is:
 
 Important nuance:
 The goal is not literal imitation. The target is the same level of conceptual beauty, smooth visual reasoning, and seriousness of presentation.
+
+## SCENE DEVELOPMENT STRATEGY
+
+- Build scenes to ~90–95% correctness, not perfection
+- Avoid getting stuck on micro-alignment issues during initial development
+- Prioritize:
+  1. Concept clarity
+  2. Visual correctness
+  3. Flow and pacing
+- Minor layout imperfections are deferred to a global polish pass later
+
+Scene 2 established that over-iteration on micro layout during initial development is inefficient.
 
 ### Balance between theory and implementation
 The broader course philosophy is balanced:
@@ -152,6 +164,20 @@ The current quality focus is:
 - transition continuity
 - scene intelligence
 - preserving a premium visual language across future scenes
+
+## VISUAL AUTHORITY (CRITICAL)
+
+- The Excel sheet in the project source is the PRIMARY visual reference and standard
+- All layouts, composition, spacing, and flow MUST align with the Excel structure
+- Do NOT invent new layouts that deviate from the Excel design language
+- Improvements are allowed ONLY within the same structural framework
+- Excel defines:
+  - layout structure
+  - spatial relationships
+  - composition balance
+  - flow direction
+
+This rule overrides aesthetic improvisation.
 
 ---
 
@@ -546,6 +572,15 @@ Do NOT:
 - change multiple subsystems at once
 - treat every dissatisfaction as an architecture problem
 
+## ITERATION DISCIPLINE
+
+- Do not repeatedly tweak the same scene beyond diminishing returns
+- If a scene is functionally correct, move forward
+- Fixes can be applied later in a batch refinement pass
+- Avoid cycling between minor adjustments without structural change
+
+Scene 2 established the importance of forward momentum over perfection.
+
 ## SCENE COMPLETION CRITERIA
 
 A scene is considered “production-ready” when:
@@ -654,7 +689,8 @@ Current status of Scene 1:
 - should only be reopened if there is a clear, meaningful reason
 
 ### In progress
-- moving to Scene 2
+- moving to Scene 3
+- Scene 2 completed with minor visual imperfections intentionally accepted
 - preserving Scene 1 visual grammar across new scenes
 - improving consistency of scene quality, not just isolated scene repair
 - strengthening motion quality and pacing in future scenes from the beginning
@@ -861,6 +897,22 @@ NOT:
 - Changes in visual grammar should be intentional, not accidental drift
 
 ---
+
+
+## COMPOSITION RULES
+
+- Elements that form a concept MUST be treated as a single composition
+- Avoid placing related elements in distant independent zones unless intentionally separated
+- Maintain visual balance:
+  - left vs right
+  - top vs bottom
+- Avoid:
+  - overcrowding one side
+  - oversized elements dominating composition
+  - misaligned visual centers
+  - weak grouping of related elements
+
+A composition should feel visually centered and balanced, not zone-scattered.
 
 ## 15. COMMON FAILURE MODES
 
@@ -1095,7 +1147,21 @@ When designing a new scene:
 - match transform-first reasoning where appropriate
 - only deviate intentionally
 
----
+### 11.SPLIT LAYOUT RULES
+
+- Avoid duplicate titles inside split panels if a global title exists
+- Right side must be simpler and lighter than the left procedural side
+- Maintain balance:
+  - left = structured steps
+  - right = inference/pattern
+- Limit connectors/links (2–3 max)
+- Avoid scaling hacks to force fit
+- Split layouts must feel readable at a glance
+
+Scene 2 revealed that split layouts are highly sensitive to:
+- density imbalance
+- duplicate labeling
+- oversized pattern objects
 
 ## REFERENCE SCENE (LOCKED STANDARD)
 

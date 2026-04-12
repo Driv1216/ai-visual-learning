@@ -76,8 +76,14 @@ def get_default_run_time(step, segment_duration: float) -> float:
 
     if action == "show_title":
         return min(1.15, max(0.8, segment_duration * 0.16))
+    if action == "show_math":
+        return min(1.0, max(0.7, segment_duration * 0.14))
     if action == "show_flow_diagram":
         return min(1.55, max(0.9, segment_duration * 0.18))
+    if action == "show_function_flow":
+        return min(1.25, max(0.8, segment_duration * 0.16))
+    if action == "show_plot":
+        return min(1.2, max(0.8, segment_duration * 0.16))
     if action == "highlight_text":
         return min(0.95, max(0.6, segment_duration * 0.12))
     if action == "square_stage_sequence":

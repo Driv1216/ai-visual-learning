@@ -7,6 +7,8 @@ AllowedAction = Literal[
     "show_text",
     "show_math",
     "show_flow_diagram",
+    "show_function_flow",
+    "show_plot",
     "show_bullet_list",
     "highlight_text",
     "show_shape",
@@ -98,6 +100,8 @@ class VisualStep(BaseModel):
 
         if action == "show_text" and isinstance(content, str):
             params.setdefault("text", content)
+        if action == "show_math" and isinstance(content, str):
+            params.setdefault("math", content)
         if action == "transform_text" and isinstance(content, str):
             params.setdefault("to", content)
         if action in {"show_box_label", "transform_box_label", "transform_box_to_pattern"} and isinstance(content, str):

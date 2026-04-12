@@ -1,0 +1,668 @@
+{
+  "scene_id": "scene03_demystifying_the_model",
+  "video_title": "What Is Machine Learning?",
+  "scene_title": "Demystifying The Model",
+  "order": 3,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s3_01",
+      "text": "One word comes up everywhere in machine learning: model."
+    },
+    {
+      "id": "s3_02",
+      "text": "That word can sound mysterious at first. But the idea is simple."
+    },
+    {
+      "id": "s3_03",
+      "text": "A model is a mathematical function. It takes an input, and it produces an output."
+    },
+    {
+      "id": "s3_04",
+      "text": "We usually write that as: x to y."
+    },
+    {
+      "id": "s3_05",
+      "text": "Or more formally: y equals f of x."
+    },
+    {
+      "id": "s3_06",
+      "text": "That is all a model is at the core."
+    },
+    {
+      "id": "s3_07",
+      "text": "For example, suppose we look at house prices."
+    },
+    {
+      "id": "s3_08",
+      "text": "On one axis, we plot house size. On the other, we plot price."
+    },
+    {
+      "id": "s3_09",
+      "text": "The points will not form a perfect line. Real data is messy."
+    },
+    {
+      "id": "s3_10",
+      "text": "But even in the mess, a pattern appears."
+    },
+    {
+      "id": "s3_11",
+      "text": "The model tries to capture that pattern."
+    },
+    {
+      "id": "s3_12",
+      "text": "So the model is not the data itself."
+    },
+    {
+      "id": "s3_13",
+      "text": "It is the structure the data suggests."
+    },
+    {
+      "id": "s3_14",
+      "text": "It is a compact mathematical summary of what the examples are telling us."
+    },
+    {
+      "id": "s3_15",
+      "text": "When we say a model is smart, we usually mean that it has learned parameters that make its predictions close to the real values."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "s3_v01_model_word",
+      "anchor": "s3_01",
+      "action": "show_text",
+      "zone": "center",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.8,
+      "camera_scale": 1.0,
+      "params": {
+        "text": "Model",
+        "font_size": 60,
+        "opacity": 0.98
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s3_v02_simple_mapping",
+      "anchor": "s3_02",
+      "action": "show_math",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.85,
+      "camera_scale": 1.0,
+      "params": {
+        "math": "x \\rightarrow y",
+        "font_size": 64,
+        "opacity": 0.98,
+        "max_width": 5.0
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s3_v03_function_flow",
+      "anchor": "s3_03",
+      "action": "show_function_flow",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.95,
+      "camera_scale": 1.0,
+      "params": {
+        "left": "x",
+        "middle": "f",
+        "right": "y",
+        "font_size": 56,
+        "middle_box_width": 1.9,
+        "middle_box_height": 1.25,
+        "node_buff": 1.1,
+        "opacity": 0.98
+      },
+      "offset": 0.08
+    },
+    {
+      "id": "s3_v04_formal_equation",
+      "anchor": "s3_05",
+      "action": "show_math",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.9,
+      "camera_scale": 1.0,
+      "params": {
+        "math": "y = f(x)",
+        "font_size": 62,
+        "opacity": 0.98,
+        "max_width": 6.6
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s3_v05_graph_emerges",
+      "anchor": "s3_07",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 1.05,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 28,
+        "equation_opacity": 0.22
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s3_v06_scatter_build",
+      "anchor": "s3_08",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 1.1,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 28,
+        "equation_opacity": 0.22,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.96
+      },
+      "offset": 0.18
+    },
+    {
+      "id": "s3_v07_messy_data",
+      "anchor": "s3_09",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.95,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 28,
+        "equation_opacity": 0.22,
+        "caption": "Real data is messy.",
+        "caption_font_size": 24,
+        "caption_opacity": 0.9,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.96
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s3_v08_pattern_appears",
+      "anchor": "s3_10",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 1.0,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 28,
+        "equation_opacity": 0.26,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.94,
+        "fit_line": {
+          "start": [0.7, 1.2],
+          "end": [8.9, 8.2],
+          "stroke_width": 4,
+          "opacity": 0.82,
+          "glow": false
+        }
+      },
+      "offset": 0.02
+    },
+    {
+      "id": "s3_v09_fit_refines",
+      "anchor": "s3_11",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 1.0,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 28,
+        "equation_opacity": 0.3,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.94,
+        "fit_line": {
+          "start": [0.8, 1.35],
+          "end": [9.1, 8.3],
+          "stroke_width": 4.5,
+          "opacity": 1.0,
+          "glow": true,
+          "glow_width": 9,
+          "glow_opacity": 0.18
+        },
+        "residual_indices": [2, 5, 8, 11, 12],
+        "residual_style": {
+          "stroke_width": 2.2,
+          "opacity": 0.6
+        }
+      },
+      "offset": 0.08
+    },
+    {
+      "id": "s3_v10_structure_remains",
+      "anchor": "s3_12",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.9,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 28,
+        "equation_opacity": 0.34,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.32,
+        "fit_line": {
+          "start": [0.8, 1.35],
+          "end": [9.1, 8.3],
+          "stroke_width": 4.5,
+          "opacity": 1.0,
+          "glow": true,
+          "glow_width": 9,
+          "glow_opacity": 0.18
+        }
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s3_v11_equation_returns",
+      "anchor": "s3_13",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.9,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 31,
+        "equation_opacity": 0.58,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.28,
+        "fit_line": {
+          "start": [0.8, 1.35],
+          "end": [9.1, 8.3],
+          "stroke_width": 4.5,
+          "opacity": 1.0,
+          "glow": true,
+          "glow_width": 9,
+          "glow_opacity": 0.18
+        }
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s3_v12_compact_summary",
+      "anchor": "s3_14",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.95,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 31,
+        "equation_opacity": 0.62,
+        "caption": "Compact mathematical summary",
+        "caption_font_size": 24,
+        "caption_opacity": 0.94,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.26,
+        "fit_line": {
+          "start": [0.8, 1.35],
+          "end": [9.1, 8.3],
+          "stroke_width": 4.5,
+          "opacity": 1.0,
+          "glow": true,
+          "glow_width": 9,
+          "glow_opacity": 0.18
+        }
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s3_v13_parameters_and_predictions",
+      "anchor": "s3_15",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 1.0,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 31,
+        "equation_opacity": 0.62,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.26,
+        "fit_line": {
+          "start": [0.8, 1.35],
+          "end": [9.1, 8.3],
+          "stroke_width": 4.5,
+          "opacity": 1.0,
+          "glow": true,
+          "glow_width": 9,
+          "glow_opacity": 0.18
+        },
+        "parameter_labels": [
+          {
+            "text": "m",
+            "point": [7.3, 7.55]
+          },
+          {
+            "text": "b",
+            "point": [1.05, 1.85]
+          }
+        ],
+        "prediction_guides": [
+          {
+            "actual": [2.1, 2.7],
+            "predicted_y": 2.44
+          },
+          {
+            "actual": [6.3, 6.0],
+            "predicted_y": 5.95
+          },
+          {
+            "actual": [7.5, 7.6],
+            "predicted_y": 6.95
+          }
+        ]
+      },
+      "offset": 0.1
+    },
+    {
+      "id": "s3_v14_resolved_end",
+      "anchor": "s3_15",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.8,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "House size",
+        "y_label": "Price",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.2,
+        "y_length": 4.25,
+        "label_font_size": 24,
+        "equation": "y = f(x)",
+        "equation_font_size": 30,
+        "equation_opacity": 0.5,
+        "points": [
+          [0.9, 1.4],
+          [1.5, 2.1],
+          [2.1, 2.7],
+          [2.8, 3.5],
+          [3.4, 4.1],
+          [3.9, 5.6],
+          [4.5, 4.8],
+          [5.1, 5.3],
+          [5.7, 6.2],
+          [6.3, 6.0],
+          [6.9, 6.8],
+          [7.5, 7.6],
+          [8.0, 6.9],
+          [8.7, 8.8]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.22,
+        "fit_line": {
+          "start": [0.8, 1.35],
+          "end": [9.1, 8.3],
+          "stroke_width": 4.5,
+          "opacity": 1.0,
+          "glow": true,
+          "glow_width": 9,
+          "glow_opacity": 0.18
+        }
+      },
+      "offset": 0.95
+    }
+  ],
+  "notes": {
+    "tone": "Calm, clean, and confidence-building. The scene should feel like the idea of a model is being gently unwrapped rather than announced with spectacle.",
+    "pacing": "Keep the whole scene center-led with smooth transforms. The graph should emerge from the equation, and the fitted structure should remain after the raw points recede.",
+    "animation_guidelines": "Prefer transform continuity over cut-like replacement. Keep one dominant focal object at each beat, avoid side layouts, and let the same centered plot evolve from axes to scatter to learned structure."
+  }
+}
