@@ -413,7 +413,7 @@
       "anchor": "s2_n8",
       "offset": 0.55,
       "action": "transform_box_to_pattern",
-      "zone": "center_right",
+      "zone": "pattern_right_compact",
       "content": "Pattern",
       "style": {
         "source_id": "v14_rules_emerge_right",
@@ -437,9 +437,9 @@
         "to": "v18_rules_to_pattern"
       },
       "style": {
-        "link_count": 3,
-        "stroke_opacity": 0.55,
-        "stroke_width": 3
+        "link_count": 2,
+        "stroke_opacity": 0.35,
+        "stroke_width": 2.2
       },
       "transition_in": "grow",
       "duration": 0.45,

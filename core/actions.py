@@ -24,6 +24,7 @@ ZONE_POSITIONS = {
     "center_right": RIGHT * 3.2,
     "center_band": ORIGIN,
     "center_left_center": LEFT * 1.8,
+    "pattern_right_compact": RIGHT * 2.45,
     "center_span": ORIGIN,
 }
 
@@ -581,7 +582,7 @@ def make_split_comparison(params, zone):
     font_size = params.get("font_size", 24)
 
     divider = Line(UP * 2.2, DOWN * 2.2, color=TEXT_SUB, stroke_width=2).set_opacity(0.6)
-    divider.move_to(LEFT * 0.25)
+    divider.move_to(LEFT * 0.4)
 
     left_title = Text(params.get("left_title", "Traditional"), font_size=font_size + 2, color=TEXT_MAIN, weight=BOLD)
     left_steps = VGroup(
@@ -601,7 +602,7 @@ def make_split_comparison(params, zone):
     )
     left_panel = VGroup(left_title, VGroup(left_steps, left_arrows))
     left_title.next_to(left_steps, UP, buff=0.35)
-    left_panel.move_to(LEFT * 3.25)
+    left_panel.move_to(LEFT * 3.45)
 
     right_examples = make_examples_grid(
         {
@@ -615,11 +616,11 @@ def make_split_comparison(params, zone):
         "center",
     )
     right_pattern = make_pattern_object({"label": "Pattern", "font_size": font_size}, "center")
-    right_pattern.scale(0.58)
-    right_content = VGroup(right_examples, right_pattern).arrange(RIGHT, buff=0.72)
-    right_content.move_to(RIGHT * 2.55)
+    right_pattern.scale(0.5)
+    right_content = VGroup(right_examples, right_pattern).arrange(RIGHT, buff=0.95)
+    right_content.move_to(RIGHT * 2.35)
     right_links = make_links(
-        {"link_count": 3, "stroke_width": 2.5, "stroke_opacity": 0.45},
+        {"link_count": 2, "stroke_width": 2.0, "stroke_opacity": 0.35},
         right_examples, right_pattern
     )
     right_panel = VGroup(right_examples, right_pattern, right_links)

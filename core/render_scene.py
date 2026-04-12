@@ -26,6 +26,7 @@ COMPOSITE_ZONES = {
     "center_right",
     "center_band",
     "center_left_center",
+    "pattern_right_compact",
     "center_span",
 }
 
