@@ -392,9 +392,16 @@ class JsonDrivenScene(MovingCameraScene):
                     handled = True
 
                 elif step.action == "show_split_comparison":
+                    # FIX: merge step.content and step.style (not step.params.get("content"))
+                    # because the JSON stores data in top-level content/style, not inside params.
                     new_params = dict(step.params)
-                    new_params.update(step.params.get("content", {}))
-                    new_params.update(step.params.get("style", {}))
+                    if isinstance(getattr(step, "content", None), dict):
+                        new_params.update(step.content)
+                    elif isinstance(getattr(step, "content", None), str):
+                        new_params.setdefault("text", step.content)
+                    if isinstance(getattr(step, "style", None), dict):
+                        new_params.update(step.style)
+
                     new_obj = build_object(
                         {
                             "id": step.id,
@@ -437,12 +444,15 @@ class JsonDrivenScene(MovingCameraScene):
                     split_obj = active_objects.get("full")
                     if split_obj is not None and hasattr(split_obj, "left_steps"):
                         steps = list(split_obj.left_steps)
+                        # FIX: interleave step boxes and arrows so animation reads
+                        # as Step1 → arrow → Step2 → arrow → Step3, not all boxes then all arrows.
                         anims = []
-                        for mob in steps:
+                        for i, mob in enumerate(steps):
                             anims.append(Indicate(mob, scale_factor=1.02, color=None))
-                        if hasattr(split_obj, "left_arrows"):
-                            for arrow in split_obj.left_arrows:
-                                anims.append(Indicate(arrow, scale_factor=1.0, color=ACCENT))
+                            if hasattr(split_obj, "left_arrows") and i < len(split_obj.left_arrows):
+                                anims.append(
+                                    Indicate(split_obj.left_arrows[i], scale_factor=1.0, color=ACCENT)
+                                )
                         self.play(Succession(*anims), run_time=run_time)
                         current_time += run_time
                     handled = True

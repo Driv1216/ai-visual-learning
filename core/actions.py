@@ -24,8 +24,9 @@ ZONE_POSITIONS = {
     "center_right": RIGHT * 3.2,
     "center_band": ORIGIN,
     "center_left_center": LEFT * 1.8,
-    "pattern_right_compact": RIGHT * 2.45,
     "center_span": ORIGIN,
+    # FIX: added missing zone used by v18_rules_to_pattern
+    "pattern_right_compact": RIGHT * 2.8,
 }
 
 
@@ -558,13 +559,28 @@ def make_pattern_object(params, zone):
 
 
 def make_links(params, from_obj, to_obj):
+    """
+    Draw link lines from from_obj to to_obj.
+    FIX: flatten one level of submobjects so we get actual grid cells
+    rather than hitting glow/halo wrapper layers.
+    """
     link_count = max(1, params.get("link_count", 3))
     stroke_width = params.get("stroke_width", 3)
     stroke_opacity = params.get("stroke_opacity", 0.55)
 
-    subs = from_obj.submobjects if len(from_obj.submobjects) >= link_count else [from_obj] * link_count
+    # FIX: flatten one level to get real leaf cells, not wrapper VGroups
+    raw_subs = from_obj.submobjects
+    flat_subs = []
+    for child in raw_subs:
+        if hasattr(child, "submobjects") and child.submobjects:
+            flat_subs.extend(child.submobjects)
+        else:
+            flat_subs.append(child)
+
+    subs = flat_subs if len(flat_subs) >= link_count else [from_obj] * link_count
     stride = max(1, len(subs) // link_count)
     sources = [subs[min(i * stride, len(subs) - 1)] for i in range(link_count)]
+
     to_height = to_obj.height
     spacing = to_height / (link_count + 1)
     lines = VGroup()
@@ -579,15 +595,35 @@ def make_links(params, from_obj, to_obj):
 
 
 def make_split_comparison(params, zone):
+    """
+    FIX: Complete rewrite of the layout sequencing.
+    Key rules applied:
+    1. Position objects BEFORE grouping them (VGroup bounding box freezes at creation).
+    2. Never call move_to() on sub-objects after they've been added to a VGroup.
+    3. Use arrange() on the parent group, then place_in_zone() once at the end.
+    4. Build make_links() AFTER final layout so coordinates are correct.
+    5. Add right_title from params (was silently ignored before).
+    6. Add right_links to full so it gets cleared with the group.
+    """
     font_size = params.get("font_size", 24)
 
-    divider = Line(UP * 2.2, DOWN * 2.2, color=TEXT_SUB, stroke_width=2).set_opacity(0.6)
-    divider.move_to(LEFT * 0.4)
-
-    left_title = Text(params.get("left_title", "Traditional"), font_size=font_size + 2, color=TEXT_MAIN, weight=BOLD)
+    # --- Left panel ---
     left_steps = VGroup(
-        *[_boxed_label(label, {"box_width": 1.6, "box_height": 0.72, "font_size": font_size - 2, "stroke_color": PRIMARY}) for label in ("Step 1", "Step 2", "Step 3")]
+        *[
+            _boxed_label(
+                label,
+                {
+                    "box_width": 1.6,
+                    "box_height": 0.72,
+                    "font_size": font_size - 2,
+                    "stroke_color": PRIMARY,
+                },
+            )
+            for label in ("Step 1", "Step 2", "Step 3")
+        ]
     ).arrange(DOWN, buff=0.24)
+
+    # Build arrows while left_steps positions are still at arrange()'d coordinates
     left_arrows = VGroup(
         *[
             Arrow(
@@ -600,10 +636,22 @@ def make_split_comparison(params, zone):
             for i in range(2)
         ]
     )
-    left_panel = VGroup(left_title, VGroup(left_steps, left_arrows))
-    left_title.next_to(left_steps, UP, buff=0.35)
-    left_panel.move_to(LEFT * 3.45)
 
+    steps_with_arrows = VGroup(left_steps, left_arrows)
+
+    # FIX: position title BEFORE creating the panel VGroup
+    left_title = Text(
+        params.get("left_title", "Traditional"),
+        font_size=font_size + 2,
+        color=TEXT_MAIN,
+        weight=BOLD,
+    )
+    left_title.next_to(steps_with_arrows, UP, buff=0.35)
+
+    # Now group — bounding box is correct
+    left_panel = VGroup(left_title, steps_with_arrows)
+
+    # --- Right panel ---
     right_examples = make_examples_grid(
         {
             "examples": ["x1 -> y1", "x2 -> y2", "x3 -> y3", "x4 -> y4"],
@@ -613,33 +661,74 @@ def make_split_comparison(params, zone):
             "cell_width": 1.45,
             "cell_height": 0.7,
         },
-        "center",
+        "center",  # place_in_zone snaps to ORIGIN; arrange() below overrides
     )
-    right_pattern = make_pattern_object({"label": "Pattern", "font_size": font_size}, "center")
-    right_pattern.scale(0.5)
-    right_content = VGroup(right_examples, right_pattern).arrange(RIGHT, buff=0.95)
-    right_content.move_to(RIGHT * 2.35)
-    right_links = make_links(
-        {"link_count": 2, "stroke_width": 2.0, "stroke_opacity": 0.35},
-        right_examples, right_pattern
+    right_pattern = make_pattern_object(
+        {"label": "Pattern", "font_size": font_size}, "center"
     )
-    right_panel = VGroup(right_examples, right_pattern, right_links)
+    right_pattern.scale(0.58)
 
-    full = VGroup(divider, left_panel, right_panel)
+    # FIX: arrange right content WITHOUT any manual move_to()
+    right_content = VGroup(right_examples, right_pattern).arrange(RIGHT, buff=0.72)
+
+    # FIX: position right_title BEFORE grouping right_panel
+    right_title = Text(
+        params.get("right_title", "Machine Learning"),
+        font_size=font_size + 2,
+        color=TEXT_MAIN,
+        weight=BOLD,
+    )
+    right_title.next_to(right_content, UP, buff=0.35)
+
+    right_panel = VGroup(right_title, right_content)
+
+    # --- Divider (no manual move_to — arrange handles it) ---
+    divider = Line(UP * 2.2, DOWN * 2.2, color=TEXT_SUB, stroke_width=2).set_opacity(0.6)
+
+    # --- FIX: arrange the full layout, THEN place once ---
+    content = VGroup(left_panel, divider, right_panel).arrange(RIGHT, buff=0.55)
+    place_in_zone(content, zone)
+
+    # --- FIX: build links AFTER final layout so coords are correct ---
+    right_links = make_links(
+        {"link_count": 3, "stroke_width": 2.5, "stroke_opacity": 0.45},
+        right_examples,
+        right_pattern,
+    )
+
+    # Wrap in full so attribute assignments work and links travel with the group
+    full = VGroup(content, right_links)
     full.left_steps = left_steps
     full.left_arrows = left_arrows
     full.right_panel = right_panel
-    place_in_zone(full, zone)
+
     return full
 
 
 def make_clean_flow(params, zone):
     left = _boxed_label(params.get("left_label", "Examples"), params)
-    right = make_pattern_object({"label": params.get("right_label", "Pattern"), "font_size": params.get("font_size", 30)}, "center")
+    right = make_pattern_object(
+        {
+            "label": params.get("right_label", "Pattern"),
+            "font_size": params.get("font_size", 30),
+        },
+        "center",
+    )
     right.scale(0.86)
     arrow_length = params.get("arrow_length", 2.1)
-    arrow = Arrow(LEFT * (arrow_length / 2), RIGHT * (arrow_length / 2), buff=0.0, stroke_width=4, color=TEXT_SUB)
-    arrow_label = Text(params.get("arrow_label", "learns"), font_size=params.get("font_size", 30) - 8, color=ACCENT, weight=MEDIUM)
+    arrow = Arrow(
+        LEFT * (arrow_length / 2),
+        RIGHT * (arrow_length / 2),
+        buff=0.0,
+        stroke_width=4,
+        color=TEXT_SUB,
+    )
+    arrow_label = Text(
+        params.get("arrow_label", "learns"),
+        font_size=params.get("font_size", 30) - 8,
+        color=ACCENT,
+        weight=MEDIUM,
+    )
     arrow_label.next_to(arrow, UP, buff=0.16)
 
     group = VGroup(left, VGroup(arrow, arrow_label), right).arrange(RIGHT, buff=0.6)

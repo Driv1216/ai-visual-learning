@@ -78,7 +78,7 @@
       "zone": "center",
       "content": [],
       "style": {
-      "scale": 1.0
+        "scale": 1.0
       },
       "transition_in": "smooth",
       "duration": 0.3,
@@ -400,7 +400,10 @@
       "action": "fade_out",
       "zone": "center_band",
       "params": {
-        "zones": ["center_mid_left", "center_mid_right"]
+        "zones": [
+          "center_mid_left",
+          "center_mid_right"
+        ]
       },
       "transition_in": "none",
       "transition_out": "fade",
@@ -514,8 +517,14 @@
       "offset": 1.2,
       "action": "camera_focus",
       "zone": "center_band",
-      "content": ["v10_data_stays_left", "v12_answers_center", "v14_rules_emerge_right"],
-      "style": { "scale": 1.0 },
+      "content": [
+        "v17_examples_replace_boxes",
+        "v18_rules_to_pattern",
+        "v20_split_compare"
+      ],
+      "style": {
+        "scale": 1.0
+      },
       "transition_in": "smooth",
       "duration": 0.3,
       "persist": false,
