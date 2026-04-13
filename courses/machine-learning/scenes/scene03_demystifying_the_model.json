@@ -92,7 +92,7 @@
     },
     {
       "id": "s3_v02_simple_mapping",
-      "anchor": "s3_02",
+      "anchor": "s3_04",
       "action": "show_math",
       "zone": "center",
       "transition_in": "transform",
@@ -107,7 +107,7 @@
         "opacity": 0.98,
         "max_width": 5.0
       },
-      "offset": 0.05
+      "offset": 0.12
     },
     {
       "id": "s3_v03_function_flow",
@@ -130,7 +130,7 @@
         "node_buff": 1.1,
         "opacity": 0.98
       },
-      "offset": 0.08
+      "offset": 1.35
     },
     {
       "id": "s3_v04_formal_equation",
