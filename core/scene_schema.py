@@ -48,6 +48,7 @@ AllowedZone = Literal[
     "center_band",
     "center_left_center",
     "center_span",
+    "pattern_right_compact",
 ]
 AllowedTransition = Literal["fade", "write", "create", "grow", "transform", "none", "smooth"]
 
