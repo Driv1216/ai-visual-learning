@@ -1,0 +1,419 @@
+{
+  "scene_id": "scene04_two_lives_of_a_system",
+  "video_title": "What Is Machine Learning?",
+  "scene_title": "The Two Lives of a System",
+  "order": 4,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s4_01",
+      "text": "A machine learning system has two main phases: training and inference."
+    },
+    {
+      "id": "s4_02",
+      "text": "Training is when the model learns."
+    },
+    {
+      "id": "s4_03",
+      "text": "Inference is when the model makes predictions."
+    },
+    {
+      "id": "s4_04",
+      "text": "During training, we give the model many examples, and we already know the correct answers."
+    },
+    {
+      "id": "s4_05",
+      "text": "The model makes a prediction, compares it to the true answer, and measures the error."
+    },
+    {
+      "id": "s4_06",
+      "text": "Then it adjusts itself to do better next time."
+    },
+    {
+      "id": "s4_07",
+      "text": "This happens again and again."
+    },
+    {
+      "id": "s4_08",
+      "text": "That is how learning takes place."
+    },
+    {
+      "id": "s4_09",
+      "text": "Inference is different. Once training is done, the model is fixed."
+    },
+    {
+      "id": "s4_10",
+      "text": "Now we give it new data it has never seen before, and it produces a prediction."
+    },
+    {
+      "id": "s4_11",
+      "text": "So training is about building the model. Inference is about using it."
+    },
+    {
+      "id": "s4_12",
+      "text": "The real goal of training is not memorization. The real goal is generalization."
+    },
+    {
+      "id": "s4_13",
+      "text": "We want the model to learn the underlying pattern well enough that it still works on new examples."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "s4_v01_system",
+      "anchor": "s4_01",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "grow",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.8,
+      "camera_scale": 0.98,
+      "params": {
+        "phase": "intro",
+        "model_label": "Machine Learning System",
+        "active_mode": "none",
+        "model_width": 3.8,
+        "model_font_size": 27
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s4_v02_training_active",
+      "anchor": "s4_02",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.75,
+      "camera_scale": 0.98,
+      "params": {
+        "phase": "intro",
+        "model_label": "Model",
+        "active_mode": "training",
+        "model_color": "#83c167",
+        "model_width": 2.75,
+        "model_font_size": 30
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s4_v03_inference_preview",
+      "anchor": "s4_03",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.65,
+      "camera_scale": 0.98,
+      "params": {
+        "phase": "intro",
+        "model_label": "Model",
+        "active_mode": "inference",
+        "model_color": "#58c4dd",
+        "model_width": 2.75,
+        "model_font_size": 30
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s4_v04_examples_enter",
+      "anchor": "s4_04",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.9,
+      "camera_scale": 1.0,
+      "params": {
+        "phase": "training",
+        "model_label": "Model",
+        "active_mode": "training",
+        "model_color": "#83c167",
+        "examples": [
+          ["x1", "y1"],
+          ["x2", "y2"],
+          ["x3", "y3"]
+        ],
+        "visible_examples": 3,
+        "prediction_label": "prediction",
+        "truth_label": "true answer",
+        "error_label": "error",
+        "error_level": 0.88
+      },
+      "offset": 0.08
+    },
+    {
+      "id": "s4_v05_error_measured",
+      "anchor": "s4_05",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.8,
+      "camera_scale": 1.0,
+      "params": {
+        "phase": "loop",
+        "model_label": "Adjusting Model",
+        "active_mode": "training",
+        "model_color": "#ff862f",
+        "examples": [
+          ["x1", "y1"],
+          ["x2", "y2"],
+          ["x3", "y3"]
+        ],
+        "prediction_label": "y_hat",
+        "truth_label": "y",
+        "error_label": "large error",
+        "error_level": 0.76,
+        "adjust_label": "adjust"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s4_v06_adjust_once",
+      "anchor": "s4_06",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.75,
+      "camera_scale": 1.0,
+      "params": {
+        "phase": "loop",
+        "model_label": "Adjusting Model",
+        "active_mode": "training",
+        "model_color": "#ff862f",
+        "examples": [
+          ["x2", "y2"],
+          ["x3", "y3"],
+          ["x4", "y4"]
+        ],
+        "prediction_label": "closer",
+        "truth_label": "y",
+        "error_label": "smaller error",
+        "error_level": 0.48,
+        "adjust_label": "adjust again"
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s4_v07_repeat_loop",
+      "anchor": "s4_07",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.85,
+      "camera_scale": 1.0,
+      "params": {
+        "phase": "loop",
+        "model_label": "Adjusting Model",
+        "active_mode": "training",
+        "model_color": "#ff862f",
+        "examples": [
+          ["x3", "y3"],
+          ["x4", "y4"],
+          ["x5", "y5"]
+        ],
+        "prediction_label": "closer",
+        "truth_label": "y",
+        "error_label": "low error",
+        "error_level": 0.24,
+        "adjust_label": "refine"
+      },
+      "offset": 0.04
+    },
+    {
+      "id": "s4_v08_trained_model",
+      "anchor": "s4_08",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.9,
+      "camera_scale": 1.0,
+      "params": {
+        "phase": "trained",
+        "model_label": "Trained Model",
+        "active_mode": "training",
+        "model_color": "#83c167",
+        "examples": [
+          ["x3", "y3"],
+          ["x4", "y4"],
+          ["x5", "y5"]
+        ],
+        "prediction_label": "prediction",
+        "truth_label": "true answer"
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s4_v09_fixed_model",
+      "anchor": "s4_09",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.85,
+      "camera_scale": 1.0,
+      "params": {
+        "phase": "fixed",
+        "model_label": "Fixed Model",
+        "active_mode": "inference",
+        "model_color": "#58c4dd",
+        "new_data_label": "new x",
+        "prediction_label": "prediction"
+      },
+      "offset": 0.04
+    },
+    {
+      "id": "s4_v10_inference_flow",
+      "anchor": "s4_10",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.85,
+      "camera_scale": 1.0,
+      "params": {
+        "phase": "inference",
+        "model_label": "Fixed Model",
+        "active_mode": "inference",
+        "model_color": "#58c4dd",
+        "new_data_label": "unseen x",
+        "prediction_label": "y_hat"
+      },
+      "offset": 0.04
+    },
+    {
+      "id": "s4_v11_summary",
+      "anchor": "s4_11",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.85,
+      "camera_scale": 1.0,
+      "params": {
+        "phase": "summary",
+        "model_label": "Model",
+        "active_mode": "inference",
+        "model_color": "#58c4dd",
+        "model_width": 2.7,
+        "model_font_size": 30
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s4_v12_generalization_word",
+      "anchor": "s4_12",
+      "action": "show_training_loop",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.75,
+      "camera_scale": 0.98,
+      "params": {
+        "phase": "intro",
+        "model_label": "Generalization",
+        "active_mode": "none",
+        "model_color": "#ffff00",
+        "model_width": 3.25,
+        "model_font_size": 32
+      },
+      "offset": 0.1
+    },
+    {
+      "id": "s4_v13_pattern_handles_new",
+      "anchor": "s4_13",
+      "action": "show_plot",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 1.05,
+      "camera_scale": 0.98,
+      "params": {
+        "x_label": "example",
+        "y_label": "answer",
+        "x_range": [0, 10, 2],
+        "y_range": [0, 10, 2],
+        "x_length": 7.1,
+        "y_length": 4.2,
+        "label_font_size": 23,
+        "points": [
+          [1.0, 1.6],
+          [1.8, 2.2],
+          [2.6, 3.1],
+          [3.4, 3.8],
+          [4.2, 4.7],
+          [5.0, 5.1],
+          [5.8, 6.0],
+          [6.6, 6.6],
+          [7.4, 7.2]
+        ],
+        "point_radius": 0.075,
+        "point_opacity": 0.7,
+        "fit_line": {
+          "start": [0.8, 1.25],
+          "end": [9.0, 8.25],
+          "stroke_width": 4.5,
+          "opacity": 1.0,
+          "glow": true,
+          "glow_width": 9,
+          "glow_opacity": 0.18
+        },
+        "prediction_guides": [
+          {
+            "actual": [8.6, 8.0],
+            "predicted_y": 7.9,
+            "color": "#ffff00",
+            "stroke_width": 2.4,
+            "opacity": 0.75,
+            "dot_color": "#ffff00",
+            "dot_radius": 0.085
+          }
+        ],
+        "caption": "works on new examples",
+        "caption_font_size": 27,
+        "caption_opacity": 0.95
+      },
+      "offset": 0.05
+    }
+  ],
+  "notes": {
+    "tone": "Clear, calm, and motion-led. The scene should feel like the same system is living through two modes, not like a comparison slide.",
+    "pacing": "Keep the central model persistent. The training loop should repeat only briefly, with error shrinking, then settle into a fixed inference flow.",
+    "animation_guidelines": "Use the Scene 1 visual grammar: transform-first, center-led, low clutter. Keep no more than two or three active groups visible, avoid long captions, and let the final pattern visual make generalization concrete."
+  }
+}

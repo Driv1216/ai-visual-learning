@@ -823,6 +823,202 @@ def make_clean_flow(params, zone):
     return group
 
 
+def _training_card(data_label: str, answer_label: str | None, params, known=True):
+    font_size = params.get("card_font_size", 21)
+    data_text = Text(data_label, font_size=font_size, color=TEXT_MAIN, weight=MEDIUM)
+    fit_to_width(data_text, 1.18)
+
+    data_box = RoundedRectangle(
+        corner_radius=0.12,
+        width=1.38,
+        height=0.68,
+        stroke_color=SECONDARY,
+        stroke_width=2,
+        fill_color="#121925",
+        fill_opacity=0.98,
+    )
+    data_text.move_to(data_box.get_center())
+    data_part = VGroup(data_box, data_text)
+
+    if answer_label is None:
+        group = data_part
+    else:
+        answer_text = Text(answer_label, font_size=font_size, color=TEXT_MAIN, weight=MEDIUM)
+        fit_to_width(answer_text, 1.18)
+        answer_box = RoundedRectangle(
+            corner_radius=0.12,
+            width=1.38,
+            height=0.68,
+            stroke_color=HIGHLIGHT if known else MUTED,
+            stroke_width=2,
+            fill_color="#121925",
+            fill_opacity=0.98,
+        )
+        answer_text.move_to(answer_box.get_center())
+        answer_part = VGroup(answer_box, answer_text)
+        divider = Line(UP * 0.28, DOWN * 0.28, color=TEXT_SUB, stroke_width=2).set_opacity(0.58)
+        group = VGroup(data_part, divider, answer_part).arrange(RIGHT, buff=0.16)
+
+    shell = RoundedRectangle(
+        corner_radius=0.15,
+        width=group.width + 0.3,
+        height=group.height + 0.22,
+        stroke_color=TEXT_SUB,
+        stroke_width=1.2,
+        fill_color="#0f1624",
+        fill_opacity=0.8,
+    ).set_opacity(0.72)
+    group.move_to(shell.get_center())
+    return VGroup(shell, group)
+
+
+def make_training_loop(params, zone):
+    phase = params.get("phase", "intro")
+    model_label = params.get("model_label", "Machine Learning System")
+    model_color = params.get("model_color", ACCENT)
+
+    model = _boxed_label(
+        model_label,
+        {
+            "box_width": params.get("model_width", 3.05),
+            "box_height": params.get("model_height", 1.18),
+            "font_size": params.get("model_font_size", 28),
+            "stroke_color": model_color,
+            "fill_color": "#141a26",
+        },
+    )
+
+    training_chip = _boxed_label(
+        "Training",
+        {
+            "box_width": 1.75,
+            "box_height": 0.58,
+            "font_size": 18,
+            "stroke_color": HIGHLIGHT if params.get("active_mode") == "training" else MUTED,
+            "fill_color": "#111827",
+            "opacity": 1.0 if params.get("active_mode") == "training" else 0.42,
+        },
+    )
+    inference_chip = _boxed_label(
+        "Inference",
+        {
+            "box_width": 1.85,
+            "box_height": 0.58,
+            "font_size": 18,
+            "stroke_color": SECONDARY if params.get("active_mode") == "inference" else MUTED,
+            "fill_color": "#111827",
+            "opacity": 1.0 if params.get("active_mode") == "inference" else 0.42,
+        },
+    )
+    mode_row = VGroup(training_chip, inference_chip).arrange(RIGHT, buff=0.34)
+    mode_row.next_to(model, UP, buff=0.42)
+
+    full = VGroup(mode_row, model)
+
+    if phase in {"training", "loop", "trained"}:
+        examples = params.get("examples", [["data", "answer"]])
+        cards = VGroup(
+            *[
+                _training_card(str(item[0]), str(item[1]), params, known=True)
+                for item in examples[: params.get("visible_examples", 3)]
+            ]
+        ).arrange(DOWN, buff=0.18)
+        cards.next_to(model, LEFT, buff=1.0)
+
+        prediction = _boxed_label(
+            params.get("prediction_label", "prediction"),
+            {
+                "box_width": 1.85,
+                "box_height": 0.78,
+                "font_size": 21,
+                "stroke_color": PRIMARY,
+                "fill_color": "#121925",
+            },
+        )
+        truth = _boxed_label(
+            params.get("truth_label", "true answer"),
+            {
+                "box_width": 1.85,
+                "box_height": 0.72,
+                "font_size": 19,
+                "stroke_color": HIGHLIGHT,
+                "fill_color": "#121925",
+            },
+        )
+        compare = VGroup(prediction, truth).arrange(DOWN, buff=0.18)
+        compare.next_to(model, RIGHT, buff=1.0)
+
+        in_arrow = Arrow(cards.get_right(), model.get_left(), buff=0.16, color=TEXT_SUB, stroke_width=3.6)
+        out_arrow = Arrow(model.get_right(), compare.get_left(), buff=0.16, color=TEXT_SUB, stroke_width=3.6)
+
+        error_label = Text(
+            params.get("error_label", "error"),
+            font_size=20,
+            color=params.get("error_color", WARNING),
+            weight=MEDIUM,
+        )
+        error_label.next_to(compare, DOWN, buff=0.24)
+        error_bar_bg = Line(LEFT * 0.75, RIGHT * 0.75, color=MUTED, stroke_width=5).set_opacity(0.32)
+        error_bar = Line(
+            error_bar_bg.get_left(),
+            error_bar_bg.get_left() + RIGHT * (1.5 * params.get("error_level", 0.75)),
+            color=params.get("error_color", WARNING),
+            stroke_width=5,
+        )
+        error_bar_group = VGroup(error_bar_bg, error_bar).next_to(error_label, DOWN, buff=0.13)
+
+        loop = CurvedArrow(
+            compare.get_bottom() + DOWN * 0.08,
+            model.get_bottom() + DOWN * 0.08,
+            angle=-TAU / 4,
+            color=params.get("error_color", WARNING),
+            stroke_width=3.2,
+        )
+        loop.set_opacity(params.get("loop_opacity", 0.72))
+        adjust = Text(
+            params.get("adjust_label", "adjust"),
+            font_size=19,
+            color=TEXT_SUB,
+            weight=MEDIUM,
+        )
+        adjust.next_to(loop, DOWN, buff=0.08)
+
+        full.add(cards, in_arrow, out_arrow, compare)
+        if phase != "trained":
+            full.add(error_label, error_bar_group, loop, adjust)
+
+    if phase in {"inference", "fixed"}:
+        card = _training_card(params.get("new_data_label", "new data"), None, params, known=False)
+        card.next_to(model, LEFT, buff=1.05)
+        prediction = _boxed_label(
+            params.get("prediction_label", "prediction"),
+            {
+                "box_width": 2.05,
+                "box_height": 0.82,
+                "font_size": 22,
+                "stroke_color": SECONDARY,
+                "fill_color": "#121925",
+            },
+        )
+        prediction.next_to(model, RIGHT, buff=1.05)
+        in_arrow = Arrow(card.get_right(), model.get_left(), buff=0.16, color=TEXT_SUB, stroke_width=3.6)
+        out_arrow = Arrow(model.get_right(), prediction.get_left(), buff=0.16, color=TEXT_SUB, stroke_width=3.6)
+        lock = Text("fixed", font_size=19, color=TEXT_SUB, weight=MEDIUM)
+        lock.next_to(model, DOWN, buff=0.28)
+        full.add(card, in_arrow, out_arrow, prediction, lock)
+
+    if phase == "summary":
+        left = Text("Training: build the model", font_size=25, color=TEXT_MAIN, weight=MEDIUM)
+        right = Text("Inference: use the model", font_size=25, color=TEXT_MAIN, weight=MEDIUM)
+        summary = VGroup(left, right).arrange(DOWN, buff=0.26, aligned_edge=LEFT)
+        summary.next_to(model, DOWN, buff=0.52)
+        full.add(summary)
+
+    place_in_zone(full, zone)
+    full.set_opacity(params.get("opacity", 1.0))
+    return full
+
+
 def make_show_plot(params, zone):
     x_range = params.get("x_range", [0, 10, 2])
     y_range = params.get("y_range", [0, 10, 2])
@@ -1088,6 +1284,9 @@ def build_object(step_dict):
 
     if action == "show_plot":
         return make_show_plot(params, zone)
+
+    if action == "show_training_loop":
+        return make_training_loop(params, zone)
 
     if action == "fade_out":
         return None

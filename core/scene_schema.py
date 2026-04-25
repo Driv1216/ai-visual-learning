@@ -31,6 +31,7 @@ AllowedAction = Literal[
     "animate_step_sequence",
     "highlight_inference_side",
     "transform_split_to_clean_flow",
+    "show_training_loop",
 ]
 
 AllowedZone = Literal[

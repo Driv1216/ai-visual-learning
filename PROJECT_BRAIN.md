@@ -71,8 +71,13 @@ Current active video:
 Latest completed reference scene:
 - **Scene 1: The Intellectual Wall**
 
+Current completed scenes:
+- **Scene 1: The Intellectual Wall**
+- **Scene 2: The Computational Inversion**
+- **Scene 3: Demystifying The Model**
+
 Current active development target:
-- **Scene 3**
+- **Scene 4**
 
 The broader curriculum plan includes:
 - Machine Learning
@@ -668,30 +673,37 @@ The following must remain aligned:
 - scene rendering works
 - ffmpeg mux works
 
+
 #### Scene 1 status
 Active reference scene:
 - `scene01_intellectual_wall.json`
 
 This scene went through multiple refinement passes involving:
-- initial cluttered stacking
-- zone-based refinement
-- title removal improvement
-- square evolution sequence
-- pressure / thesis / wall / ML pacing fixes
-- removal of duplicate messaging
-- removal of blank center gaps
-- transition smoothing
+    - initial cluttered stacking
+    - zone-based refinement
+    - title removal improvement
+    - square evolution sequence
+    - pressure / thesis / wall / ML pacing fixes
+    - removal of duplicate messaging
+    - removal of blank center gaps
+    - transition smoothing
 
 Current status of Scene 1:
-- stable enough to stop touching for now
-- no longer treated as a rescue problem
-- should now act as the reference grammar for later scenes
-- should only be reopened if there is a clear, meaningful reason
+    - stable enough to stop touching for now
+    - no longer treated as a rescue problem
+    - should now act as the reference grammar for later scenes
+    - should only be reopened if there is a clear, meaningful reason
+
+#### Scene 2 and Scene 3 status
+- Scene 2 is complete with minor visual imperfections intentionally accepted
+- Scene 3 is complete enough to move forward after sync and composition cleanup
+- Scene 3 added/uses reusable visual primitives such as `show_math`, `show_function_flow`, and `show_plot`
+- Scene 3 lesson learned: first check JSON anchors and offsets when visual timing feels wrong; avoid redundant captions and advanced overlays if narration already carries the idea
 
 ### In progress
-- moving to Scene 3
-- Scene 2 completed with minor visual imperfections intentionally accepted
+- moving to Scene 4
 - preserving Scene 1 visual grammar across new scenes
+- using Scene 2 and Scene 3 lessons to avoid over-polishing early passes
 - improving consistency of scene quality, not just isolated scene repair
 - strengthening motion quality and pacing in future scenes from the beginning
 - building a reusable premium visual language for the entire course
@@ -736,12 +748,13 @@ The project must think beyond one isolated scene and begin designing transitions
 ## 11. Next Steps
 
 ### Immediate next steps
-1. Begin Scene 2 design.
-   - use Scene 1 as the reference grammar
-   - preserve continuity of pacing and clarity
+1. Begin Scene 4 design.
+   - use PROJECT_BRAIN.md as the primary source of truth
+   - use the Excel sheet as the primary visual authority
+   - preserve Scene 1 visual grammar and lessons from Scenes 2–3
    - avoid reinventing style unnecessarily
 
-2. Keep Scene 2 first pass structurally clean.
+2. Keep Scene 4 first pass structurally clean.
    - establish good focal hierarchy early
    - keep density low
    - prefer evolving visuals over slide replacement
@@ -757,7 +770,7 @@ The project must think beyond one isolated scene and begin designing transitions
    - use `--flush_cache --disable_caching` during active refinement
    - avoid stale conclusions
 
-5. Preserve Scene 1 as a locked benchmark.
+5. Preserve Scene 1 as the locked benchmark.
    - use it to judge later scene quality
    - do not casually reopen it just because later work feels difficult
 
@@ -1229,7 +1242,9 @@ Current state:
 - timestamp generation works
 - renderer works
 - Scene 1 is stable enough to act as the reference scene
-- active work is moving to Scene 2
+- Scene 2 is complete with accepted minor imperfections
+- Scene 3 is complete enough to move forward after sync and composition cleanup
+- active work is moving to Scene 4
 
 CURRENT BOTTLENECK:
 The bottleneck is scene quality, motion design, pacing, hierarchy, continuity, and preserving visual grammar across scenes — not basic engineering.
@@ -1253,5 +1268,5 @@ Avoid:
 - breaking stable systems
 - overengineering
 
-We are now extending the quality standard established by Scene 1 into Scene 2 and beyond.
+We are now extending the quality standard established by Scene 1 into Scene 4 and beyond, while carrying forward lessons from Scenes 2 and 3.
 ```
