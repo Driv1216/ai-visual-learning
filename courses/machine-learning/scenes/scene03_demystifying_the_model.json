@@ -241,9 +241,6 @@
         "equation": "y = f(x)",
         "equation_font_size": 28,
         "equation_opacity": 0.22,
-        "caption": "Real data is messy.",
-        "caption_font_size": 24,
-        "caption_opacity": 0.9,
         "points": [
           [0.9, 1.4],
           [1.5, 2.1],
@@ -363,11 +360,6 @@
           "glow": true,
           "glow_width": 9,
           "glow_opacity": 0.18
-        },
-        "residual_indices": [2, 5, 8, 11, 12],
-        "residual_style": {
-          "stroke_width": 2.2,
-          "opacity": 0.6
         }
       },
       "offset": 0.08
@@ -498,9 +490,6 @@
         "equation": "y = f(x)",
         "equation_font_size": 31,
         "equation_opacity": 0.62,
-        "caption": "Compact mathematical summary",
-        "caption_font_size": 24,
-        "caption_opacity": 0.94,
         "points": [
           [0.9, 1.4],
           [1.5, 2.1],
@@ -579,31 +568,7 @@
           "glow": true,
           "glow_width": 9,
           "glow_opacity": 0.18
-        },
-        "parameter_labels": [
-          {
-            "text": "m",
-            "point": [7.3, 7.55]
-          },
-          {
-            "text": "b",
-            "point": [1.05, 1.85]
-          }
-        ],
-        "prediction_guides": [
-          {
-            "actual": [2.1, 2.7],
-            "predicted_y": 2.44
-          },
-          {
-            "actual": [6.3, 6.0],
-            "predicted_y": 5.95
-          },
-          {
-            "actual": [7.5, 7.6],
-            "predicted_y": 6.95
-          }
-        ]
+        }
       },
       "offset": 0.1
     },
