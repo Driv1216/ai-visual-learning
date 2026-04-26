@@ -65,7 +65,7 @@
   ],
   "visual_timeline": [
     {
-      "id": "s4_v01_system_core",
+      "id": "s4_v01_intro",
       "anchor": "s4_01",
       "action": "show_training_loop",
       "zone": "center",
@@ -77,64 +77,13 @@
       "camera_scale": 0.98,
       "params": {
         "phase": "intro",
-        "model_label": "Machine Learning System",
-        "active_mode": "none",
-        "model_color": "#f2c94c",
-        "model_width": 3.25,
-        "model_font_size": 26,
-        "model_progress": 0.1,
-        "model_trace_opacity": 0.38
+        "curve_progress": 0.0,
+        "visible_points": 0
       },
       "offset": 0.0
     },
     {
-      "id": "s4_v02_training_model",
-      "anchor": "s4_02",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "duration": 0.68,
-      "camera_scale": 0.98,
-      "params": {
-        "phase": "core",
-        "model_label": "Model",
-        "active_mode": "training",
-        "model_color": "#83c167",
-        "model_width": 3.05,
-        "model_font_size": 29,
-        "model_progress": 0.18,
-        "model_trace_opacity": 0.52
-      },
-      "offset": 0.02
-    },
-    {
-      "id": "s4_v03_inference_hint",
-      "anchor": "s4_03",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "duration": 0.62,
-      "camera_scale": 0.98,
-      "params": {
-        "phase": "core",
-        "model_label": "Model",
-        "active_mode": "inference",
-        "model_color": "#58c4dd",
-        "model_width": 3.05,
-        "model_font_size": 29,
-        "model_progress": 0.18,
-        "model_trace_opacity": 0.52
-      },
-      "offset": 0.04
-    },
-    {
-      "id": "s4_v04_known_example",
+      "id": "s4_v02_training_points",
       "anchor": "s4_04",
       "action": "show_training_loop",
       "zone": "center",
@@ -142,24 +91,18 @@
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.82,
+      "duration": 0.94,
       "camera_scale": 1.0,
       "params": {
-        "phase": "training",
-        "model_label": "Model",
-        "active_mode": "training",
-        "model_color": "#83c167",
-        "model_width": 3.05,
-        "model_progress": 0.25,
-        "model_trace_opacity": 0.58,
-        "example": ["x1", "y1"],
-        "ghost_examples": [["x2", "y2"]],
-        "prediction_label": "prediction"
+        "phase": "training_points",
+        "curve_progress": 0.24,
+        "visible_points": 4,
+        "active_point_index": 1
       },
       "offset": 0.0
     },
     {
-      "id": "s4_v05_error_visible",
+      "id": "s4_v03_error_large",
       "anchor": "s4_05",
       "action": "show_training_loop",
       "zone": "center",
@@ -167,55 +110,19 @@
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.78,
+      "duration": 0.82,
       "camera_scale": 1.0,
       "params": {
-        "phase": "loop",
-        "model_label": "Adjusting Model",
-        "active_mode": "training",
-        "model_color": "#ff9d45",
-        "model_width": 3.05,
-        "model_font_size": 26,
-        "model_progress": 0.36,
-        "model_trace_opacity": 0.72,
-        "example": ["x1", "y1"],
-        "ghost_examples": [["x2", "y2"]],
-        "prediction_label": "prediction",
-        "error_level": 0.82,
-        "pulse_position": 0.2
+        "phase": "error_large",
+        "curve_progress": 0.38,
+        "visible_points": 6,
+        "active_point_index": 2,
+        "error_level": 0.9
       },
       "offset": 0.02
     },
     {
-      "id": "s4_v06_adjusting_x2",
-      "anchor": "s4_06",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "duration": 0.72,
-      "camera_scale": 1.0,
-      "params": {
-        "phase": "loop",
-        "model_label": "Adjusting Model",
-        "active_mode": "training",
-        "model_color": "#f2a65a",
-        "model_width": 3.05,
-        "model_font_size": 26,
-        "model_progress": 0.58,
-        "model_trace_opacity": 0.82,
-        "example": ["x2", "y2"],
-        "ghost_examples": [["x3", "y3"]],
-        "prediction_label": "prediction",
-        "error_level": 0.46,
-        "pulse_position": 0.52
-      },
-      "offset": 0.04
-    },
-    {
-      "id": "s4_v07_repeat_x3",
+      "id": "s4_v04_error_smaller",
       "anchor": "s4_07",
       "action": "show_training_loop",
       "zone": "center",
@@ -223,49 +130,19 @@
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.76,
+      "duration": 0.88,
       "camera_scale": 1.0,
       "params": {
-        "phase": "loop",
-        "model_label": "Adjusting Model",
-        "active_mode": "training",
-        "model_color": "#e7b86b",
-        "model_width": 3.05,
-        "model_font_size": 26,
-        "model_progress": 0.82,
-        "model_trace_opacity": 0.92,
-        "example": ["x3", "y3"],
-        "prediction_label": "prediction",
-        "error_level": 0.16,
-        "pulse_position": 0.78
+        "phase": "error_smaller",
+        "curve_progress": 0.72,
+        "visible_points": 6,
+        "active_point_index": 4,
+        "error_level": 0.28
       },
       "offset": 0.04
     },
     {
-      "id": "s4_v08_trained",
-      "anchor": "s4_08",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "duration": 0.82,
-      "camera_scale": 1.0,
-      "params": {
-        "phase": "trained",
-        "model_label": "Trained Model",
-        "active_mode": "training",
-        "model_color": "#83c167",
-        "model_width": 3.05,
-        "model_font_size": 28,
-        "model_progress": 1.0,
-        "model_trace_opacity": 0.96
-      },
-      "offset": 0.04
-    },
-    {
-      "id": "s4_v09_fixed",
+      "id": "s4_v05_trained_curve",
       "anchor": "s4_09",
       "action": "show_training_loop",
       "zone": "center",
@@ -273,22 +150,18 @@
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.78,
+      "duration": 0.9,
       "camera_scale": 1.0,
       "params": {
-        "phase": "core",
-        "model_label": "Fixed Model",
-        "active_mode": "inference",
-        "model_color": "#58c4dd",
-        "model_width": 3.05,
-        "model_font_size": 28,
-        "model_progress": 1.0,
-        "model_trace_opacity": 0.82
+        "phase": "trained_curve",
+        "curve_progress": 1.0,
+        "visible_points": 6,
+        "show_trained_label": true
       },
-      "offset": 0.02
+      "offset": 0.0
     },
     {
-      "id": "s4_v10_inference",
+      "id": "s4_v06_inference",
       "anchor": "s4_10",
       "action": "show_training_loop",
       "zone": "center",
@@ -296,72 +169,19 @@
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.82,
+      "duration": 0.86,
       "camera_scale": 1.0,
       "params": {
         "phase": "inference",
-        "model_label": "Fixed Model",
-        "active_mode": "inference",
-        "model_color": "#58c4dd",
-        "model_width": 3.05,
-        "model_font_size": 28,
-        "model_progress": 1.0,
-        "model_trace_opacity": 0.82,
-        "new_data_label": "new x",
-        "prediction_label": "prediction"
+        "curve_progress": 1.0,
+        "visible_points": 6,
+        "show_unseen": true,
+        "show_trained_label": true
       },
       "offset": 0.02
     },
     {
-      "id": "s4_v11_build_use",
-      "anchor": "s4_11",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "duration": 0.78,
-      "camera_scale": 1.0,
-      "params": {
-        "phase": "summary",
-        "model_label": "Fixed Model",
-        "active_mode": "none",
-        "model_color": "#58c4dd",
-        "model_width": 3.05,
-        "model_font_size": 28,
-        "model_progress": 1.0,
-        "model_trace_opacity": 0.82
-      },
-      "offset": 0.0
-    },
-    {
-      "id": "s4_v12_generalization_opens",
-      "anchor": "s4_12",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "duration": 0.9,
-      "camera_scale": 0.98,
-      "params": {
-        "phase": "generalization",
-        "model_label": "Trained Model",
-        "points": [
-          [1.0, 1.4],
-          [2.1, 2.3],
-          [3.3, 3.1],
-          [4.8, 4.7],
-          [6.0, 5.8],
-          [7.2, 6.8]
-        ]
-      },
-      "offset": 0.06
-    },
-    {
-      "id": "s4_v13_generalization_new_example",
+      "id": "s4_v07_generalization_final",
       "anchor": "s4_13",
       "action": "show_training_loop",
       "zone": "center",
@@ -373,22 +193,18 @@
       "camera_scale": 0.98,
       "params": {
         "phase": "generalization_final",
-        "model_label": "Trained Model",
-        "points": [
-          [1.0, 1.4],
-          [2.1, 2.3],
-          [3.3, 3.1],
-          [4.8, 4.7],
-          [6.0, 5.8],
-          [7.2, 6.8]
-        ]
+        "curve_progress": 1.0,
+        "visible_points": 6,
+        "show_unseen": true,
+        "show_final_text": true,
+        "show_trained_label": false
       },
       "offset": 0.04
     }
   ],
   "notes": {
-    "tone": "Calm, precise, and motion-led. The model should feel like the central character moving through two lives.",
-    "pacing": "Use a stable center model and side slots. Training repeats through one active example at a time; error shrinks; the model settles; inference uses the fixed model without feedback.",
-    "animation_guidelines": "No comparison slide, no permanent top labels, no giant feedback arrow, no standalone final graph. Generalization should emerge as the trained model opening into a compact pattern panel."
+    "tone": "Calm, precise, and motion-led. The curve is the model.",
+    "pacing": "The same curve-world persists: examples appear, the curve adjusts, error shrinks, the curve stabilizes, and an unseen point reads from it.",
+    "animation_guidelines": "No boxes, cards, flow arrows, panels, persistent mode labels, or summary slides. Training is curve adjustment; inference is using the fixed curve; generalization is the unseen point still making sense."
   }
 }

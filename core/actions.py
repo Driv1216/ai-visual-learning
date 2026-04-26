@@ -874,418 +874,168 @@ def _training_card(data_label: str, answer_label: str | None, params, known=True
 
 def make_training_loop(params, zone):
     phase = params.get("phase", "intro")
-    model_label = params.get("model_label", "Machine Learning System")
-    model_color = params.get("model_color", ACCENT)
-    active_mode = params.get("active_mode", "none")
-    model_width = 3.05
-    model_height = 1.16
+    curve_progress = max(0.0, min(1.0, params.get("curve_progress", 0.0)))
+    active_point_index = int(params.get("active_point_index", -1))
+    error_level = max(0.0, min(1.0, params.get("error_level", 0.0)))
+    show_unseen = params.get("show_unseen", False)
+    show_final_text = params.get("show_final_text", False)
+    show_trained_label = params.get(
+        "show_trained_label",
+        phase in {"trained_curve", "inference", "generalization_final"},
+    )
 
-    mode_pos = UP * 1.22
-    input_pos = LEFT * 3.12
-    model_pos = ORIGIN
-    output_pos = RIGHT * 3.12
-    feedback_pos = DOWN * 0.92 + RIGHT * 0.8
-    note_pos = DOWN * 1.05
+    def clamp(value, low, high):
+        return max(low, min(high, value))
 
-    def silence(obj):
-        for child in getattr(obj, "submobjects", []):
-            silence(child)
-        if hasattr(obj, "set_fill"):
-            obj.set_fill(opacity=0)
-        if hasattr(obj, "set_stroke"):
-            obj.set_stroke(opacity=0, width=0)
-        obj.set_opacity(0)
-        return obj
+    x_min, x_max = 0.0, 8.4
+    y_min, y_max = 0.0, 6.0
+    graph_width = 7.3
+    graph_height = 3.85
+    origin = LEFT * (graph_width / 2) + DOWN * (graph_height / 2 + 0.2)
 
-    def mode_tag(text, color):
-        tag_text = Text(text, font_size=15, color=TEXT_SUB, weight=MEDIUM)
-        fit_to_width(tag_text, 1.45)
-        tag_line = Line(LEFT * 0.43, RIGHT * 0.43, color=color, stroke_width=2.4)
-        tag_line.next_to(tag_text, DOWN, buff=0.06)
-        return VGroup(tag_text, tag_line)
+    def graph_point(x, y):
+        px = (x - x_min) / (x_max - x_min)
+        py = (y - y_min) / (y_max - y_min)
+        return origin + RIGHT * (px * graph_width) + UP * (py * graph_height)
 
-    def make_mode_pair():
-        # Scene 4 should not keep mode labels pinned for the whole scene.
-        # Keep the structure stable, but make the tags visible only during the opening beat.
-        training = mode_tag("Training" if phase == "intro" else " ", HIGHLIGHT)
-        inference = mode_tag("Inference" if phase == "intro" else " ", SECONDARY)
-        opacity = 0.72 if phase == "intro" else 0.0
-        if opacity > 0:
-            training.set_opacity(opacity)
-            inference.set_opacity(opacity)
-        else:
-            silence(training)
-            silence(inference)
-        pair = VGroup(training, inference).arrange(RIGHT, buff=0.56)
-        pair.move_to(mode_pos)
-        return pair
+    train_data = [
+        (0.9, 1.08),
+        (2.0, 1.85),
+        (3.0, 2.95),
+        (4.4, 3.28),
+        (5.7, 4.5),
+        (6.9, 5.12),
+    ]
+    unseen_x = params.get("unseen_x", 7.75)
 
-    def card_parts(data_label, answer_label, pos, opacity=1.0, scale=0.82, known=True):
-        shell = RoundedRectangle(
-            corner_radius=0.15,
-            width=3.12,
-            height=0.9,
-            stroke_color=TEXT_SUB,
-            stroke_width=1.2,
-            fill_color="#0f1624",
-            fill_opacity=0.8,
-        )
-        data_box = RoundedRectangle(
-            corner_radius=0.12,
-            width=1.38,
-            height=0.68,
-            stroke_color=SECONDARY,
-            stroke_width=2,
-            fill_color="#121925",
-            fill_opacity=0.98,
-        )
-        answer_box = RoundedRectangle(
-            corner_radius=0.12,
-            width=1.38,
-            height=0.68,
-            stroke_color=HIGHLIGHT if known else MUTED,
-            stroke_width=2,
-            fill_color="#121925",
-            fill_opacity=0.98,
-        )
-        divider = Line(UP * 0.28, DOWN * 0.28, color=TEXT_SUB, stroke_width=2).set_opacity(0.58)
-        data_text = Text(str(data_label), font_size=params.get("card_font_size", 21), color=TEXT_MAIN, weight=MEDIUM)
-        answer_text = Text(" " if answer_label is None else str(answer_label), font_size=params.get("card_font_size", 21), color=TEXT_MAIN, weight=MEDIUM)
-        fit_to_width(data_text, 1.18)
-        fit_to_width(answer_text, 1.18)
+    def final_y(x):
+        return 0.56 * x + 0.72 + 0.32 * np.sin((x - 1.15) * 0.92)
 
-        data_box.move_to(LEFT * 0.76)
-        data_text.move_to(data_box.get_center())
-        divider.move_to(ORIGIN)
-        answer_box.move_to(RIGHT * 0.76)
-        answer_text.move_to(answer_box.get_center())
-        if answer_label is None:
-            silence(answer_box)
-            answer_text.set_opacity(0)
-            silence(divider)
-        card = VGroup(shell, data_box, data_text, divider, answer_box, answer_text)
-        card.scale(scale)
-        card.move_to(pos)
-        if opacity > 0:
-            card.set_opacity(opacity)
-        else:
-            silence(card)
-        return card
+    def loose_y(x):
+        return 2.95 + 0.42 * np.sin(x * 1.55 + 0.6) - 0.10 * (x - 4.0)
 
-    def make_input_slot():
-        active_opacity = 1.0 if phase in {"training", "loop", "inference"} else 0.0
-        ghost_opacity = min(params.get("ghost_opacity", 0.12), 0.12) if phase in {"training", "loop"} else 0.0
-        if phase in {"training", "loop"}:
-            example = params.get("example", ["x", "y"])
-            data_label, answer_label, known = example[0], example[1], True
-            ghost_data = params.get("ghost_examples", [["x", "y"]])[0] if params.get("ghost_examples") else ["x", "y"]
-        elif phase == "inference":
-            data_label, answer_label, known = params.get("new_data_label", "new x"), None, False
-            ghost_data = ["x", "y"]
-        else:
-            data_label, answer_label, known = "x", "y", True
-            ghost_data = ["x", "y"]
+    def curve_y(x):
+        return (1 - curve_progress) * loose_y(x) + curve_progress * final_y(x)
 
-        ghost = card_parts(ghost_data[0], ghost_data[1], input_pos + LEFT * 0.08 + DOWN * 0.28, ghost_opacity, params.get("ghost_card_scale", 0.7), True)
-        card = card_parts(data_label, answer_label, input_pos, active_opacity, params.get("card_scale", 0.82), known)
-        arrow = Arrow(
-            LEFT * 1.8,
-            LEFT * 1.55,
-            buff=0.0,
-            color=TEXT_SUB,
-            stroke_width=2.4,
-            max_tip_length_to_length_ratio=0.09,
-        )
-        if phase in {"training", "loop", "inference"}:
-            arrow.set_opacity(0.56)
-        else:
-            silence(arrow)
-        return VGroup(ghost, card, arrow)
+    training_label = Text("Training", font_size=24, color=HIGHLIGHT, weight=MEDIUM)
+    inference_label = Text("Inference", font_size=24, color=SECONDARY, weight=MEDIUM)
+    mode_labels = VGroup(training_label, inference_label).arrange(RIGHT, buff=0.72)
+    mode_labels.move_to(UP * 2.35)
+    mode_labels.set_opacity(0.82 if phase == "intro" else 0.0)
 
-    def make_model():
-        graph_phase = phase in {"generalization", "generalization_final"}
-        label = Text(
-            " " if graph_phase else model_label,
-            font_size=params.get("model_font_size", 28),
-            color=TEXT_MAIN,
-            weight=MEDIUM,
-        )
-        fit_to_width(label, model_width - 0.5)
+    x_axis = Line(graph_point(0, 0), graph_point(8.35, 0), color=TEXT_SUB, stroke_width=1.7)
+    y_axis = Line(graph_point(0, 0), graph_point(0, 5.82), color=TEXT_SUB, stroke_width=1.7)
+    axes = VGroup(x_axis, y_axis).set_opacity(0.36)
 
-        core = RoundedRectangle(
-            corner_radius=0.22,
-            width=model_width,
-            height=model_height,
-            stroke_color=model_color,
-            stroke_width=params.get("model_stroke_width", 3),
-            fill_color=params.get("model_fill_color", "#141a26"),
-            fill_opacity=params.get("model_fill_opacity", 0.92),
-        )
-        label.move_to(core.get_center() + UP * 0.12)
+    visible_points = int(params.get("visible_points", 0))
+    if phase in {"training_points", "error_large", "error_smaller", "trained_curve", "inference", "generalization_final"}:
+        visible_points = max(visible_points, 6 if phase != "training_points" else 4)
+    if phase == "intro":
+        visible_points = 0
+    visible_points = clamp(visible_points, 0, len(train_data))
 
-        progress = max(0.0, min(1.0, params.get("model_progress", 0.25)))
-        dot_y = [-0.18 + progress * 0.1, -0.27 + progress * 0.23, -0.14 + progress * 0.04]
-        dots = VGroup(
-            Dot(LEFT * 0.42 + DOWN * abs(dot_y[0]), radius=0.035, color=model_color),
-            Dot(ORIGIN + DOWN * abs(dot_y[1]), radius=0.035, color=model_color),
-            Dot(RIGHT * 0.42 + DOWN * abs(dot_y[2]), radius=0.035, color=model_color),
-        )
-        trace = VGroup(
-            Line(dots[0].get_center(), dots[1].get_center(), color=model_color, stroke_width=1.8),
-            Line(dots[1].get_center(), dots[2].get_center(), color=model_color, stroke_width=1.8),
-            dots,
-        )
-        trace.set_opacity(params.get("model_trace_opacity", 0.58))
+    dots = []
+    for index, (x, y) in enumerate(train_data):
+        dot = Dot(graph_point(x, y), radius=0.055, color=SECONDARY)
+        dot.set_opacity(0.82 if index < visible_points else 0.0)
+        if index == active_point_index:
+            dot.scale(1.35)
+            dot.set_color(ACCENT)
+            dot.set_opacity(1.0)
+        if phase in {"trained_curve", "inference", "generalization_final"} and index < visible_points:
+            dot.set_opacity(0.32)
+        dots.append(dot)
+    training_points = VGroup(*dots)
 
-        shell_glow = RoundedRectangle(
-            corner_radius=0.25,
-            width=model_width + 0.13,
-            height=model_height + 0.13,
-            stroke_color=model_color,
-            stroke_width=1.2,
-        )
-        shell_glow.set_opacity(params.get("model_glow_opacity", 0.14 + progress * 0.1))
+    curve_samples = []
+    for step in range(36):
+        x = x_min + (x_max - x_min) * step / 35
+        y = clamp(curve_y(x), 0.25, 5.78)
+        curve_samples.append(graph_point(x, y))
+    glow_curve = VMobject()
+    glow_curve.set_points_smoothly(curve_samples)
+    glow_curve.set_stroke(HIGHLIGHT, width=9, opacity=0.10 + 0.08 * curve_progress)
+    curve = VMobject()
+    curve.set_points_smoothly(curve_samples)
+    curve.set_stroke(HIGHLIGHT, width=3.5, opacity=0.78 + 0.18 * curve_progress)
+    if phase in {"trained_curve", "inference", "generalization_final"}:
+        glow_curve.set_stroke(HIGHLIGHT, width=11, opacity=0.18)
+        curve.set_stroke(HIGHLIGHT, width=4.2, opacity=0.96)
+    model_curve = VGroup(glow_curve, curve)
 
-        panel = RoundedRectangle(
-            corner_radius=0.18,
-            width=5.2,
-            height=3.0,
-            stroke_color=HIGHLIGHT,
-            stroke_width=2.4,
-            fill_color="#111827",
-            fill_opacity=0.94,
-        )
-        panel.move_to(model_pos)
-        axes_origin = panel.get_corner(DL) + RIGHT * 0.58 + UP * 0.48
-        x_axis = Line(axes_origin, axes_origin + RIGHT * 4.1, color=TEXT_SUB, stroke_width=1.8)
-        y_axis = Line(axes_origin, axes_origin + UP * 2.0, color=TEXT_SUB, stroke_width=1.8)
+    point_index = active_point_index if 0 <= active_point_index < len(train_data) else 2
+    active_x, true_y = train_data[point_index]
+    predicted_y = curve_y(active_x)
+    prediction_guide = DashedLine(
+        graph_point(active_x, 0),
+        graph_point(active_x, predicted_y),
+        dash_length=0.055,
+        color=PRIMARY,
+        stroke_width=1.3,
+    )
+    prediction_dot = Dot(graph_point(active_x, predicted_y), radius=0.048, color=PRIMARY)
+    true_dot = Dot(graph_point(active_x, true_y), radius=0.05, color=ACCENT)
+    prediction_marker = VGroup(prediction_guide, prediction_dot, true_dot)
+    if phase in {"error_large", "error_smaller"}:
+        prediction_guide.set_opacity(0.38)
+        prediction_dot.set_opacity(1.0)
+        true_dot.set_opacity(0.95)
+    else:
+        prediction_marker.set_opacity(0)
 
-        def p(x, y):
-            return axes_origin + RIGHT * (x * 0.42) + UP * (y * 0.2)
+    error_end_y = true_y if error_level > 0 else predicted_y
+    error_line = Line(
+        graph_point(active_x, predicted_y),
+        graph_point(active_x, error_end_y),
+        color=WARNING,
+        stroke_width=3.2,
+    )
+    error_line.set_opacity(0.78 if phase in {"error_large", "error_smaller"} else 0.0)
+    error_gap = VGroup(error_line)
 
-        point_data = list(params.get("points", [(1.0, 1.4), (2.2, 2.5), (3.5, 3.2), (4.9, 4.6), (6.2, 5.7), (7.3, 6.7)]))
-        while len(point_data) < 6:
-            point_data.append(point_data[-1] if point_data else (1.0, 1.4))
-        points = VGroup(*[Dot(p(x, y), radius=0.045, color=SECONDARY) for x, y in point_data[:6]])
-        pattern_glow = Line(p(0.8, 1.15), p(8.5, 7.9), color=HIGHLIGHT, stroke_width=8)
-        pattern = Line(p(0.8, 1.15), p(8.5, 7.9), color=HIGHLIGHT, stroke_width=3.5)
-        unseen = Dot(p(8.1, 7.55), radius=0.07, color=ACCENT)
-        unseen_guide = DashedLine(p(8.1, 7.55), p(8.1, 7.36), dash_length=0.045, color=ACCENT, stroke_width=1.6)
-        show_final_text = phase == "generalization_final"
-        title = Text("Generalization" if show_final_text else " ", font_size=27, color=TEXT_MAIN, weight=BOLD)
-        subtitle = Text("works on new examples" if show_final_text else " ", font_size=20, color=TEXT_SUB, weight=MEDIUM)
-        title.next_to(panel, DOWN, buff=0.28)
-        subtitle.next_to(title, DOWN, buff=0.12)
-        model_mark = _boxed_label(
-            params.get("model_label", "Trained Model"),
-            {
-                "box_width": 2.15,
-                "box_height": 0.52,
-                "font_size": 16,
-                "stroke_color": HIGHLIGHT,
-                "fill_color": "#141a26",
-                "opacity": 0.92,
-            },
-        )
-        model_mark.next_to(panel, UP, buff=0.18)
-        show_summary = phase == "summary"
-        note_top = Text("Training shaped it." if show_summary else " ", font_size=21, color=TEXT_SUB, weight=MEDIUM)
-        note_bottom = Text("Inference uses it." if show_summary else " ", font_size=21, color=TEXT_SUB, weight=MEDIUM)
-        note = VGroup(note_top, note_bottom).arrange(DOWN, buff=0.18).move_to(note_pos)
-        modes = make_mode_pair()
+    unseen_y = curve_y(unseen_x)
+    unseen_guide = DashedLine(
+        graph_point(unseen_x, 0),
+        graph_point(unseen_x, unseen_y),
+        dash_length=0.06,
+        color=ACCENT,
+        stroke_width=1.6,
+    )
+    unseen_base = Dot(graph_point(unseen_x, 0), radius=0.04, color=ACCENT)
+    unseen_dot = Dot(graph_point(unseen_x, unseen_y), radius=0.07, color=ACCENT)
+    unseen_marker = VGroup(unseen_guide, unseen_base, unseen_dot)
+    if show_unseen or phase in {"inference", "generalization_final"}:
+        unseen_guide.set_opacity(0.56)
+        unseen_base.set_opacity(0.72)
+        unseen_dot.set_opacity(1.0)
+    else:
+        unseen_marker.set_opacity(0.0)
 
-        # Generalization must emerge cleanly from the model, not appear as a new slide.
-        # Keep all graph subobjects structurally present, but reveal them progressively.
-        graph_progress = 0.0
-        if phase == "generalization":
-            graph_progress = 0.55
-        elif phase == "generalization_final":
-            graph_progress = 1.0
+    trained_text = Text("trained model", font_size=21, color=TEXT_SUB, weight=MEDIUM)
+    trained_text.next_to(curve, UP, buff=0.22)
+    trained_text.set_opacity(0.82 if show_trained_label else 0.0)
+    final_title = Text("Generalization", font_size=32, color=TEXT_MAIN, weight=BOLD)
+    final_subtitle = Text("works on new examples", font_size=22, color=TEXT_SUB, weight=MEDIUM)
+    final_title.next_to(axes, DOWN, buff=0.36)
+    final_subtitle.next_to(final_title, DOWN, buff=0.11)
+    final_title.set_opacity(1.0 if show_final_text else 0.0)
+    final_subtitle.set_opacity(0.86 if show_final_text else 0.0)
+    final_text = VGroup(trained_text, final_title, final_subtitle)
 
-        pattern_start = p(0.8, 1.15) if graph_progress > 0 else model_pos
-        pattern_end = p(0.8 + (8.5 - 0.8) * max(graph_progress, 0.04), 1.15 + (7.9 - 1.15) * max(graph_progress, 0.04)) if graph_progress > 0 else model_pos
-        pattern.put_start_and_end_on(pattern_start, pattern_end)
-        pattern_glow.put_start_and_end_on(pattern_start, pattern_end)
-
-        if graph_progress == 0:
-            panel.scale(0.01).move_to(model_pos)
-            silence(panel)
-            x_axis.put_start_and_end_on(model_pos, model_pos)
-            y_axis.put_start_and_end_on(model_pos, model_pos)
-            silence(x_axis)
-            silence(y_axis)
-            silence(pattern_glow)
-            silence(pattern)
-        else:
-            panel.set_fill("#111827", opacity=0.78 * graph_progress)
-            panel.set_stroke(HIGHLIGHT, width=2.4, opacity=0.82 * graph_progress)
-            x_axis.set_stroke(TEXT_SUB, width=1.8, opacity=0.52 * graph_progress)
-            y_axis.set_stroke(TEXT_SUB, width=1.8, opacity=0.52 * graph_progress)
-            pattern_glow.set_stroke(HIGHLIGHT, width=8, opacity=0.10 * graph_progress)
-            pattern.set_stroke(HIGHLIGHT, width=3.5, opacity=0.88 * graph_progress)
-
-        visible_points = int(round(6 * graph_progress))
-        for index, point in enumerate(points):
-            if index < visible_points:
-                point.set_fill(SECONDARY, opacity=0.70)
-                point.set_stroke(opacity=0)
-            else:
-                point.move_to(model_pos)
-                silence(point)
-
-        if phase == "generalization_final":
-            unseen.set_fill(ACCENT, opacity=1.0)
-            unseen_guide.set_stroke(ACCENT, width=1.6, opacity=0.48)
-            title.set_opacity(1.0)
-            subtitle.set_opacity(0.86)
-        else:
-            unseen.move_to(model_pos)
-            unseen_guide.put_start_and_end_on(model_pos, model_pos)
-            silence(unseen)
-            silence(unseen_guide)
-            title.set_opacity(0.0)
-            subtitle.set_opacity(0.0)
-
-        # The model badge and summary notes were visually competing with the graph.
-        # Keep their objects in the stable structure, but do not show them.
-        silence(model_mark)
-        note_top.set_opacity(1.0 if show_summary else 0.0)
-        note_bottom.set_opacity(1.0 if show_summary else 0.0)
-        if graph_phase:
-            silence(shell_glow)
-            silence(core)
-            label.set_opacity(0)
-            silence(trace[0])
-            silence(trace[1])
-            for dot in dots:
-                silence(dot)
-
-        model = VGroup(
-            modes,
-            shell_glow,
-            core,
-            label,
-            trace[0],
-            trace[1],
-            dots[0],
-            dots[1],
-            dots[2],
-            panel,
-            x_axis,
-            y_axis,
-            points[0],
-            points[1],
-            points[2],
-            points[3],
-            points[4],
-            points[5],
-            pattern_glow,
-            pattern,
-            unseen_guide,
-            unseen,
-            title,
-            subtitle,
-            model_mark,
-            note_top,
-            note_bottom,
-        )
-        return model
-
-    def make_output_slot():
-        visible = phase in {"training", "loop", "inference"}
-        stroke = SECONDARY if phase == "inference" else PRIMARY
-        pred = _boxed_label(
-            params.get("prediction_label", "prediction"),
-            {
-                "box_width": params.get("prediction_width", 1.6),
-                "box_height": 0.58,
-                "font_size": params.get("prediction_font_size", 18),
-                "stroke_color": stroke,
-                "fill_color": "#121925",
-                "opacity": 0.94,
-            },
-        )
-        pred.move_to(output_pos)
-        if not visible:
-            silence(pred)
-
-        error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
-        gap = error_level * 0.42
-        truth = Dot(pred.get_center() + DOWN * gap, radius=0.045, color=HIGHLIGHT)
-        guide = DashedLine(
-            pred.get_bottom() + DOWN * 0.04,
-            truth.get_center(),
-            dash_length=0.045,
-            color=params.get("error_color", WARNING),
-            stroke_width=1.6,
-        )
-        if phase == "loop":
-            guide.set_opacity(0.45 + 0.25 * error_level)
-            truth.set_opacity(1.0)
-        else:
-            silence(guide)
-            silence(truth)
-        arrow = Arrow(
-            RIGHT * 1.55,
-            RIGHT * 1.8,
-            buff=0.0,
-            color=TEXT_SUB,
-            stroke_width=2.4,
-            max_tip_length_to_length_ratio=0.09,
-        )
-        if visible:
-            arrow.set_opacity(0.56)
-        else:
-            silence(arrow)
-        return VGroup(pred[0], pred[1], pred[2], guide, truth, arrow)
-
-    def make_feedback_slot():
-        # Feedback is part of the training loop only. It must never visually leak into
-        # summary or generalization frames, but the two-child structure must persist.
-        error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
-        start = RIGHT * 1.92 + DOWN * 0.48
-        end = RIGHT * 0.42 + DOWN * 0.56
-        arc = ArcBetweenPoints(
-            start,
-            end,
-            angle=-PI / 3.6,
-            color=params.get("error_color", WARNING),
-            stroke_width=0.9,
-        )
-        arc.set_z_index(-2)
-        arc_opacity = (0.07 + 0.11 * error_level) if phase == "loop" else 0.0
-        if arc_opacity > 0:
-            arc.set_opacity(arc_opacity)
-        else:
-            silence(arc)
-
-        pulse = Dot(
-            arc.point_from_proportion(params.get("pulse_position", 0.42)),
-            radius=0.035,
-            color=params.get("error_color", WARNING),
-        )
-        pulse.set_z_index(-1)
-        if phase == "loop":
-            pulse.set_opacity(0.42)
-        else:
-            silence(pulse)
-        return VGroup(arc, pulse)
-
-    input_slot = make_input_slot()
-    model = make_model()
-    output_slot = make_output_slot()
-    feedback_slot = make_feedback_slot()
-
-    # Preserve the exact top-level order required for ReplacementTransform mapping,
-    # but force feedback behind the model so it cannot cover the graph or labels.
-    feedback_slot.set_z_index(-2)
-    model.set_z_index(1)
-    input_slot.set_z_index(2)
-    output_slot.set_z_index(2)
-
-    full = VGroup(input_slot, model, output_slot, feedback_slot)
+    full = VGroup(
+        mode_labels,
+        axes,
+        training_points,
+        model_curve,
+        prediction_marker,
+        error_gap,
+        unseen_marker,
+        final_text,
+    )
+    place_in_zone(full, zone)
     full.set_opacity(params.get("opacity", 1.0))
     return full
+
 
 def make_show_plot(params, zone):
     x_range = params.get("x_range", [0, 10, 2])
