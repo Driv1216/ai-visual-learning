@@ -884,43 +884,112 @@ def make_training_loop(params, zone):
     input_pos = LEFT * 3.12
     model_pos = ORIGIN
     output_pos = RIGHT * 3.12
-    feedback_pos = DOWN * 0.9 + RIGHT * 0.8
+    feedback_pos = DOWN * 0.92 + RIGHT * 0.8
     note_pos = DOWN * 1.05
-    panel_pos = ORIGIN
 
-    def blank(width=1.0, height=0.5):
-        spacer = VGroup()
-        spacer.move_to(ORIGIN)
-        return spacer
-
-    def mode_tag(text, color, opacity=1.0):
+    def mode_tag(text, color):
         tag_text = Text(text, font_size=15, color=TEXT_SUB, weight=MEDIUM)
         fit_to_width(tag_text, 1.45)
-        line = Line(LEFT * 0.43, RIGHT * 0.43, color=color, stroke_width=2.4)
-        line.next_to(tag_text, DOWN, buff=0.06)
-        tag = VGroup(tag_text, line)
-        tag.set_opacity(opacity)
-        return tag
+        tag_line = Line(LEFT * 0.43, RIGHT * 0.43, color=color, stroke_width=2.4)
+        tag_line.next_to(tag_text, DOWN, buff=0.06)
+        return VGroup(tag_text, tag_line)
 
-    def make_mode_slot():
+    def make_mode_pair():
+        training = mode_tag("Training" if phase == "intro" else "training mode", HIGHLIGHT)
+        inference = mode_tag("Inference" if phase == "intro" else "inference mode", SECONDARY)
         if phase == "intro":
-            training = mode_tag("Training", HIGHLIGHT, 0.75)
-            inference = mode_tag("Inference", SECONDARY, 0.75)
-            slot = VGroup(training, inference).arrange(RIGHT, buff=0.56)
-        elif phase in {"training", "loop", "trained"}:
-            slot = mode_tag("training mode", HIGHLIGHT, 0.55)
-        elif phase in {"inference", "summary"}:
-            slot = mode_tag("inference mode", SECONDARY, 0.55)
-        elif phase == "core" and active_mode == "training":
-            slot = mode_tag("training mode", HIGHLIGHT, 0.55)
-        elif phase == "core" and active_mode == "inference":
-            slot = mode_tag("inference mode", SECONDARY, 0.55)
+            training.set_opacity(0.75)
+            inference.set_opacity(0.75)
+        elif phase in {"training", "loop", "trained"} or (phase == "core" and active_mode == "training"):
+            training.set_opacity(0.55)
+            inference.set_opacity(0)
+        elif phase in {"inference", "summary"} or (phase == "core" and active_mode == "inference"):
+            training.set_opacity(0)
+            inference.set_opacity(0.55)
         else:
-            slot = blank(2.8, 0.38)
-        slot.move_to(mode_pos)
-        return slot
+            training.set_opacity(0)
+            inference.set_opacity(0)
+        pair = VGroup(training, inference).arrange(RIGHT, buff=0.56)
+        pair.move_to(mode_pos)
+        return pair
 
-    def make_model_core():
+    def card_parts(data_label, answer_label, pos, opacity=1.0, scale=0.82, known=True):
+        shell = RoundedRectangle(
+            corner_radius=0.15,
+            width=3.12,
+            height=0.9,
+            stroke_color=TEXT_SUB,
+            stroke_width=1.2,
+            fill_color="#0f1624",
+            fill_opacity=0.8,
+        )
+        data_box = RoundedRectangle(
+            corner_radius=0.12,
+            width=1.38,
+            height=0.68,
+            stroke_color=SECONDARY,
+            stroke_width=2,
+            fill_color="#121925",
+            fill_opacity=0.98,
+        )
+        answer_box = RoundedRectangle(
+            corner_radius=0.12,
+            width=1.38,
+            height=0.68,
+            stroke_color=HIGHLIGHT if known else MUTED,
+            stroke_width=2,
+            fill_color="#121925",
+            fill_opacity=0.98,
+        )
+        divider = Line(UP * 0.28, DOWN * 0.28, color=TEXT_SUB, stroke_width=2).set_opacity(0.58)
+        data_text = Text(str(data_label), font_size=params.get("card_font_size", 21), color=TEXT_MAIN, weight=MEDIUM)
+        answer_text = Text(" " if answer_label is None else str(answer_label), font_size=params.get("card_font_size", 21), color=TEXT_MAIN, weight=MEDIUM)
+        fit_to_width(data_text, 1.18)
+        fit_to_width(answer_text, 1.18)
+
+        data_box.move_to(LEFT * 0.76)
+        data_text.move_to(data_box.get_center())
+        divider.move_to(ORIGIN)
+        answer_box.move_to(RIGHT * 0.76)
+        answer_text.move_to(answer_box.get_center())
+        if answer_label is None:
+            answer_box.set_opacity(0)
+            answer_text.set_opacity(0)
+            divider.set_opacity(0)
+        card = VGroup(shell, data_box, data_text, divider, answer_box, answer_text)
+        card.scale(scale)
+        card.move_to(pos)
+        card.set_opacity(opacity)
+        return card
+
+    def make_input_slot():
+        active_opacity = 1.0 if phase in {"training", "loop", "inference"} else 0.0
+        ghost_opacity = min(params.get("ghost_opacity", 0.12), 0.12) if phase in {"training", "loop"} else 0.0
+        if phase in {"training", "loop"}:
+            example = params.get("example", ["x", "y"])
+            data_label, answer_label, known = example[0], example[1], True
+            ghost_data = params.get("ghost_examples", [["x", "y"]])[0] if params.get("ghost_examples") else ["x", "y"]
+        elif phase == "inference":
+            data_label, answer_label, known = params.get("new_data_label", "new x"), None, False
+            ghost_data = ["x", "y"]
+        else:
+            data_label, answer_label, known = "x", "y", True
+            ghost_data = ["x", "y"]
+
+        ghost = card_parts(ghost_data[0], ghost_data[1], input_pos + LEFT * 0.08 + DOWN * 0.28, ghost_opacity, params.get("ghost_card_scale", 0.7), True)
+        card = card_parts(data_label, answer_label, input_pos, active_opacity, params.get("card_scale", 0.82), known)
+        arrow = Arrow(
+            LEFT * 1.8,
+            LEFT * 1.55,
+            buff=0.0,
+            color=TEXT_SUB,
+            stroke_width=2.4,
+            max_tip_length_to_length_ratio=0.09,
+        )
+        arrow.set_opacity(0.56 if phase in {"training", "loop", "inference"} else 0)
+        return VGroup(ghost, card, arrow)
+
+    def make_model():
         label = Text(
             model_label,
             font_size=params.get("model_font_size", 28),
@@ -963,120 +1032,6 @@ def make_training_loop(params, zone):
         )
         shell_glow.set_opacity(params.get("model_glow_opacity", 0.14 + progress * 0.1))
 
-        model = VGroup(shell_glow, core, label, trace)
-        model.move_to(model_pos)
-        if phase in {"generalization", "generalization_final"}:
-            model.set_opacity(0)
-        return model
-
-    def make_input_slot():
-        if phase in {"training", "loop"}:
-            example = params.get("example", ["x", "y"])
-            card = _training_card(str(example[0]), str(example[1]), params, known=True)
-            card.scale(params.get("card_scale", 0.82))
-            card.move_to(input_pos)
-            ghosts = VGroup()
-            for ghost_data in params.get("ghost_examples", [])[:1]:
-                ghost = _training_card(str(ghost_data[0]), str(ghost_data[1]), params, known=True)
-                ghost.scale(params.get("ghost_card_scale", 0.7))
-                ghost.set_opacity(min(params.get("ghost_opacity", 0.12), 0.12))
-                ghost.move_to(card.get_center() + LEFT * 0.08 + DOWN * 0.28)
-                ghosts.add(ghost)
-            return VGroup(ghosts, card)
-
-        if phase == "inference":
-            card = _training_card(params.get("new_data_label", "new x"), None, params, known=False)
-            card.scale(params.get("card_scale", 0.82))
-            card.move_to(input_pos)
-            return card
-
-        return blank(1.8, 0.8).move_to(input_pos)
-
-    def make_prediction_slot():
-        if phase in {"training", "loop", "inference"}:
-            stroke = SECONDARY if phase == "inference" else PRIMARY
-            pred = _boxed_label(
-                params.get("prediction_label", "prediction"),
-                {
-                    "box_width": params.get("prediction_width", 1.6),
-                    "box_height": 0.58,
-                    "font_size": params.get("prediction_font_size", 18),
-                    "stroke_color": stroke,
-                    "fill_color": "#121925",
-                    "opacity": 0.94,
-                },
-            )
-            pred.move_to(output_pos)
-
-            if phase != "loop":
-                return pred
-
-            error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
-            gap = error_level * 0.42
-            truth = Dot(
-                pred.get_center() + DOWN * gap,
-                radius=0.045,
-                color=HIGHLIGHT,
-            )
-            guide = DashedLine(
-                pred.get_bottom() + DOWN * 0.04,
-                truth.get_center(),
-                dash_length=0.045,
-                color=params.get("error_color", WARNING),
-                stroke_width=1.6,
-            )
-            guide.set_opacity(0.45 + 0.25 * error_level)
-            return VGroup(pred, guide, truth)
-
-        return blank(1.6, 0.7).move_to(output_pos)
-
-    def make_arrow_between(start, end, visible=True):
-        arrow = Arrow(
-            start,
-            end,
-            buff=0.0,
-            color=TEXT_SUB,
-            stroke_width=2.4,
-            max_tip_length_to_length_ratio=0.09,
-        )
-        arrow.set_opacity(0.56 if visible else 0)
-        return arrow
-
-    def make_feedback_slot(model, output_slot):
-        if phase != "loop":
-            return blank(1.2, 0.5).move_to(feedback_pos)
-
-        error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
-        start = output_slot.get_bottom() + DOWN * 0.08 + LEFT * 0.05
-        end = model.get_bottom() + DOWN * 0.04 + RIGHT * 0.25
-        arc = ArcBetweenPoints(
-            start,
-            end,
-            angle=-PI / 2.4,
-            color=params.get("error_color", WARNING),
-            stroke_width=1.4,
-        )
-        arc.set_opacity(0.18 + 0.22 * error_level)
-        pulse = Dot(
-            arc.point_from_proportion(params.get("pulse_position", 0.42)),
-            radius=0.045,
-            color=params.get("error_color", WARNING),
-        )
-        pulse.set_opacity(0.72)
-        feedback = VGroup(arc, pulse)
-        feedback.move_to(feedback_pos)
-        return feedback
-
-    def make_note_slot():
-        if phase == "summary":
-            left = Text("Training shaped it.", font_size=21, color=TEXT_SUB, weight=MEDIUM)
-            right = Text("Inference uses it.", font_size=21, color=TEXT_SUB, weight=MEDIUM)
-            note = VGroup(left, right).arrange(DOWN, buff=0.18)
-            note.move_to(note_pos)
-            return note
-        return blank(3.2, 0.6).move_to(note_pos)
-
-    def make_pattern_panel():
         panel = RoundedRectangle(
             corner_radius=0.18,
             width=5.2,
@@ -1086,38 +1041,26 @@ def make_training_loop(params, zone):
             fill_color="#111827",
             fill_opacity=0.94,
         )
-        panel.move_to(panel_pos)
+        panel.move_to(model_pos)
         axes_origin = panel.get_corner(DL) + RIGHT * 0.58 + UP * 0.48
-        x_axis = Line(axes_origin, axes_origin + RIGHT * 4.1, color=TEXT_SUB, stroke_width=1.8).set_opacity(0.62)
-        y_axis = Line(axes_origin, axes_origin + UP * 2.0, color=TEXT_SUB, stroke_width=1.8).set_opacity(0.62)
+        x_axis = Line(axes_origin, axes_origin + RIGHT * 4.1, color=TEXT_SUB, stroke_width=1.8)
+        y_axis = Line(axes_origin, axes_origin + UP * 2.0, color=TEXT_SUB, stroke_width=1.8)
 
         def p(x, y):
             return axes_origin + RIGHT * (x * 0.42) + UP * (y * 0.2)
 
-        points = VGroup(
-            *[
-                Dot(p(x, y), radius=0.045, color=SECONDARY).set_opacity(0.76)
-                for x, y in params.get("points", [(1.0, 1.4), (2.2, 2.5), (3.5, 3.2), (4.9, 4.6), (6.2, 5.7), (7.3, 6.7)])
-            ]
-        )
+        point_data = list(params.get("points", [(1.0, 1.4), (2.2, 2.5), (3.5, 3.2), (4.9, 4.6), (6.2, 5.7), (7.3, 6.7)]))
+        while len(point_data) < 6:
+            point_data.append(point_data[-1] if point_data else (1.0, 1.4))
+        points = VGroup(*[Dot(p(x, y), radius=0.045, color=SECONDARY) for x, y in point_data[:6]])
+        pattern_glow = Line(p(0.8, 1.15), p(8.5, 7.9), color=HIGHLIGHT, stroke_width=8)
         pattern = Line(p(0.8, 1.15), p(8.5, 7.9), color=HIGHLIGHT, stroke_width=3.5)
-        pattern_glow = pattern.copy().set_stroke(width=8, opacity=0.12)
-
-        new_dot = VGroup()
-        if phase == "generalization_final":
-            unseen = Dot(p(8.1, 7.55), radius=0.07, color=ACCENT)
-            guide = DashedLine(p(8.1, 7.55), p(8.1, 7.36), dash_length=0.045, color=ACCENT, stroke_width=1.6)
-            guide.set_opacity(0.55)
-            new_dot.add(guide, unseen)
-
+        unseen = Dot(p(8.1, 7.55), radius=0.07, color=ACCENT)
+        unseen_guide = DashedLine(p(8.1, 7.55), p(8.1, 7.36), dash_length=0.045, color=ACCENT, stroke_width=1.6)
         title = Text("Generalization", font_size=27, color=TEXT_MAIN, weight=BOLD)
         subtitle = Text("works on new examples", font_size=20, color=TEXT_SUB, weight=MEDIUM)
         title.next_to(panel, DOWN, buff=0.28)
         subtitle.next_to(title, DOWN, buff=0.12)
-        if phase != "generalization_final":
-            title.set_opacity(0)
-            subtitle.set_opacity(0)
-
         model_mark = _boxed_label(
             params.get("model_label", "Trained Model"),
             {
@@ -1130,40 +1073,131 @@ def make_training_loop(params, zone):
             },
         )
         model_mark.next_to(panel, UP, buff=0.18)
+        note_top = Text("Training shaped it.", font_size=21, color=TEXT_SUB, weight=MEDIUM)
+        note_bottom = Text("Inference uses it.", font_size=21, color=TEXT_SUB, weight=MEDIUM)
+        note = VGroup(note_top, note_bottom).arrange(DOWN, buff=0.18).move_to(note_pos)
+        modes = make_mode_pair()
 
+        graph_opacity = 1.0 if phase == "generalization_final" else 0.0
         if phase == "generalization":
-            panel.set_opacity(0.85)
-            x_axis.set_opacity(0.35)
-            y_axis.set_opacity(0.35)
-            points.set_opacity(0.45)
-            pattern.set_stroke(opacity=0.55)
-            pattern_glow.set_stroke(opacity=0.06)
-            model_mark.set_opacity(0.75)
+            graph_opacity = 0.55
+        panel.set_opacity(0.85 if phase == "generalization" else graph_opacity)
+        x_axis.set_opacity(0.35 if phase == "generalization" else 0.62 * graph_opacity)
+        y_axis.set_opacity(0.35 if phase == "generalization" else 0.62 * graph_opacity)
+        points.set_opacity(0.45 if phase == "generalization" else 0.76 * graph_opacity)
+        pattern_glow.set_opacity(0.06 if phase == "generalization" else 0.12 * graph_opacity)
+        pattern.set_opacity(0.55 if phase == "generalization" else graph_opacity)
+        unseen.set_opacity(1.0 if phase == "generalization_final" else 0.0)
+        unseen_guide.set_opacity(0.55 if phase == "generalization_final" else 0.0)
+        title.set_opacity(1.0 if phase == "generalization_final" else 0.0)
+        subtitle.set_opacity(1.0 if phase == "generalization_final" else 0.0)
+        model_mark.set_opacity(0.75 if phase == "generalization" else graph_opacity)
+        note.set_opacity(1.0 if phase == "summary" else 0.0)
+        if phase in {"generalization", "generalization_final"}:
+            shell_glow.set_opacity(0)
+            core.set_opacity(0)
+            label.set_opacity(0)
+            trace.set_opacity(0)
 
-        return VGroup(model_mark, panel, x_axis, y_axis, points, pattern_glow, pattern, new_dot, title, subtitle)
+        model = VGroup(
+            modes,
+            shell_glow,
+            core,
+            label,
+            trace[0],
+            trace[1],
+            dots[0],
+            dots[1],
+            dots[2],
+            panel,
+            x_axis,
+            y_axis,
+            points[0],
+            points[1],
+            points[2],
+            points[3],
+            points[4],
+            points[5],
+            pattern_glow,
+            pattern,
+            unseen_guide,
+            unseen,
+            title,
+            subtitle,
+            model_mark,
+            note_top,
+            note_bottom,
+        )
+        return model
 
-    mode_slot = make_mode_slot()
-    input_slot = make_input_slot()
-    model = make_model_core()
-    input_visible = phase in {"training", "loop", "inference"}
-    output_visible = phase in {"training", "loop", "inference"}
-    input_arrow = make_arrow_between(LEFT * 1.8, LEFT * 1.55, input_visible)
-    output_arrow = make_arrow_between(RIGHT * 1.55, RIGHT * 1.8, output_visible)
-    output_slot = make_prediction_slot()
-    feedback = make_feedback_slot(model, output_slot)
-    note = make_note_slot()
-    panel = make_pattern_panel() if phase in {"generalization", "generalization_final"} else blank(5.2, 3.0).move_to(panel_pos)
+    def make_output_slot():
+        visible = phase in {"training", "loop", "inference"}
+        stroke = SECONDARY if phase == "inference" else PRIMARY
+        pred = _boxed_label(
+            params.get("prediction_label", "prediction"),
+            {
+                "box_width": params.get("prediction_width", 1.6),
+                "box_height": 0.58,
+                "font_size": params.get("prediction_font_size", 18),
+                "stroke_color": stroke,
+                "fill_color": "#121925",
+                "opacity": 0.94,
+            },
+        )
+        pred.move_to(output_pos)
+        if not visible:
+            pred.set_opacity(0)
+
+        error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
+        gap = error_level * 0.42
+        truth = Dot(pred.get_center() + DOWN * gap, radius=0.045, color=HIGHLIGHT)
+        guide = DashedLine(
+            pred.get_bottom() + DOWN * 0.04,
+            truth.get_center(),
+            dash_length=0.045,
+            color=params.get("error_color", WARNING),
+            stroke_width=1.6,
+        )
+        guide.set_opacity((0.45 + 0.25 * error_level) if phase == "loop" else 0)
+        truth.set_opacity(1.0 if phase == "loop" else 0)
+        arrow = Arrow(
+            RIGHT * 1.55,
+            RIGHT * 1.8,
+            buff=0.0,
+            color=TEXT_SUB,
+            stroke_width=2.4,
+            max_tip_length_to_length_ratio=0.09,
+        )
+        arrow.set_opacity(0.56 if visible else 0)
+        return VGroup(pred[0], pred[1], pred[2], guide, truth, arrow)
+
+    def make_feedback_slot():
+        error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
+        start = output_pos + DOWN * 0.42 + LEFT * 0.05
+        end = DOWN * (model_height / 2 + 0.04) + RIGHT * 0.25
+        arc = ArcBetweenPoints(
+            start,
+            end,
+            angle=-PI / 2.4,
+            color=params.get("error_color", WARNING),
+            stroke_width=1.4,
+        )
+        arc.set_opacity((0.18 + 0.22 * error_level) if phase == "loop" else 0.0)
+        pulse = Dot(
+            arc.point_from_proportion(params.get("pulse_position", 0.42)),
+            radius=0.045,
+            color=params.get("error_color", WARNING),
+        )
+        pulse.set_opacity(0.72 if phase == "loop" else 0.0)
+        feedback = VGroup(arc, pulse)
+        feedback.move_to(feedback_pos)
+        return feedback
 
     full = VGroup(
-        mode_slot,
-        input_slot,
-        input_arrow,
-        model,
-        output_arrow,
-        output_slot,
-        feedback,
-        note,
-        panel,
+        make_input_slot(),
+        make_model(),
+        make_output_slot(),
+        make_feedback_slot(),
     )
     full.set_opacity(params.get("opacity", 1.0))
     return full
