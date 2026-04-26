@@ -895,20 +895,13 @@ def make_training_loop(params, zone):
         return VGroup(tag_text, tag_line)
 
     def make_mode_pair():
-        training = mode_tag("Training" if phase == "intro" else "training mode", HIGHLIGHT)
-        inference = mode_tag("Inference" if phase == "intro" else "inference mode", SECONDARY)
-        if phase == "intro":
-            training.set_opacity(0.75)
-            inference.set_opacity(0.75)
-        elif phase in {"training", "loop", "trained"} or (phase == "core" and active_mode == "training"):
-            training.set_opacity(0.55)
-            inference.set_opacity(0)
-        elif phase in {"inference", "summary"} or (phase == "core" and active_mode == "inference"):
-            training.set_opacity(0)
-            inference.set_opacity(0.55)
-        else:
-            training.set_opacity(0)
-            inference.set_opacity(0)
+        # Scene 4 should not keep mode labels pinned for the whole scene.
+        # Keep the structure stable, but make the tags visible only during the opening beat.
+        training = mode_tag("Training", HIGHLIGHT)
+        inference = mode_tag("Inference", SECONDARY)
+        opacity = 0.72 if phase == "intro" else 0.0
+        training.set_opacity(opacity)
+        inference.set_opacity(opacity)
         pair = VGroup(training, inference).arrange(RIGHT, buff=0.56)
         pair.move_to(mode_pos)
         return pair
@@ -1078,21 +1071,38 @@ def make_training_loop(params, zone):
         note = VGroup(note_top, note_bottom).arrange(DOWN, buff=0.18).move_to(note_pos)
         modes = make_mode_pair()
 
-        graph_opacity = 1.0 if phase == "generalization_final" else 0.0
+        # Generalization must emerge cleanly from the model, not appear as a new slide.
+        # Keep all graph subobjects structurally present, but reveal them progressively.
+        graph_progress = 0.0
         if phase == "generalization":
-            graph_opacity = 0.55
-        panel.set_opacity(0.85 if phase == "generalization" else graph_opacity)
-        x_axis.set_opacity(0.35 if phase == "generalization" else 0.62 * graph_opacity)
-        y_axis.set_opacity(0.35 if phase == "generalization" else 0.62 * graph_opacity)
-        points.set_opacity(0.45 if phase == "generalization" else 0.76 * graph_opacity)
-        pattern_glow.set_opacity(0.06 if phase == "generalization" else 0.12 * graph_opacity)
-        pattern.set_opacity(0.55 if phase == "generalization" else graph_opacity)
+            graph_progress = 0.55
+        elif phase == "generalization_final":
+            graph_progress = 1.0
+
+        pattern_start = p(0.8, 1.15)
+        pattern_end = p(0.8 + (8.5 - 0.8) * max(graph_progress, 0.04), 1.15 + (7.9 - 1.15) * max(graph_progress, 0.04))
+        pattern.put_start_and_end_on(pattern_start, pattern_end)
+        pattern_glow.put_start_and_end_on(pattern_start, pattern_end)
+
+        panel.set_opacity(0.82 * graph_progress)
+        x_axis.set_opacity(0.52 * graph_progress)
+        y_axis.set_opacity(0.52 * graph_progress)
+        pattern_glow.set_opacity(0.10 * graph_progress)
+        pattern.set_opacity(0.88 * graph_progress)
+
+        visible_points = int(round(6 * graph_progress))
+        for index, point in enumerate(points):
+            point.set_opacity(0.70 if index < visible_points else 0.0)
+
         unseen.set_opacity(1.0 if phase == "generalization_final" else 0.0)
-        unseen_guide.set_opacity(0.55 if phase == "generalization_final" else 0.0)
+        unseen_guide.set_opacity(0.48 if phase == "generalization_final" else 0.0)
         title.set_opacity(1.0 if phase == "generalization_final" else 0.0)
-        subtitle.set_opacity(1.0 if phase == "generalization_final" else 0.0)
-        model_mark.set_opacity(0.75 if phase == "generalization" else graph_opacity)
-        note.set_opacity(1.0 if phase == "summary" else 0.0)
+        subtitle.set_opacity(0.86 if phase == "generalization_final" else 0.0)
+
+        # The model badge and summary notes were visually competing with the graph.
+        # Keep their objects in the stable structure, but do not show them.
+        model_mark.set_opacity(0.0)
+        note.set_opacity(0.0)
         if phase in {"generalization", "generalization_final"}:
             shell_glow.set_opacity(0)
             core.set_opacity(0)
@@ -1172,36 +1182,46 @@ def make_training_loop(params, zone):
         return VGroup(pred[0], pred[1], pred[2], guide, truth, arrow)
 
     def make_feedback_slot():
+        # Feedback is part of the training loop only. It must never visually leak into
+        # summary or generalization frames, but the two-child structure must persist.
         error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
-        start = output_pos + DOWN * 0.42 + LEFT * 0.05
-        end = DOWN * (model_height / 2 + 0.04) + RIGHT * 0.25
+        start = RIGHT * 1.92 + DOWN * 0.48
+        end = RIGHT * 0.42 + DOWN * 0.56
         arc = ArcBetweenPoints(
             start,
             end,
-            angle=-PI / 2.4,
+            angle=-PI / 3.6,
             color=params.get("error_color", WARNING),
-            stroke_width=1.4,
+            stroke_width=0.9,
         )
-        arc.set_opacity((0.18 + 0.22 * error_level) if phase == "loop" else 0.0)
+        arc.set_z_index(-2)
+        arc_opacity = (0.07 + 0.11 * error_level) if phase == "loop" else 0.0
+        arc.set_opacity(arc_opacity)
+
         pulse = Dot(
             arc.point_from_proportion(params.get("pulse_position", 0.42)),
-            radius=0.045,
+            radius=0.035,
             color=params.get("error_color", WARNING),
         )
-        pulse.set_opacity(0.72 if phase == "loop" else 0.0)
-        feedback = VGroup(arc, pulse)
-        feedback.move_to(feedback_pos)
-        return feedback
+        pulse.set_z_index(-1)
+        pulse.set_opacity(0.42 if phase == "loop" else 0.0)
+        return VGroup(arc, pulse)
 
-    full = VGroup(
-        make_input_slot(),
-        make_model(),
-        make_output_slot(),
-        make_feedback_slot(),
-    )
+    input_slot = make_input_slot()
+    model = make_model()
+    output_slot = make_output_slot()
+    feedback_slot = make_feedback_slot()
+
+    # Preserve the exact top-level order required for ReplacementTransform mapping,
+    # but force feedback behind the model so it cannot cover the graph or labels.
+    feedback_slot.set_z_index(-2)
+    model.set_z_index(1)
+    input_slot.set_z_index(2)
+    output_slot.set_z_index(2)
+
+    full = VGroup(input_slot, model, output_slot, feedback_slot)
     full.set_opacity(params.get("opacity", 1.0))
     return full
-
 
 def make_show_plot(params, zone):
     x_range = params.get("x_range", [0, 10, 2])
