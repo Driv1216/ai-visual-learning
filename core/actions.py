@@ -889,8 +889,12 @@ def make_training_loop(params, zone):
     panel_pos = ORIGIN
 
     def blank(width=1.0, height=0.5):
-        rect = Rectangle(width=width, height=height)
-        rect.set_opacity(0)
+        rect = Rectangle(
+            width=width,
+            height=height,
+            fill_opacity=0,
+            stroke_opacity=0,
+        )
         return rect
 
     def mode_tag(text, color, opacity=1.0):
@@ -1130,6 +1134,16 @@ def make_training_loop(params, zone):
             },
         )
         model_mark.next_to(panel, UP, buff=0.18)
+
+        if phase == "generalization":
+            panel.set_opacity(0.85)
+            x_axis.set_opacity(0.35)
+            y_axis.set_opacity(0.35)
+            points.set_opacity(0.45)
+            pattern.set_stroke(opacity=0.55)
+            pattern_glow.set_stroke(opacity=0.06)
+            model_mark.set_opacity(0.75)
+
         return VGroup(model_mark, panel, x_axis, y_axis, points, pattern_glow, pattern, new_dot, title, subtitle)
 
     mode_slot = make_mode_slot()
