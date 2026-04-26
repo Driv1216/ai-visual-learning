@@ -889,13 +889,9 @@ def make_training_loop(params, zone):
     panel_pos = ORIGIN
 
     def blank(width=1.0, height=0.5):
-        rect = Rectangle(
-            width=width,
-            height=height,
-            fill_opacity=0,
-            stroke_opacity=0,
-        )
-        return rect
+        spacer = VGroup()
+        spacer.move_to(ORIGIN)
+        return spacer
 
     def mode_tag(text, color, opacity=1.0):
         tag_text = Text(text, font_size=15, color=TEXT_SUB, weight=MEDIUM)
