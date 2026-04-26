@@ -1134,80 +1134,82 @@ def make_show_generalization_pattern(params, zone):
     stage = params.get("stage", "final" if params.get("show_text", False) else "pattern")
     show_text = params.get("show_text", stage == "final")
 
-    # The model sits at ORIGIN with radius ~0.82 and its fixed label below it.
-    # Keep all ending-support visuals outside the model's label/circle area.
-    # This avoids the previous ugly diagonal graph cutting across the model.
+    # The support visuals must read as a calm realization, not another diagram.
+    # Keep them compact around the fixed center model: old examples are only
+    # soft echoes, then they collapse into a simple learned pattern.
 
     # ------------------------------------------------------------------
     # 1) OLD EXAMPLES — faint echoes around the model, never a database/list
     # ------------------------------------------------------------------
     memory_positions = [
-        LEFT * 2.65 + UP * 0.85,
-        LEFT * 2.25 + UP * 0.22,
-        LEFT * 2.55 + DOWN * 0.42,
-        LEFT * 1.70 + UP * 0.62,
-        RIGHT * 1.75 + UP * 0.70,
-        RIGHT * 2.35 + UP * 0.18,
+        LEFT * 1.95 + UP * 0.84,
+        LEFT * 2.15 + UP * 0.16,
+        LEFT * 1.72 + DOWN * 0.46,
+        RIGHT * 1.55 + UP * 0.72,
+        RIGHT * 1.95 + UP * 0.04,
+        RIGHT * 1.48 + DOWN * 0.50,
     ]
     pattern_positions = [
-        LEFT * 2.25 + DOWN * 0.55,
-        LEFT * 1.45 + DOWN * 0.38,
-        LEFT * 0.65 + DOWN * 0.24,
-        RIGHT * 0.62 + DOWN * 0.18,
-        RIGHT * 1.42 + DOWN * 0.34,
-        RIGHT * 2.20 + DOWN * 0.58,
+        LEFT * 0.74 + DOWN * 0.20,
+        LEFT * 0.43 + DOWN * 0.05,
+        LEFT * 0.14 + UP * 0.06,
+        RIGHT * 0.18 + UP * 0.10,
+        RIGHT * 0.49 + UP * 0.20,
+        RIGHT * 0.78 + UP * 0.36,
     ]
 
     examples_t = 0.0 if stage == "memory" else 1.0
     default_examples_opacity = {
-        "memory": 0.38,
-        "pattern": 0.15,
-        "new_example": 0.07,
-        "final": 0.04,
-    }.get(stage, 0.10)
+        "memory": 0.30,
+        "pattern": 0.12,
+        "new_example": 0.05,
+        "final": 0.025,
+    }.get(stage, 0.08)
     examples_opacity = params.get("examples_opacity", default_examples_opacity)
 
     old_dots = VGroup()
     for memory_pos, pattern_pos in zip(memory_positions, pattern_positions):
         point = memory_pos * (1 - examples_t) + pattern_pos * examples_t
-        radius = 0.048 if stage == "memory" else 0.032
+        radius = 0.042 if stage == "memory" else 0.026
         old_dots.add(Dot(point, radius=radius, color=SECONDARY).set_opacity(examples_opacity))
 
-    # Label is visible only in the memory stage and stays away from final text.
-    old_label = Text("old examples", font_size=13, color=TEXT_SUB, weight=MEDIUM)
-    old_label.move_to(LEFT * 2.55 + DOWN * 0.98)
-    old_label.set_opacity(0.32 if stage == "memory" else 0.0)
+    # This label appears only while the old examples briefly return as memories.
+    # It disappears before the final frame so the ending is not label-heavy.
+    old_label = Text("old examples", font_size=12, color=TEXT_SUB, weight=MEDIUM)
+    old_label.move_to(LEFT * 2.08 + DOWN * 0.88)
+    old_label.set_opacity(0.24 if stage == "memory" else 0.0)
     old_examples_group = VGroup(old_dots, old_label)
 
     # ------------------------------------------------------------------
-    # 2) LEARNED PATTERN — compact curve below the model, not through it
+    # 2) LEARNED PATTERN — the examples collapse into this compact curve
     # ------------------------------------------------------------------
-    # This curve sits in a shallow band below the model and above final text.
-    # It communicates pattern without becoming a big graph or crossing labels.
+    # The curve sits inside/just behind the fixed model, so it reads as the
+    # structure the model carries forward rather than a separate graph.
     pattern_pts = [
-        LEFT * 2.25 + DOWN * 0.62,
-        LEFT * 1.38 + DOWN * 0.42,
-        LEFT * 0.45 + DOWN * 0.30,
-        RIGHT * 0.45 + DOWN * 0.30,
-        RIGHT * 1.38 + DOWN * 0.42,
-        RIGHT * 2.25 + DOWN * 0.62,
+        LEFT * 0.78 + DOWN * 0.23,
+        LEFT * 0.50 + DOWN * 0.10,
+        LEFT * 0.18 + UP * 0.02,
+        RIGHT * 0.14 + UP * 0.08,
+        RIGHT * 0.48 + UP * 0.20,
+        RIGHT * 0.80 + UP * 0.38,
     ]
     learned_curve = VMobject()
     learned_curve.set_points_smoothly(pattern_pts)
 
-    default_pattern_opacity = 0.0 if stage == "memory" else 0.72
+    default_pattern_opacity = 0.0 if stage == "memory" else 0.78
     pattern_opacity = params.get("pattern_opacity", default_pattern_opacity)
-    learned_curve.set_stroke(ACCENT, width=3.2, opacity=pattern_opacity)
+    learned_curve.set_stroke(ACCENT, width=3.6, opacity=pattern_opacity)
     pattern_glow = learned_curve.copy().set_stroke(
         ACCENT,
-        width=10,
-        opacity=0.0 if stage == "memory" else 0.08,
+        width=12,
+        opacity=0.0 if stage == "memory" else 0.11,
     )
 
-    # Small caption only during the pattern stage; hidden by final stage to avoid clutter.
-    pattern_caption = Text("learned pattern", font_size=14, color=ACCENT, weight=MEDIUM)
-    pattern_caption.next_to(learned_curve, DOWN, buff=0.12)
-    pattern_caption.set_opacity(0.46 if stage == "pattern" else 0.0)
+    # No extra "learned pattern" label in the landing frame: the visual pattern
+    # should carry the meaning, then the final Generalization title names it.
+    pattern_caption = Text("learned pattern", font_size=12, color=ACCENT, weight=MEDIUM)
+    pattern_caption.next_to(learned_curve, DOWN, buff=0.10)
+    pattern_caption.set_opacity(0.0)
     learned_pattern_group = VGroup(pattern_glow, learned_curve, pattern_caption)
 
     # ------------------------------------------------------------------
@@ -1216,46 +1218,46 @@ def make_show_generalization_pattern(params, zone):
     new_visible = stage in {"new_example", "final"}
     new_point_opacity = params.get("new_point_opacity", 0.92 if new_visible else 0.0)
 
-    input_pos = LEFT * 2.85 + UP * 0.92
-    model_entry = LEFT * 0.96 + UP * 0.18
-    model_exit = RIGHT * 0.96 + UP * 0.18
-    prediction_pos = RIGHT * 2.25 + DOWN * 0.62
+    input_pos = LEFT * 2.45 + UP * 0.82
+    model_entry = LEFT * 0.82 + UP * 0.04
+    model_exit = RIGHT * 0.82 + UP * 0.06
+    prediction_pos = RIGHT * 1.62 + UP * 0.36
 
-    input_dot = Dot(input_pos, radius=0.066, color=SECONDARY).set_opacity(new_point_opacity)
-    input_label = Text("new data", font_size=13, color=SECONDARY, weight=MEDIUM)
-    input_label.next_to(input_dot, UP, buff=0.12)
-    input_label.set_opacity(0.78 if new_visible else 0.0)
+    input_dot = Dot(input_pos, radius=0.062, color=SECONDARY).set_opacity(new_point_opacity)
+    input_label = Text("new data", font_size=12, color=SECONDARY, weight=MEDIUM)
+    input_label.next_to(input_dot, UP, buff=0.10)
+    input_label.set_opacity(0.70 if new_visible else 0.0)
 
     in_path = Arrow(
-        input_pos + RIGHT * 0.18,
+        input_pos + RIGHT * 0.16,
         model_entry,
         buff=0.0,
         color=SECONDARY,
-        stroke_width=2.2,
-        max_tip_length_to_length_ratio=0.08,
-    ).set_opacity(0.58 if new_visible else 0.0)
+        stroke_width=2.0,
+        max_tip_length_to_length_ratio=0.075,
+    ).set_opacity(0.44 if new_visible else 0.0)
 
     out_path = Arrow(
         model_exit,
-        prediction_pos + LEFT * 0.16,
+        prediction_pos + LEFT * 0.14,
         buff=0.0,
         color=PRIMARY,
-        stroke_width=2.2,
-        max_tip_length_to_length_ratio=0.08,
-    ).set_opacity(0.62 if new_visible else 0.0)
+        stroke_width=2.0,
+        max_tip_length_to_length_ratio=0.075,
+    ).set_opacity(0.50 if new_visible else 0.0)
 
-    prediction_dot = Dot(prediction_pos, radius=0.066, color=PRIMARY).set_opacity(new_point_opacity)
-    prediction_label = Text("prediction", font_size=13, color=TEXT_SUB, weight=MEDIUM)
-    prediction_label.next_to(prediction_dot, RIGHT, buff=0.12)
-    prediction_label.set_opacity(0.70 if new_visible else 0.0)
+    prediction_dot = Dot(prediction_pos, radius=0.062, color=PRIMARY).set_opacity(new_point_opacity)
+    prediction_label = Text("prediction", font_size=12, color=TEXT_SUB, weight=MEDIUM)
+    prediction_label.next_to(prediction_dot, RIGHT, buff=0.10)
+    prediction_label.set_opacity(0.58 if new_visible else 0.0)
 
     # A small gold landing tick marks that the prediction lies on the learned pattern.
     landing_tick = Line(
-        prediction_pos + LEFT * 0.13 + DOWN * 0.08,
-        prediction_pos + RIGHT * 0.13 + UP * 0.08,
+        prediction_pos + LEFT * 0.11 + DOWN * 0.055,
+        prediction_pos + RIGHT * 0.11 + UP * 0.055,
         color=ACCENT,
-        stroke_width=2.4,
-    ).set_opacity(0.70 if new_visible else 0.0)
+        stroke_width=2.2,
+    ).set_opacity(0.62 if new_visible else 0.0)
 
     new_example_group = VGroup(
         input_dot,
