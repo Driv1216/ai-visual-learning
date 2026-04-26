@@ -935,10 +935,11 @@ def _scene4_model_core(params, zone):
     lock.set_opacity(0.72 if phase == "fixed" else 0.0)
 
     # "Fixed model" label — outside circle, below, only during fixed phase
-    fixed_label = Text("Fixed model", font_size=17, color=TEXT_SUB, weight=MEDIUM)
-    fixed_label.next_to(shell, DOWN, buff=0.38)
+    # Positioned well clear of the circle so it never crowds the pattern curve
+    fixed_label = Text("Fixed model", font_size=16, color=TEXT_SUB, weight=MEDIUM)
+    fixed_label.next_to(shell, DOWN, buff=0.45)
     fixed_label.set_opacity(
-        0.80 if phase == "fixed" and params.get("show_fixed_label", True) else 0.0
+        0.72 if phase == "fixed" and params.get("show_fixed_label", True) else 0.0
     )
 
     core = VGroup(glow, shell, pattern, label, lock, fixed_label)
@@ -1034,13 +1035,32 @@ def make_show_adjustment_loop(params, zone):
 
 def make_show_repeat_learning(params, zone):
     progress = max(0.0, min(1.0, params.get("model_progress", 0.65)))
-    example = Dot(LEFT * 2.6 + UP * 0.2, radius=0.055, color=HIGHLIGHT)
-    pred = Dot(RIGHT * 2.5 + UP * (0.38 - 0.14 * progress), radius=0.055, color=PRIMARY)
-    true = Dot(RIGHT * 2.5 + DOWN * (0.16 - 0.06 * progress), radius=0.055, color=ACCENT)
-    in_arrow = Arrow(LEFT * 2.38 + UP * 0.15, LEFT * 0.9 + UP * 0.04, buff=0, color=HIGHLIGHT, stroke_width=2.5)
-    out_arrow = Arrow(RIGHT * 0.9 + UP * 0.02, pred.get_left() + LEFT * 0.1, buff=0, color=PRIMARY, stroke_width=2.5)
-    gap = Line(pred.get_center(), true.get_center(), color=WARNING, stroke_width=2.6).set_opacity(0.76 - 0.26 * progress)
-    label = Text("again and again", font_size=17, color=TEXT_SUB, weight=MEDIUM).move_to(DOWN * 1.25)
+    # Example dot on the left
+    example = Dot(LEFT * 2.8 + UP * 0.12, radius=0.058, color=HIGHLIGHT)
+    # Prediction and true dots on the right — gap shrinks as progress grows
+    pred_y = 0.42 - 0.32 * progress
+    true_y = -0.18 + 0.14 * progress
+    pred = Dot(RIGHT * 2.6 + UP * pred_y, radius=0.058, color=PRIMARY)
+    true = Dot(RIGHT * 2.6 + UP * true_y, radius=0.058, color=ACCENT)
+    # Arrows through model
+    in_arrow = Arrow(
+        LEFT * 2.55 + UP * 0.08, LEFT * 0.92 + UP * 0.04,
+        buff=0, color=HIGHLIGHT, stroke_width=2.4,
+        max_tip_length_to_length_ratio=0.09,
+    )
+    out_arrow = Arrow(
+        RIGHT * 0.92 + UP * 0.04, pred.get_left() + LEFT * 0.08,
+        buff=0, color=PRIMARY, stroke_width=2.4,
+        max_tip_length_to_length_ratio=0.09,
+    )
+    # Error gap — visually shrinks
+    gap = Line(
+        pred.get_center(), true.get_center(),
+        color=WARNING, stroke_width=3.0,
+    ).set_opacity(max(0.1, 0.85 - 0.65 * progress))
+    # Label goes ABOVE — clear of model's "Fixed model" label below
+    label = Text("again and again", font_size=16, color=TEXT_SUB, weight=MEDIUM)
+    label.move_to(UP * 1.55)
     group = VGroup(example, in_arrow, out_arrow, pred, true, gap, label)
     group.set_opacity(params.get("opacity", 1.0))
     return group
@@ -1049,44 +1069,40 @@ def make_show_repeat_learning(params, zone):
 def make_show_inference_pass(params, zone):
     opacity = params.get("opacity", 1.0)
 
-    # Layout: new data on the RIGHT side, flows LEFT into the fixed model at ORIGIN,
-    # prediction exits further RIGHT below. Clean, one-directional, no feedback.
-    #
-    #   [New data] ──────────────────► [model]
-    #                                     │
-    #                                     ▼
-    #                              [● Prediction]
-    #
-    # "New data" arrives from top-right. Output drops down-right from model.
+    # Clean horizontal pipeline — everything on one line:
+    # [● New data] ────────► [model] ────────► [● Prediction]
+    # New data comes from the LEFT, exits as prediction to the RIGHT.
+    # This mirrors the training-examples layout (examples also from the left)
+    # but without any feedback loop — purely one-directional.
 
-    new_data_pos = RIGHT * 3.0 + UP * 0.55
-    pred_pos = RIGHT * 2.2 + DOWN * 1.0
+    new_data_pos = LEFT * 2.8 + UP * 0.0
+    pred_pos = RIGHT * 2.8 + UP * 0.0
 
     new_data = Dot(new_data_pos, radius=0.075, color=SECONDARY)
-    new_label = Text("New data", font_size=17, color=SECONDARY, weight=MEDIUM)
-    new_label.next_to(new_data, RIGHT, buff=0.18)
+    new_label = Text("New data", font_size=16, color=SECONDARY, weight=MEDIUM)
+    new_label.next_to(new_data, UP, buff=0.16)
 
     pred = Dot(pred_pos, radius=0.075, color=PRIMARY)
-    pred_label = Text("Prediction", font_size=17, color=TEXT_SUB, weight=MEDIUM)
-    pred_label.next_to(pred, RIGHT, buff=0.18)
+    pred_label = Text("Prediction", font_size=16, color=TEXT_SUB, weight=MEDIUM)
+    pred_label.next_to(pred, UP, buff=0.16)
 
-    # Arrow from new data → model right edge
+    # Arrow: new data → model left edge
     in_arrow = Arrow(
-        new_data_pos + LEFT * 0.10,
-        RIGHT * 0.88 + UP * 0.14,
+        new_data_pos + RIGHT * 0.12,
+        LEFT * 0.88,
         buff=0.0,
         color=SECONDARY,
         stroke_width=2.6,
-        max_tip_length_to_length_ratio=0.10,
+        max_tip_length_to_length_ratio=0.09,
     )
-    # Arrow from model bottom → prediction
+    # Arrow: model right edge → prediction
     out_arrow = Arrow(
-        DOWN * 0.88,
-        pred_pos + UP * 0.12,
+        RIGHT * 0.88,
+        pred_pos + LEFT * 0.12,
         buff=0.0,
         color=PRIMARY,
         stroke_width=2.6,
-        max_tip_length_to_length_ratio=0.10,
+        max_tip_length_to_length_ratio=0.09,
     )
 
     group = VGroup(in_arrow, out_arrow, new_data, new_label, pred, pred_label)
@@ -1095,12 +1111,12 @@ def make_show_inference_pass(params, zone):
 
 
 def make_show_build_use_summary(params, zone):
-    # Two clean lines below the model. Centered, not split across left/right.
-    # Uses a subtle separator dot between them for visual cleanliness.
-    build = Text("Training  ·  build the model", font_size=22, color=HIGHLIGHT, weight=MEDIUM)
-    use = Text("Inference  ·  use the model", font_size=22, color=SECONDARY, weight=MEDIUM)
-    group = VGroup(build, use).arrange(DOWN, buff=0.32)
-    group.move_to(DOWN * 2.2)
+    # Two lines, stacked, centered below the model.
+    # Sit at DOWN * 1.9 — clear of the model circle bottom (~DOWN * 1.27 with label).
+    build = Text("Training  ·  build the model", font_size=21, color=HIGHLIGHT, weight=MEDIUM)
+    use = Text("Inference  ·  use the model", font_size=21, color=SECONDARY, weight=MEDIUM)
+    group = VGroup(build, use).arrange(DOWN, buff=0.28)
+    group.move_to(DOWN * 1.95)
     group.set_opacity(params.get("opacity", 1.0))
     return group
 
@@ -1108,83 +1124,100 @@ def make_show_build_use_summary(params, zone):
 def make_show_generalization_pattern(params, zone):
     show_text = params.get("show_text", False)
 
-    # --- Training scatter dots ---
-    # These are the noisy training observations — scattered around an underlying trend.
-    # They sit in a wide band across the screen, model at center.
-    # When show_text is False (pattern only), dots are bright but no curve text shown.
-    # When show_text is True, dots fade slightly — the CURVE is the star.
+    # The visual concept:
+    # The model (at ORIGIN) looks DOWN at training scatter and extracted a pattern.
+    # The scatter lives in the LOWER portion of the screen (-0.8 to -2.2 vertically).
+    # The learned curve threads through the scatter below the model.
+    # A new cyan dot appears ON the curve (not seen during training) — still fits perfectly.
+    #
+    # This separates model from data visually, making it readable as:
+    #   "model up here → learned pattern down there → new point also fits"
+
+    # --- Scatter of training observations (lower screen, noisy cloud) ---
     scatter_positions = [
-        LEFT * 3.6 + DOWN * 1.05,
-        LEFT * 3.1 + DOWN * 0.52,
-        LEFT * 2.7 + DOWN * 0.78,
-        LEFT * 2.2 + DOWN * 0.18,
-        LEFT * 1.8 + DOWN * 0.44,
-        LEFT * 1.3 + DOWN * 0.08,
-        LEFT * 0.9 + UP * 0.22,
-        LEFT * 0.4 + DOWN * 0.12,
-        RIGHT * 0.2 + UP * 0.34,
-        RIGHT * 0.7 + UP * 0.08,
-        RIGHT * 1.2 + UP * 0.52,
-        RIGHT * 1.7 + UP * 0.28,
-        RIGHT * 2.2 + UP * 0.68,
+        LEFT * 3.5 + DOWN * 1.9,
+        LEFT * 2.9 + DOWN * 1.3,
+        LEFT * 2.4 + DOWN * 1.65,
+        LEFT * 1.9 + DOWN * 1.1,
+        LEFT * 1.4 + DOWN * 1.45,
+        LEFT * 0.8 + DOWN * 1.0,
+        LEFT * 0.2 + DOWN * 1.22,
+        RIGHT * 0.4 + DOWN * 0.9,
+        RIGHT * 1.0 + DOWN * 1.18,
+        RIGHT * 1.6 + DOWN * 0.85,
+        RIGHT * 2.2 + DOWN * 1.08,
+        RIGHT * 2.8 + DOWN * 0.72,
+        RIGHT * 3.3 + DOWN * 0.95,
     ]
+    # Dots are CYAN (SECONDARY) — same color as "new data", reinforcing "these were data"
     scatter = VGroup(*[
-        Dot(p, radius=0.055, color=SECONDARY).set_opacity(0.55 if not show_text else 0.28)
+        Dot(p, radius=0.058, color=SECONDARY).set_opacity(0.50 if not show_text else 0.22)
         for p in scatter_positions
     ])
 
-    # --- The learned curve — threading through the scatter ---
-    # This is the pattern the model extracted. It passes THROUGH the model circle.
-    # Points are chosen to create a graceful rising S-curve from bottom-left to top-right.
+    # --- Learned curve — smooth trend through the scatter ---
+    # Stays in the lower half, never crosses through the model circle
     curve_pts = [
-        LEFT * 3.8 + DOWN * 0.9,
-        LEFT * 2.6 + DOWN * 0.55,
-        LEFT * 1.4 + DOWN * 0.18,
-        LEFT * 0.2 + UP * 0.18,
-        RIGHT * 1.0 + UP * 0.40,
-        RIGHT * 2.2 + UP * 0.60,
-        RIGHT * 3.2 + UP * 1.05,
+        LEFT * 3.8 + DOWN * 1.75,
+        LEFT * 2.5 + DOWN * 1.42,
+        LEFT * 1.2 + DOWN * 1.15,
+        ORIGIN + DOWN * 0.98,
+        RIGHT * 1.2 + DOWN * 0.82,
+        RIGHT * 2.5 + DOWN * 0.68,
+        RIGHT * 3.8 + DOWN * 0.52,
     ]
     curve = VMobject()
     curve.set_points_smoothly(curve_pts)
-    curve_opacity = 0.88 if show_text else 0.72
-    curve.set_stroke(ACCENT, width=4.2, opacity=curve_opacity)
+    curve.set_stroke(ACCENT, width=4.0, opacity=0.88 if show_text else 0.70)
 
-    # Soft halo under the curve — the signature 3B1B glow
     curve_glow = VMobject()
     curve_glow.set_points_smoothly(curve_pts)
-    curve_glow.set_stroke(ACCENT, width=18, opacity=0.09 if show_text else 0.05)
+    curve_glow.set_stroke(ACCENT, width=20, opacity=0.08 if show_text else 0.04)
 
-    # --- New data point arriving at the right end of the curve ---
-    # It's a distinct dot (cyan) that sits ON the curve, demonstrating generalization
-    new_pt_pos = RIGHT * 2.95 + UP * 0.92
-    new_pt = Dot(new_pt_pos, radius=0.08, color=SECONDARY)
-    new_pt.set_opacity(0.92 if show_text else 0.0)
+    # --- "New example" dot — arrives at the RIGHT end of the curve ---
+    # It was never in training, but it lands exactly on the pattern.
+    new_pt_pos = RIGHT * 3.5 + DOWN * 0.56
+    new_pt = Dot(new_pt_pos, radius=0.085, color=SECONDARY)
+    new_pt.set_opacity(0.95 if show_text else 0.0)
 
-    # Small arrow pointing to it: "new example"
-    new_arrow = Arrow(
-        new_pt_pos + RIGHT * 0.55 + DOWN * 0.18,
-        new_pt_pos + RIGHT * 0.12,
-        buff=0.0,
-        color=SECONDARY,
-        stroke_width=2.2,
-        max_tip_length_to_length_ratio=0.18,
-    )
-    new_arrow.set_opacity(0.82 if show_text else 0.0)
+    # Tiny label "new" above it
+    new_pt_label = Text("new", font_size=14, color=SECONDARY, weight=MEDIUM)
+    new_pt_label.next_to(new_pt, UP, buff=0.10)
+    new_pt_label.set_opacity(0.85 if show_text else 0.0)
 
-    # Prediction dot — where the curve predicts the output for the new point
-    pred_pos = RIGHT * 3.4 + UP * 1.12
-    pred_dot = Dot(pred_pos, radius=0.07, color=PRIMARY)
-    pred_dot.set_opacity(0.88 if show_text else 0.0)
+    # A check-mark style indicator: small line from curve to dot showing it fits
+    fit_line = DashedLine(
+        RIGHT * 3.5 + DOWN * 0.60,
+        RIGHT * 3.5 + DOWN * 0.72,
+        color=ACCENT,
+        stroke_width=2.0,
+        dash_length=0.06,
+    ).set_opacity(0.72 if show_text else 0.0)
 
-    # --- Final text — appears only at the very end ---
+    # --- Visual connector: subtle line from model bottom toward curve ---
+    # Shows the model is the SOURCE of the pattern
+    connector = DashedLine(
+        DOWN * 0.88,        # model bottom edge
+        ORIGIN + DOWN * 0.96,  # top of curve
+        color=TEXT_SUB,
+        stroke_width=1.5,
+        dash_length=0.08,
+    ).set_opacity(0.28 if show_text else 0.0)
+
+    # --- Final text (only at very end) ---
     title = Text("Generalization", font_size=34, color=TEXT_MAIN, weight=BOLD)
     subtitle = Text("works on new examples", font_size=20, color=TEXT_SUB, weight=MEDIUM)
     text_group = VGroup(title, subtitle).arrange(DOWN, buff=0.14)
-    text_group.move_to(DOWN * 2.55)
+    text_group.move_to(DOWN * 2.78)
     text_group.set_opacity(1.0 if show_text else 0.0)
 
-    group = VGroup(curve_glow, curve, scatter, new_pt, new_arrow, pred_dot, text_group)
+    group = VGroup(
+        curve_glow, curve,
+        scatter,
+        connector,
+        new_pt, new_pt_label, fit_line,
+        text_group,
+    )
     group.set_opacity(params.get("opacity", 1.0))
     return group
 
@@ -1611,7 +1644,7 @@ def transition_in_for(obj, transition_name: str):
     if transition_name in {"none", "smooth"}:
         return FadeIn(obj)
     if transition_name == "fade":
-        return FadeIn(obj, shift=UP * 0.3, scale=0.96)
+        return FadeIn(obj)
     if transition_name == "write":
         return Write(obj)
     if transition_name == "create":
