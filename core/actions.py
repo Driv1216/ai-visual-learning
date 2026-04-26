@@ -877,8 +877,16 @@ def make_training_loop(params, zone):
     model_label = params.get("model_label", "Machine Learning System")
     model_color = params.get("model_color", ACCENT)
     active_mode = params.get("active_mode", "none")
-    model_width = params.get("model_width", 3.05)
-    model_height = params.get("model_height", 1.16)
+    model_width = 3.05
+    model_height = 1.16
+
+    mode_pos = UP * 1.22
+    input_pos = LEFT * 3.12
+    model_pos = ORIGIN
+    output_pos = RIGHT * 3.12
+    feedback_pos = DOWN * 0.9 + RIGHT * 0.8
+    note_pos = DOWN * 1.05
+    panel_pos = ORIGIN
 
     def blank(width=1.0, height=0.5):
         rect = Rectangle(width=width, height=height)
@@ -895,24 +903,21 @@ def make_training_loop(params, zone):
         return tag
 
     def make_mode_slot():
-        show_modes = params.get("show_modes")
-        if show_modes is None:
-            show_modes = phase in {"intro", "training", "loop", "trained", "fixed", "inference"}
-        if not show_modes:
-            return blank(2.8, 0.38).move_to(UP * 1.18)
-
         if phase == "intro":
-            training = mode_tag("Training", HIGHLIGHT, 0.82)
-            inference = mode_tag("Inference", SECONDARY, 0.82)
+            training = mode_tag("Training", HIGHLIGHT, 0.75)
+            inference = mode_tag("Inference", SECONDARY, 0.75)
             slot = VGroup(training, inference).arrange(RIGHT, buff=0.56)
-        elif active_mode == "training":
-            slot = mode_tag("training mode", HIGHLIGHT, 0.9)
-        elif active_mode == "inference":
-            slot = mode_tag("inference mode", SECONDARY, 0.9)
+        elif phase in {"training", "loop", "trained"}:
+            slot = mode_tag("training mode", HIGHLIGHT, 0.55)
+        elif phase in {"inference", "summary"}:
+            slot = mode_tag("inference mode", SECONDARY, 0.55)
+        elif phase == "core" and active_mode == "training":
+            slot = mode_tag("training mode", HIGHLIGHT, 0.55)
+        elif phase == "core" and active_mode == "inference":
+            slot = mode_tag("inference mode", SECONDARY, 0.55)
         else:
             slot = blank(2.8, 0.38)
-
-        slot.move_to(UP * 1.22)
+        slot.move_to(mode_pos)
         return slot
 
     def make_model_core():
@@ -959,7 +964,9 @@ def make_training_loop(params, zone):
         shell_glow.set_opacity(params.get("model_glow_opacity", 0.14 + progress * 0.1))
 
         model = VGroup(shell_glow, core, label, trace)
-        model.move_to(ORIGIN)
+        model.move_to(model_pos)
+        if phase in {"generalization", "generalization_final"}:
+            model.set_opacity(0)
         return model
 
     def make_input_slot():
@@ -967,27 +974,27 @@ def make_training_loop(params, zone):
             example = params.get("example", ["x", "y"])
             card = _training_card(str(example[0]), str(example[1]), params, known=True)
             card.scale(params.get("card_scale", 0.82))
-            card.move_to(LEFT * 3.12)
+            card.move_to(input_pos)
             ghosts = VGroup()
-            for idx, ghost_data in enumerate(params.get("ghost_examples", [])[:1]):
+            for ghost_data in params.get("ghost_examples", [])[:1]:
                 ghost = _training_card(str(ghost_data[0]), str(ghost_data[1]), params, known=True)
                 ghost.scale(params.get("ghost_card_scale", 0.7))
-                ghost.set_opacity(params.get("ghost_opacity", 0.12))
-                ghost.move_to(card.get_center() + LEFT * 0.08 + DOWN * (0.28 + idx * 0.18))
+                ghost.set_opacity(min(params.get("ghost_opacity", 0.12), 0.12))
+                ghost.move_to(card.get_center() + LEFT * 0.08 + DOWN * 0.28)
                 ghosts.add(ghost)
             return VGroup(ghosts, card)
 
-        if phase in {"fixed", "inference"}:
+        if phase == "inference":
             card = _training_card(params.get("new_data_label", "new x"), None, params, known=False)
             card.scale(params.get("card_scale", 0.82))
-            card.move_to(LEFT * 3.12)
+            card.move_to(input_pos)
             return card
 
-        return blank(1.8, 0.8).move_to(LEFT * 3.12)
+        return blank(1.8, 0.8).move_to(input_pos)
 
     def make_prediction_slot():
-        if phase in {"training", "loop", "fixed", "inference"}:
-            stroke = SECONDARY if phase in {"fixed", "inference"} else PRIMARY
+        if phase in {"training", "loop", "inference"}:
+            stroke = SECONDARY if phase == "inference" else PRIMARY
             pred = _boxed_label(
                 params.get("prediction_label", "prediction"),
                 {
@@ -999,14 +1006,15 @@ def make_training_loop(params, zone):
                     "opacity": 0.94,
                 },
             )
-            pred.move_to(RIGHT * 3.12 + UP * 0.08)
+            pred.move_to(output_pos)
 
             if phase != "loop":
                 return pred
 
             error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
+            gap = error_level * 0.42
             truth = Dot(
-                pred.get_center() + DOWN * (0.16 + 0.42 * error_level),
+                pred.get_center() + DOWN * gap,
                 radius=0.045,
                 color=HIGHLIGHT,
             )
@@ -1020,13 +1028,13 @@ def make_training_loop(params, zone):
             guide.set_opacity(0.45 + 0.25 * error_level)
             return VGroup(pred, guide, truth)
 
-        return blank(1.6, 0.7).move_to(RIGHT * 3.12)
+        return blank(1.6, 0.7).move_to(output_pos)
 
     def make_arrow_between(start, end, visible=True):
         arrow = Arrow(
             start,
             end,
-            buff=0.12,
+            buff=0.0,
             color=TEXT_SUB,
             stroke_width=2.4,
             max_tip_length_to_length_ratio=0.09,
@@ -1036,7 +1044,7 @@ def make_training_loop(params, zone):
 
     def make_feedback_slot(model, output_slot):
         if phase != "loop":
-            return blank(1.2, 0.5).move_to(DOWN * 0.9 + RIGHT * 1.2)
+            return blank(1.2, 0.5).move_to(feedback_pos)
 
         error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
         start = output_slot.get_bottom() + DOWN * 0.08 + LEFT * 0.05
@@ -1051,20 +1059,22 @@ def make_training_loop(params, zone):
         arc.set_opacity(0.18 + 0.22 * error_level)
         pulse = Dot(
             arc.point_from_proportion(params.get("pulse_position", 0.42)),
-            radius=0.045 + 0.035 * error_level,
+            radius=0.045,
             color=params.get("error_color", WARNING),
         )
-        pulse.set_opacity(0.75)
-        return VGroup(arc, pulse)
+        pulse.set_opacity(0.72)
+        feedback = VGroup(arc, pulse)
+        feedback.move_to(feedback_pos)
+        return feedback
 
     def make_note_slot():
         if phase == "summary":
             left = Text("Training shaped it.", font_size=21, color=TEXT_SUB, weight=MEDIUM)
             right = Text("Inference uses it.", font_size=21, color=TEXT_SUB, weight=MEDIUM)
             note = VGroup(left, right).arrange(DOWN, buff=0.18)
-            note.move_to(DOWN * 1.05)
+            note.move_to(note_pos)
             return note
-        return blank(3.2, 0.6).move_to(DOWN * 1.0)
+        return blank(3.2, 0.6).move_to(note_pos)
 
     def make_pattern_panel():
         panel = RoundedRectangle(
@@ -1076,6 +1086,7 @@ def make_training_loop(params, zone):
             fill_color="#111827",
             fill_opacity=0.94,
         )
+        panel.move_to(panel_pos)
         axes_origin = panel.get_corner(DL) + RIGHT * 0.58 + UP * 0.48
         x_axis = Line(axes_origin, axes_origin + RIGHT * 4.1, color=TEXT_SUB, stroke_width=1.8).set_opacity(0.62)
         y_axis = Line(axes_origin, axes_origin + UP * 2.0, color=TEXT_SUB, stroke_width=1.8).set_opacity(0.62)
@@ -1121,21 +1132,17 @@ def make_training_loop(params, zone):
         model_mark.next_to(panel, UP, buff=0.18)
         return VGroup(model_mark, panel, x_axis, y_axis, points, pattern_glow, pattern, new_dot, title, subtitle)
 
-    if phase in {"generalization", "generalization_final"}:
-        full = make_pattern_panel()
-        place_in_zone(full, zone)
-        return full
-
     mode_slot = make_mode_slot()
-    model = make_model_core()
     input_slot = make_input_slot()
+    model = make_model_core()
+    input_visible = phase in {"training", "loop", "inference"}
+    output_visible = phase in {"training", "loop", "inference"}
+    input_arrow = make_arrow_between(LEFT * 1.8, LEFT * 1.55, input_visible)
+    output_arrow = make_arrow_between(RIGHT * 1.55, RIGHT * 1.8, output_visible)
     output_slot = make_prediction_slot()
-    input_visible = phase in {"training", "loop", "fixed", "inference"}
-    output_visible = phase in {"training", "loop", "fixed", "inference"}
-    input_arrow = make_arrow_between(input_slot.get_right(), model.get_left(), input_visible)
-    output_arrow = make_arrow_between(model.get_right(), output_slot.get_left(), output_visible)
     feedback = make_feedback_slot(model, output_slot)
     note = make_note_slot()
+    panel = make_pattern_panel() if phase in {"generalization", "generalization_final"} else blank(5.2, 3.0).move_to(panel_pos)
 
     full = VGroup(
         mode_slot,
@@ -1146,8 +1153,8 @@ def make_training_loop(params, zone):
         output_slot,
         feedback,
         note,
+        panel,
     )
-    place_in_zone(full, zone)
     full.set_opacity(params.get("opacity", 1.0))
     return full
 
