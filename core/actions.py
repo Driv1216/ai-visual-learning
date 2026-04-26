@@ -887,6 +887,16 @@ def make_training_loop(params, zone):
     feedback_pos = DOWN * 0.92 + RIGHT * 0.8
     note_pos = DOWN * 1.05
 
+    def silence(obj):
+        for child in getattr(obj, "submobjects", []):
+            silence(child)
+        if hasattr(obj, "set_fill"):
+            obj.set_fill(opacity=0)
+        if hasattr(obj, "set_stroke"):
+            obj.set_stroke(opacity=0, width=0)
+        obj.set_opacity(0)
+        return obj
+
     def mode_tag(text, color):
         tag_text = Text(text, font_size=15, color=TEXT_SUB, weight=MEDIUM)
         fit_to_width(tag_text, 1.45)
@@ -897,11 +907,15 @@ def make_training_loop(params, zone):
     def make_mode_pair():
         # Scene 4 should not keep mode labels pinned for the whole scene.
         # Keep the structure stable, but make the tags visible only during the opening beat.
-        training = mode_tag("Training", HIGHLIGHT)
-        inference = mode_tag("Inference", SECONDARY)
+        training = mode_tag("Training" if phase == "intro" else " ", HIGHLIGHT)
+        inference = mode_tag("Inference" if phase == "intro" else " ", SECONDARY)
         opacity = 0.72 if phase == "intro" else 0.0
-        training.set_opacity(opacity)
-        inference.set_opacity(opacity)
+        if opacity > 0:
+            training.set_opacity(opacity)
+            inference.set_opacity(opacity)
+        else:
+            silence(training)
+            silence(inference)
         pair = VGroup(training, inference).arrange(RIGHT, buff=0.56)
         pair.move_to(mode_pos)
         return pair
@@ -946,13 +960,16 @@ def make_training_loop(params, zone):
         answer_box.move_to(RIGHT * 0.76)
         answer_text.move_to(answer_box.get_center())
         if answer_label is None:
-            answer_box.set_opacity(0)
+            silence(answer_box)
             answer_text.set_opacity(0)
-            divider.set_opacity(0)
+            silence(divider)
         card = VGroup(shell, data_box, data_text, divider, answer_box, answer_text)
         card.scale(scale)
         card.move_to(pos)
-        card.set_opacity(opacity)
+        if opacity > 0:
+            card.set_opacity(opacity)
+        else:
+            silence(card)
         return card
 
     def make_input_slot():
@@ -979,12 +996,16 @@ def make_training_loop(params, zone):
             stroke_width=2.4,
             max_tip_length_to_length_ratio=0.09,
         )
-        arrow.set_opacity(0.56 if phase in {"training", "loop", "inference"} else 0)
+        if phase in {"training", "loop", "inference"}:
+            arrow.set_opacity(0.56)
+        else:
+            silence(arrow)
         return VGroup(ghost, card, arrow)
 
     def make_model():
+        graph_phase = phase in {"generalization", "generalization_final"}
         label = Text(
-            model_label,
+            " " if graph_phase else model_label,
             font_size=params.get("model_font_size", 28),
             color=TEXT_MAIN,
             weight=MEDIUM,
@@ -1050,8 +1071,9 @@ def make_training_loop(params, zone):
         pattern = Line(p(0.8, 1.15), p(8.5, 7.9), color=HIGHLIGHT, stroke_width=3.5)
         unseen = Dot(p(8.1, 7.55), radius=0.07, color=ACCENT)
         unseen_guide = DashedLine(p(8.1, 7.55), p(8.1, 7.36), dash_length=0.045, color=ACCENT, stroke_width=1.6)
-        title = Text("Generalization", font_size=27, color=TEXT_MAIN, weight=BOLD)
-        subtitle = Text("works on new examples", font_size=20, color=TEXT_SUB, weight=MEDIUM)
+        show_final_text = phase == "generalization_final"
+        title = Text("Generalization" if show_final_text else " ", font_size=27, color=TEXT_MAIN, weight=BOLD)
+        subtitle = Text("works on new examples" if show_final_text else " ", font_size=20, color=TEXT_SUB, weight=MEDIUM)
         title.next_to(panel, DOWN, buff=0.28)
         subtitle.next_to(title, DOWN, buff=0.12)
         model_mark = _boxed_label(
@@ -1066,8 +1088,9 @@ def make_training_loop(params, zone):
             },
         )
         model_mark.next_to(panel, UP, buff=0.18)
-        note_top = Text("Training shaped it.", font_size=21, color=TEXT_SUB, weight=MEDIUM)
-        note_bottom = Text("Inference uses it.", font_size=21, color=TEXT_SUB, weight=MEDIUM)
+        show_summary = phase == "summary"
+        note_top = Text("Training shaped it." if show_summary else " ", font_size=21, color=TEXT_SUB, weight=MEDIUM)
+        note_bottom = Text("Inference uses it." if show_summary else " ", font_size=21, color=TEXT_SUB, weight=MEDIUM)
         note = VGroup(note_top, note_bottom).arrange(DOWN, buff=0.18).move_to(note_pos)
         modes = make_mode_pair()
 
@@ -1079,35 +1102,63 @@ def make_training_loop(params, zone):
         elif phase == "generalization_final":
             graph_progress = 1.0
 
-        pattern_start = p(0.8, 1.15)
-        pattern_end = p(0.8 + (8.5 - 0.8) * max(graph_progress, 0.04), 1.15 + (7.9 - 1.15) * max(graph_progress, 0.04))
+        pattern_start = p(0.8, 1.15) if graph_progress > 0 else model_pos
+        pattern_end = p(0.8 + (8.5 - 0.8) * max(graph_progress, 0.04), 1.15 + (7.9 - 1.15) * max(graph_progress, 0.04)) if graph_progress > 0 else model_pos
         pattern.put_start_and_end_on(pattern_start, pattern_end)
         pattern_glow.put_start_and_end_on(pattern_start, pattern_end)
 
-        panel.set_opacity(0.82 * graph_progress)
-        x_axis.set_opacity(0.52 * graph_progress)
-        y_axis.set_opacity(0.52 * graph_progress)
-        pattern_glow.set_opacity(0.10 * graph_progress)
-        pattern.set_opacity(0.88 * graph_progress)
+        if graph_progress == 0:
+            panel.scale(0.01).move_to(model_pos)
+            silence(panel)
+            x_axis.put_start_and_end_on(model_pos, model_pos)
+            y_axis.put_start_and_end_on(model_pos, model_pos)
+            silence(x_axis)
+            silence(y_axis)
+            silence(pattern_glow)
+            silence(pattern)
+        else:
+            panel.set_fill("#111827", opacity=0.78 * graph_progress)
+            panel.set_stroke(HIGHLIGHT, width=2.4, opacity=0.82 * graph_progress)
+            x_axis.set_stroke(TEXT_SUB, width=1.8, opacity=0.52 * graph_progress)
+            y_axis.set_stroke(TEXT_SUB, width=1.8, opacity=0.52 * graph_progress)
+            pattern_glow.set_stroke(HIGHLIGHT, width=8, opacity=0.10 * graph_progress)
+            pattern.set_stroke(HIGHLIGHT, width=3.5, opacity=0.88 * graph_progress)
 
         visible_points = int(round(6 * graph_progress))
         for index, point in enumerate(points):
-            point.set_opacity(0.70 if index < visible_points else 0.0)
+            if index < visible_points:
+                point.set_fill(SECONDARY, opacity=0.70)
+                point.set_stroke(opacity=0)
+            else:
+                point.move_to(model_pos)
+                silence(point)
 
-        unseen.set_opacity(1.0 if phase == "generalization_final" else 0.0)
-        unseen_guide.set_opacity(0.48 if phase == "generalization_final" else 0.0)
-        title.set_opacity(1.0 if phase == "generalization_final" else 0.0)
-        subtitle.set_opacity(0.86 if phase == "generalization_final" else 0.0)
+        if phase == "generalization_final":
+            unseen.set_fill(ACCENT, opacity=1.0)
+            unseen_guide.set_stroke(ACCENT, width=1.6, opacity=0.48)
+            title.set_opacity(1.0)
+            subtitle.set_opacity(0.86)
+        else:
+            unseen.move_to(model_pos)
+            unseen_guide.put_start_and_end_on(model_pos, model_pos)
+            silence(unseen)
+            silence(unseen_guide)
+            title.set_opacity(0.0)
+            subtitle.set_opacity(0.0)
 
         # The model badge and summary notes were visually competing with the graph.
         # Keep their objects in the stable structure, but do not show them.
-        model_mark.set_opacity(0.0)
-        note.set_opacity(0.0)
-        if phase in {"generalization", "generalization_final"}:
-            shell_glow.set_opacity(0)
-            core.set_opacity(0)
+        silence(model_mark)
+        note_top.set_opacity(1.0 if show_summary else 0.0)
+        note_bottom.set_opacity(1.0 if show_summary else 0.0)
+        if graph_phase:
+            silence(shell_glow)
+            silence(core)
             label.set_opacity(0)
-            trace.set_opacity(0)
+            silence(trace[0])
+            silence(trace[1])
+            for dot in dots:
+                silence(dot)
 
         model = VGroup(
             modes,
@@ -1156,7 +1207,7 @@ def make_training_loop(params, zone):
         )
         pred.move_to(output_pos)
         if not visible:
-            pred.set_opacity(0)
+            silence(pred)
 
         error_level = max(0.04, min(1.0, params.get("error_level", 0.6)))
         gap = error_level * 0.42
@@ -1168,8 +1219,12 @@ def make_training_loop(params, zone):
             color=params.get("error_color", WARNING),
             stroke_width=1.6,
         )
-        guide.set_opacity((0.45 + 0.25 * error_level) if phase == "loop" else 0)
-        truth.set_opacity(1.0 if phase == "loop" else 0)
+        if phase == "loop":
+            guide.set_opacity(0.45 + 0.25 * error_level)
+            truth.set_opacity(1.0)
+        else:
+            silence(guide)
+            silence(truth)
         arrow = Arrow(
             RIGHT * 1.55,
             RIGHT * 1.8,
@@ -1178,7 +1233,10 @@ def make_training_loop(params, zone):
             stroke_width=2.4,
             max_tip_length_to_length_ratio=0.09,
         )
-        arrow.set_opacity(0.56 if visible else 0)
+        if visible:
+            arrow.set_opacity(0.56)
+        else:
+            silence(arrow)
         return VGroup(pred[0], pred[1], pred[2], guide, truth, arrow)
 
     def make_feedback_slot():
@@ -1196,7 +1254,10 @@ def make_training_loop(params, zone):
         )
         arc.set_z_index(-2)
         arc_opacity = (0.07 + 0.11 * error_level) if phase == "loop" else 0.0
-        arc.set_opacity(arc_opacity)
+        if arc_opacity > 0:
+            arc.set_opacity(arc_opacity)
+        else:
+            silence(arc)
 
         pulse = Dot(
             arc.point_from_proportion(params.get("pulse_position", 0.42)),
@@ -1204,7 +1265,10 @@ def make_training_loop(params, zone):
             color=params.get("error_color", WARNING),
         )
         pulse.set_z_index(-1)
-        pulse.set_opacity(0.42 if phase == "loop" else 0.0)
+        if phase == "loop":
+            pulse.set_opacity(0.42)
+        else:
+            silence(pulse)
         return VGroup(arc, pulse)
 
     input_slot = make_input_slot()
