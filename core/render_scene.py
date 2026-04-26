@@ -86,6 +86,18 @@ def get_default_run_time(step, segment_duration: float) -> float:
         return min(1.2, max(0.8, segment_duration * 0.16))
     if action == "show_training_loop":
         return min(1.15, max(0.75, segment_duration * 0.15))
+    if action in {
+        "show_model_core",
+        "show_phase_labels",
+        "show_training_examples",
+        "show_prediction_error",
+        "show_adjustment_loop",
+        "show_repeat_learning",
+        "show_inference_pass",
+        "show_build_use_summary",
+        "show_generalization_pattern",
+    }:
+        return min(1.0, max(0.6, segment_duration * 0.14))
     if action == "highlight_text":
         return min(0.95, max(0.6, segment_duration * 0.12))
     if action == "square_stage_sequence":

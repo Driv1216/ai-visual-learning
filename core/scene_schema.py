@@ -32,6 +32,15 @@ AllowedAction = Literal[
     "highlight_inference_side",
     "transform_split_to_clean_flow",
     "show_training_loop",
+    "show_model_core",
+    "show_phase_labels",
+    "show_training_examples",
+    "show_prediction_error",
+    "show_adjustment_loop",
+    "show_repeat_learning",
+    "show_inference_pass",
+    "show_build_use_summary",
+    "show_generalization_pattern",
 ]
 
 AllowedZone = Literal[

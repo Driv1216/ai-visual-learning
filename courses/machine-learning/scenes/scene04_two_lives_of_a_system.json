@@ -65,259 +65,421 @@
   ],
   "visual_timeline": [
     {
-      "id": "s4_v01_intro",
+      "id": "s4_v01_core_open",
       "anchor": "s4_01",
-      "action": "show_training_loop",
+      "action": "show_model_core",
       "zone": "center",
       "transition_in": "grow",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.72,
-      "camera_scale": 0.98,
+      "duration": 0.7,
+      "camera_scale": 0.96,
       "params": {
-        "phase": "intro",
-        "model_progress": 0.0
+        "phase": "plastic",
+        "model_progress": 0.0,
+        "label": "model"
       },
       "offset": 0.0
     },
     {
-      "id": "s4_v02_phase_split",
+      "id": "s4_v02_two_lives",
       "anchor": "s4_01",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
+      "action": "show_phase_labels",
+      "zone": "center_span",
+      "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
+      "replace": "center_span",
       "duration": 0.62,
       "camera_scale": 0.98,
       "params": {
-        "phase": "split",
-        "model_progress": 0.05
+        "show_title": true
       },
       "offset": 0.34
     },
     {
-      "id": "s4_v03_training_life",
+      "id": "s4_v03_training_active",
       "anchor": "s4_02",
-      "action": "show_training_loop",
+      "action": "show_phase_labels",
+      "zone": "center_span",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_span",
+      "duration": 0.55,
+      "camera_scale": 1.0,
+      "params": {
+        "show_title": false,
+        "active": "training"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s4_v04_model_plastic",
+      "anchor": "s4_02",
+      "action": "show_model_core",
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.72,
-      "camera_scale": 1.0,
+      "duration": 0.58,
+      "camera_scale": 0.96,
       "params": {
-        "phase": "training_examples",
-        "model_progress": 0.12,
-        "loop_index": 0
+        "phase": "plastic",
+        "model_progress": 0.1,
+        "label_opacity": 0.0
       },
-      "offset": 0.0
+      "offset": 0.22
     },
     {
-      "id": "s4_v04_inference_hint",
+      "id": "s4_v05_inference_hint_label",
       "anchor": "s4_03",
-      "action": "show_training_loop",
-      "zone": "center",
+      "action": "show_phase_labels",
+      "zone": "center_span",
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
-      "duration": 0.66,
+      "replace": "center_span",
+      "duration": 0.48,
       "camera_scale": 1.0,
       "params": {
-        "phase": "inference_hint",
-        "model_progress": 0.12,
-        "loop_index": 0
+        "show_title": false,
+        "active": "inference"
       },
       "offset": 0.0
     },
     {
-      "id": "s4_v05_known_examples",
+      "id": "s4_v06_inference_hint_pass",
+      "anchor": "s4_03",
+      "action": "show_inference_pass",
+      "zone": "center_right",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_right",
+      "duration": 0.55,
+      "camera_scale": 1.0,
+      "params": {
+        "opacity": 0.42
+      },
+      "offset": 0.16
+    },
+    {
+      "id": "s4_v07_clear_hint",
       "anchor": "s4_04",
-      "action": "show_training_loop",
+      "action": "fade_out",
       "zone": "center",
-      "transition_in": "transform",
+      "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
-      "duration": 0.82,
-      "camera_scale": 1.0,
+      "duration": 0.24,
       "params": {
-        "phase": "training_examples",
-        "model_progress": 0.22,
-        "loop_index": 1
+        "zones": [
+          "center_right"
+        ]
       },
       "offset": 0.0
     },
     {
-      "id": "s4_v06_prediction_error",
+      "id": "s4_v08_training_return",
+      "anchor": "s4_04",
+      "action": "show_phase_labels",
+      "zone": "center_span",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_span",
+      "duration": 0.48,
+      "camera_scale": 1.0,
+      "params": {
+        "show_title": false,
+        "active": "training"
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s4_v09_examples_one",
+      "anchor": "s4_04",
+      "action": "show_training_examples",
+      "zone": "center_left",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_left",
+      "duration": 0.48,
+      "camera_scale": 1.0,
+      "params": {
+        "count": 1
+      },
+      "offset": 0.16
+    },
+    {
+      "id": "s4_v10_examples_three",
+      "anchor": "s4_04",
+      "action": "show_training_examples",
+      "zone": "center_left",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_left",
+      "duration": 0.62,
+      "camera_scale": 1.0,
+      "params": {
+        "count": 3
+      },
+      "offset": 0.48
+    },
+    {
+      "id": "s4_v11_prediction_error",
       "anchor": "s4_05",
-      "action": "show_training_loop",
+      "action": "show_prediction_error",
+      "zone": "center_right",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_right",
+      "duration": 0.72,
+      "camera_scale": 1.0,
+      "params": {
+        "gap": 0.38
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s4_v12_adjust_loop",
+      "anchor": "s4_06",
+      "action": "show_adjustment_loop",
+      "zone": "center_span",
+      "transition_in": "create",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_span",
+      "duration": 0.58,
+      "camera_scale": 1.0,
+      "params": {},
+      "offset": 0.0
+    },
+    {
+      "id": "s4_v13_model_adjusted",
+      "anchor": "s4_06",
+      "action": "show_model_core",
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.78,
-      "camera_scale": 1.0,
+      "duration": 0.58,
+      "camera_scale": 0.96,
       "params": {
-        "phase": "training_error",
-        "model_progress": 0.36,
-        "loop_index": 1
+        "phase": "plastic",
+        "model_progress": 0.42,
+        "label_opacity": 0.0
       },
-      "offset": 0.02
+      "offset": 0.22
     },
     {
-      "id": "s4_v07_adjust",
-      "anchor": "s4_06",
-      "action": "show_training_loop",
+      "id": "s4_v14_clear_training_loop",
+      "anchor": "s4_07",
+      "action": "fade_out",
+      "zone": "center",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.24,
+      "params": {
+        "zones": [
+          "center_left",
+          "center_right",
+          "center_span"
+        ]
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s4_v15_repeat_cycle_one",
+      "anchor": "s4_07",
+      "action": "show_repeat_learning",
+      "zone": "center_span",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_span",
+      "duration": 0.52,
+      "camera_scale": 1.0,
+      "params": {
+        "model_progress": 0.58
+      },
+      "offset": 0.18
+    },
+    {
+      "id": "s4_v16_model_repeat_one",
+      "anchor": "s4_07",
+      "action": "show_model_core",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.48,
+      "camera_scale": 0.96,
+      "params": {
+        "phase": "plastic",
+        "model_progress": 0.62,
+        "label_opacity": 0.0
+      },
+      "offset": 0.42
+    },
+    {
+      "id": "s4_v17_repeat_cycle_two",
+      "anchor": "s4_07",
+      "action": "show_repeat_learning",
+      "zone": "center_span",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_span",
+      "duration": 0.52,
+      "camera_scale": 1.0,
+      "params": {
+        "model_progress": 0.82
+      },
+      "offset": 0.76
+    },
+    {
+      "id": "s4_v18_learning_resolves",
+      "anchor": "s4_08",
+      "action": "show_model_core",
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
       "duration": 0.72,
-      "camera_scale": 1.0,
+      "camera_scale": 0.96,
       "params": {
-        "phase": "adjust",
-        "model_progress": 0.52,
-        "loop_index": 1
-      },
-      "offset": 0.02
-    },
-    {
-      "id": "s4_v08_repeat",
-      "anchor": "s4_07",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "duration": 0.78,
-      "camera_scale": 1.0,
-      "params": {
-        "phase": "repeat",
-        "model_progress": 0.74,
-        "loop_index": 2
+        "phase": "plastic",
+        "model_progress": 0.94,
+        "label_opacity": 0.0
       },
       "offset": 0.0
     },
     {
-      "id": "s4_v09_learning_settles",
+      "id": "s4_v19_clear_repeat",
       "anchor": "s4_08",
-      "action": "show_training_loop",
+      "action": "fade_out",
       "zone": "center",
-      "transition_in": "transform",
+      "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
-      "duration": 0.74,
-      "camera_scale": 1.0,
+      "duration": 0.28,
       "params": {
-        "phase": "repeat",
-        "model_progress": 0.9,
-        "loop_index": 2
+        "zones": [
+          "center_span"
+        ]
       },
-      "offset": 0.0
+      "offset": 0.52
     },
     {
-      "id": "s4_v10_fixed_model",
+      "id": "s4_v20_fixed_model",
       "anchor": "s4_09",
-      "action": "show_training_loop",
+      "action": "show_model_core",
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
-      "duration": 0.82,
-      "camera_scale": 1.0,
+      "duration": 0.72,
+      "camera_scale": 0.96,
       "params": {
         "phase": "fixed",
         "model_progress": 1.0,
-        "loop_index": 2
+        "show_fixed_label": true
       },
       "offset": 0.0
     },
     {
-      "id": "s4_v11_inference",
+      "id": "s4_v21_inference_pass",
       "anchor": "s4_10",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
+      "action": "show_inference_pass",
+      "zone": "center_right",
+      "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
-      "duration": 0.86,
+      "replace": "center_right",
+      "duration": 0.82,
       "camera_scale": 1.0,
-      "params": {
-        "phase": "inference",
-        "model_progress": 1.0,
-        "loop_index": 2
-      },
+      "params": {},
       "offset": 0.0
     },
     {
-      "id": "s4_v12_build_use",
+      "id": "s4_v22_build_use",
       "anchor": "s4_11",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
+      "action": "show_build_use_summary",
+      "zone": "center_span",
+      "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
-      "duration": 0.76,
+      "replace": "center_span",
+      "duration": 0.7,
       "camera_scale": 1.0,
+      "params": {},
+      "offset": 0.0
+    },
+    {
+      "id": "s4_v23_clear_for_generalization",
+      "anchor": "s4_12",
+      "action": "fade_out",
+      "zone": "center",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.3,
       "params": {
-        "phase": "build_use",
-        "model_progress": 1.0,
-        "loop_index": 2
+        "zones": [
+          "center_right",
+          "center_span"
+        ]
       },
       "offset": 0.0
     },
     {
-      "id": "s4_v13_generalization",
+      "id": "s4_v24_pattern_only",
       "anchor": "s4_12",
-      "action": "show_training_loop",
-      "zone": "center",
-      "transition_in": "transform",
+      "action": "show_generalization_pattern",
+      "zone": "center_span",
+      "transition_in": "create",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
-      "duration": 0.84,
+      "replace": "center_span",
+      "duration": 0.78,
       "camera_scale": 0.98,
       "params": {
-        "phase": "generalization",
-        "model_progress": 1.0,
-        "loop_index": 2
+        "show_text": false
       },
-      "offset": 0.0
+      "offset": 0.22
     },
     {
-      "id": "s4_v14_generalization_final",
+      "id": "s4_v25_generalization_final",
       "anchor": "s4_13",
-      "action": "show_training_loop",
-      "zone": "center",
+      "action": "show_generalization_pattern",
+      "zone": "center_span",
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "replace": "center",
+      "replace": "center_span",
       "duration": 1.0,
       "camera_scale": 0.98,
       "params": {
-        "phase": "generalization_final",
-        "model_progress": 1.0,
-        "loop_index": 2
+        "show_text": true
       },
-      "offset": 0.02
+      "offset": 0.0
     }
   ],
   "notes": {
-    "tone": "Calm, precise, and motion-led. One central model has two lives.",
-    "pacing": "The same model persists: it starts plastic, receives examples, feels error, adjusts, becomes fixed, then performs a clean inference pass.",
-    "animation_guidelines": "No disconnected training/inference slides. Keep only a few connectors visible at once. Generalization is shown as a learned pattern, not as stored examples."
+    "tone": "Calm, precise, and motion-led. One central model has two lives, but the surrounding objects appear only when needed.",
+    "pacing": "Sequential beats: core, phase labels, training examples, error, adjustment, repeat, fixed model, inference, build/use, generalization.",
+    "animation_guidelines": "Do not prebuild a poster. Use object lifecycle: create, transform, fade, and keep generalization until the end."
   }
 }
