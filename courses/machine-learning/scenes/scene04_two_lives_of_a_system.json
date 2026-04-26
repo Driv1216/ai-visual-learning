@@ -445,23 +445,47 @@
       "offset": 0.0
     },
     {
-      "id": "s4_v24_pattern_only",
+      "id": "s4_v24_generalization_memory",
       "anchor": "s4_12",
       "action": "show_generalization_pattern",
       "zone": "center_span",
-      "transition_in": "create",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_span",
+      "duration": 0.58,
+      "camera_scale": 0.98,
+      "params": {
+        "stage": "memory",
+        "examples_opacity": 0.46,
+        "pattern_opacity": 0.08,
+        "new_point_opacity": 0.0,
+        "show_text": false
+      },
+      "offset": 0.18
+    },
+    {
+      "id": "s4_v25_generalization_pattern",
+      "anchor": "s4_12",
+      "action": "show_generalization_pattern",
+      "zone": "center_span",
+      "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
       "replace": "center_span",
       "duration": 0.78,
       "camera_scale": 0.98,
       "params": {
+        "stage": "pattern",
+        "examples_opacity": 0.18,
+        "pattern_opacity": 0.84,
+        "new_point_opacity": 0.0,
         "show_text": false
       },
-      "offset": 0.22
+      "offset": 0.64
     },
     {
-      "id": "s4_v25_generalization_final",
+      "id": "s4_v26_generalization_new_example",
       "anchor": "s4_13",
       "action": "show_generalization_pattern",
       "zone": "center_span",
@@ -469,12 +493,36 @@
       "transition_out": "fade",
       "persist": true,
       "replace": "center_span",
-      "duration": 1.0,
+      "duration": 0.82,
       "camera_scale": 0.98,
       "params": {
-        "show_text": true
+        "stage": "new_example",
+        "examples_opacity": 0.08,
+        "pattern_opacity": 0.88,
+        "new_point_opacity": 0.95,
+        "show_text": false
       },
       "offset": 0.0
+    },
+    {
+      "id": "s4_v27_generalization_final",
+      "anchor": "s4_13",
+      "action": "show_generalization_pattern",
+      "zone": "center_span",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_span",
+      "duration": 0.82,
+      "camera_scale": 0.98,
+      "params": {
+        "stage": "final",
+        "examples_opacity": 0.06,
+        "pattern_opacity": 0.9,
+        "new_point_opacity": 0.95,
+        "show_text": true
+      },
+      "offset": 0.62
     }
   ],
   "notes": {
