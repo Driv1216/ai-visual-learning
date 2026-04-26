@@ -874,162 +874,202 @@ def _training_card(data_label: str, answer_label: str | None, params, known=True
 
 def make_training_loop(params, zone):
     phase = params.get("phase", "intro")
-    curve_progress = max(0.0, min(1.0, params.get("curve_progress", 0.0)))
-    active_point_index = int(params.get("active_point_index", -1))
-    error_level = max(0.0, min(1.0, params.get("error_level", 0.0)))
-    show_unseen = params.get("show_unseen", False)
-    show_final_text = params.get("show_final_text", False)
-    show_trained_label = params.get(
-        "show_trained_label",
-        phase in {"trained_curve", "inference", "generalization_final"},
-    )
+    training_phases = {"training_examples", "training_error", "adjust", "repeat"}
+    inference_phases = {"fixed", "inference", "build_use", "generalization", "generalization_final"}
+    model_progress = max(0.0, min(1.0, params.get("model_progress", 0.0)))
+    loop_index = int(params.get("loop_index", 0))
 
-    def clamp(value, low, high):
-        return max(low, min(high, value))
+    def phase_opacity(names, value=1.0):
+        return value if phase in names else 0.0
 
-    x_min, x_max = 0.0, 8.4
-    y_min, y_max = 0.0, 6.0
-    graph_width = 7.3
-    graph_height = 3.85
-    origin = LEFT * (graph_width / 2) + DOWN * (graph_height / 2 + 0.2)
+    def soften(group, opacity=0.16):
+        group.set_opacity(opacity)
+        return group
 
-    def graph_point(x, y):
-        px = (x - x_min) / (x_max - x_min)
-        py = (y - y_min) / (y_max - y_min)
-        return origin + RIGHT * (px * graph_width) + UP * (py * graph_height)
+    title = Text("Two lives of one system", font_size=30, color=TEXT_MAIN, weight=MEDIUM)
+    title.move_to(UP * 2.55)
+    title.set_opacity(0.92 if phase == "intro" else 0.0)
 
-    train_data = [
-        (0.9, 1.08),
-        (2.0, 1.85),
-        (3.0, 2.95),
-        (4.4, 3.28),
-        (5.7, 4.5),
-        (6.9, 5.12),
+    training_label = Text("Training", font_size=23, color=HIGHLIGHT, weight=MEDIUM)
+    inference_label = Text("Inference", font_size=23, color=SECONDARY, weight=MEDIUM)
+    training_label.move_to(LEFT * 2.7 + UP * 2.0)
+    inference_label.move_to(RIGHT * 2.7 + UP * 2.0)
+    label_opacity = 0.84 if phase in {"split", "inference_hint", *training_phases, *inference_phases} else 0.0
+    mode_labels = VGroup(training_label, inference_label).set_opacity(label_opacity)
+    if phase in training_phases:
+        inference_label.set_opacity(0.20)
+    if phase == "inference_hint":
+        training_label.set_opacity(0.20)
+    if phase in {"fixed", "inference"}:
+        training_label.set_opacity(0.20)
+
+    core_radius = 0.72
+    core_color = HIGHLIGHT if phase in training_phases else SECONDARY if phase in {"fixed", "inference"} else ACCENT
+    core_fill = "#121926" if phase not in {"generalization", "generalization_final"} else "#101d20"
+    shell = Circle(radius=core_radius, stroke_color=core_color, stroke_width=3.2, fill_color=core_fill, fill_opacity=0.94)
+    glow = Circle(radius=core_radius + 0.08, stroke_color=core_color, stroke_width=8)
+    glow.set_opacity(0.08 + 0.10 * model_progress)
+    lock_line = Line(LEFT * 0.22, RIGHT * 0.22, color=TEXT_SUB, stroke_width=2.3).move_to(DOWN * 0.3)
+    lock_line.set_opacity(0.0 if phase not in {"fixed", "inference", "build_use"} else 0.75)
+
+    rough_points = [
+        LEFT * 0.42 + DOWN * 0.06,
+        LEFT * 0.20 + UP * 0.25,
+        RIGHT * 0.05 + DOWN * 0.18,
+        RIGHT * 0.32 + UP * 0.18,
+        RIGHT * 0.48 + DOWN * 0.02,
     ]
-    unseen_x = params.get("unseen_x", 7.75)
+    smooth_points = [
+        LEFT * 0.45 + DOWN * 0.20,
+        LEFT * 0.25 + DOWN * 0.02,
+        ORIGIN + UP * 0.08,
+        RIGHT * 0.25 + UP * 0.17,
+        RIGHT * 0.47 + UP * 0.28,
+    ]
+    pattern_points = [
+        rough * (1 - model_progress) + smooth * model_progress
+        for rough, smooth in zip(rough_points, smooth_points)
+    ]
+    internal_pattern = VMobject()
+    internal_pattern.set_points_smoothly(pattern_points)
+    internal_pattern.set_stroke(ACCENT, width=3.0, opacity=0.58 + 0.32 * model_progress)
+    model_word = Text("model", font_size=18, color=TEXT_SUB, weight=MEDIUM).move_to(UP * 0.46)
+    model_word.set_opacity(0.72 if phase in {"intro", "split"} else 0.0)
+    fixed_label = Text("Fixed model", font_size=20, color=TEXT_SUB, weight=MEDIUM)
+    fixed_label.next_to(shell, DOWN, buff=0.2)
+    fixed_label.set_opacity(0.82 if phase in {"fixed", "inference"} else 0.0)
+    model_core = VGroup(glow, shell, internal_pattern, lock_line, model_word, fixed_label)
 
-    def final_y(x):
-        return 0.56 * x + 0.72 + 0.32 * np.sin((x - 1.15) * 0.92)
-
-    def loose_y(x):
-        return 2.95 + 0.42 * np.sin(x * 1.55 + 0.6) - 0.10 * (x - 4.0)
-
-    def curve_y(x):
-        return (1 - curve_progress) * loose_y(x) + curve_progress * final_y(x)
-
-    training_label = Text("Training", font_size=24, color=HIGHLIGHT, weight=MEDIUM)
-    inference_label = Text("Inference", font_size=24, color=SECONDARY, weight=MEDIUM)
-    mode_labels = VGroup(training_label, inference_label).arrange(RIGHT, buff=0.72)
-    mode_labels.move_to(UP * 2.35)
-    mode_labels.set_opacity(0.82 if phase == "intro" else 0.0)
-
-    x_axis = Line(graph_point(0, 0), graph_point(8.35, 0), color=TEXT_SUB, stroke_width=1.7)
-    y_axis = Line(graph_point(0, 0), graph_point(0, 5.82), color=TEXT_SUB, stroke_width=1.7)
-    axes = VGroup(x_axis, y_axis).set_opacity(0.36)
-
-    visible_points = int(params.get("visible_points", 0))
-    if phase in {"training_points", "error_large", "error_smaller", "trained_curve", "inference", "generalization_final"}:
-        visible_points = max(visible_points, 6 if phase != "training_points" else 4)
-    if phase == "intro":
-        visible_points = 0
-    visible_points = clamp(visible_points, 0, len(train_data))
-
-    dots = []
-    for index, (x, y) in enumerate(train_data):
-        dot = Dot(graph_point(x, y), radius=0.055, color=SECONDARY)
-        dot.set_opacity(0.82 if index < visible_points else 0.0)
-        if index == active_point_index:
-            dot.scale(1.35)
-            dot.set_color(ACCENT)
-            dot.set_opacity(1.0)
-        if phase in {"trained_curve", "inference", "generalization_final"} and index < visible_points:
-            dot.set_opacity(0.32)
-        dots.append(dot)
-    training_points = VGroup(*dots)
-
-    curve_samples = []
-    for step in range(36):
-        x = x_min + (x_max - x_min) * step / 35
-        y = clamp(curve_y(x), 0.25, 5.78)
-        curve_samples.append(graph_point(x, y))
-    glow_curve = VMobject()
-    glow_curve.set_points_smoothly(curve_samples)
-    glow_curve.set_stroke(HIGHLIGHT, width=9, opacity=0.10 + 0.08 * curve_progress)
-    curve = VMobject()
-    curve.set_points_smoothly(curve_samples)
-    curve.set_stroke(HIGHLIGHT, width=3.5, opacity=0.78 + 0.18 * curve_progress)
-    if phase in {"trained_curve", "inference", "generalization_final"}:
-        glow_curve.set_stroke(HIGHLIGHT, width=11, opacity=0.18)
-        curve.set_stroke(HIGHLIGHT, width=4.2, opacity=0.96)
-    model_curve = VGroup(glow_curve, curve)
-
-    point_index = active_point_index if 0 <= active_point_index < len(train_data) else 2
-    active_x, true_y = train_data[point_index]
-    predicted_y = curve_y(active_x)
-    prediction_guide = DashedLine(
-        graph_point(active_x, 0),
-        graph_point(active_x, predicted_y),
-        dash_length=0.055,
+    example_offsets = [UP * 0.42, ORIGIN, DOWN * 0.42]
+    example_labels = ["x1,y1", "x2,y2", "x3,y3"]
+    examples = VGroup()
+    for index, (offset, label) in enumerate(zip(example_offsets, example_labels)):
+        dot = Dot(LEFT * 3.1 + offset, radius=0.055, color=HIGHLIGHT)
+        text = Text(label, font_size=15, color=TEXT_SUB)
+        text.next_to(dot, RIGHT, buff=0.12)
+        item = VGroup(dot, text)
+        item.set_opacity(1.0 if index <= loop_index else 0.22)
+        examples.add(item)
+    known = Text("Known answers", font_size=18, color=TEXT_SUB, weight=MEDIUM)
+    known.next_to(examples, DOWN, buff=0.25)
+    into_model = Arrow(
+        LEFT * 2.05,
+        LEFT * 0.83,
+        buff=0.0,
+        color=HIGHLIGHT,
+        stroke_width=3,
+        max_tip_length_to_length_ratio=0.08,
+    )
+    prediction_dot = Dot(RIGHT * 1.95 + UP * 0.24, radius=0.065, color=PRIMARY)
+    prediction_text = Text("Prediction", font_size=18, color=TEXT_SUB, weight=MEDIUM)
+    prediction_text.next_to(prediction_dot, UP, buff=0.12)
+    out_arrow = Arrow(
+        RIGHT * 0.82,
+        RIGHT * 1.75 + UP * 0.18,
+        buff=0.0,
         color=PRIMARY,
-        stroke_width=1.3,
+        stroke_width=3,
+        max_tip_length_to_length_ratio=0.08,
     )
-    prediction_dot = Dot(graph_point(active_x, predicted_y), radius=0.048, color=PRIMARY)
-    true_dot = Dot(graph_point(active_x, true_y), radius=0.05, color=ACCENT)
-    prediction_marker = VGroup(prediction_guide, prediction_dot, true_dot)
-    if phase in {"error_large", "error_smaller"}:
-        prediction_guide.set_opacity(0.38)
-        prediction_dot.set_opacity(1.0)
-        true_dot.set_opacity(0.95)
-    else:
-        prediction_marker.set_opacity(0)
+    training_flow = VGroup(examples, known, into_model, out_arrow, prediction_dot, prediction_text)
+    training_flow.set_opacity(phase_opacity(training_phases))
+    if phase in {"fixed", "inference", "build_use", "generalization", "generalization_final"}:
+        soften(training_flow, 0.12)
 
-    error_end_y = true_y if error_level > 0 else predicted_y
-    error_line = Line(
-        graph_point(active_x, predicted_y),
-        graph_point(active_x, error_end_y),
+    true_dot = Dot(RIGHT * 1.95 + DOWN * (0.25 - 0.13 * model_progress), radius=0.065, color=ACCENT)
+    true_text = Text("true", font_size=15, color=TEXT_SUB).next_to(true_dot, DOWN, buff=0.1)
+    error_line = Line(prediction_dot.get_center(), true_dot.get_center(), color=WARNING, stroke_width=3.4)
+    error_text = Text("Error", font_size=18, color=WARNING, weight=MEDIUM)
+    error_text.next_to(error_line, RIGHT, buff=0.12)
+    adjust_arc = ArcBetweenPoints(
+        RIGHT * 1.75 + DOWN * 0.28,
+        RIGHT * 0.5 + DOWN * 0.58,
+        angle=-PI / 2.8,
         color=WARNING,
-        stroke_width=3.2,
+        stroke_width=2.8,
     )
-    error_line.set_opacity(0.78 if phase in {"error_large", "error_smaller"} else 0.0)
-    error_gap = VGroup(error_line)
-
-    unseen_y = curve_y(unseen_x)
-    unseen_guide = DashedLine(
-        graph_point(unseen_x, 0),
-        graph_point(unseen_x, unseen_y),
-        dash_length=0.06,
-        color=ACCENT,
-        stroke_width=1.6,
-    )
-    unseen_base = Dot(graph_point(unseen_x, 0), radius=0.04, color=ACCENT)
-    unseen_dot = Dot(graph_point(unseen_x, unseen_y), radius=0.07, color=ACCENT)
-    unseen_marker = VGroup(unseen_guide, unseen_base, unseen_dot)
-    if show_unseen or phase in {"inference", "generalization_final"}:
-        unseen_guide.set_opacity(0.56)
-        unseen_base.set_opacity(0.72)
-        unseen_dot.set_opacity(1.0)
+    adjust_tip = Triangle(color=WARNING, fill_color=WARNING, fill_opacity=1.0).scale(0.08)
+    adjust_tip.rotate(-PI / 3.5)
+    adjust_tip.move_to(RIGHT * 0.52 + DOWN * 0.58)
+    adjust_text = Text("Adjust", font_size=18, color=WARNING, weight=MEDIUM)
+    adjust_text.move_to(RIGHT * 1.35 + DOWN * 1.03)
+    feedback_loop = VGroup(true_dot, true_text, error_line, error_text, adjust_arc, adjust_tip, adjust_text)
+    if phase == "training_error":
+        VGroup(adjust_arc, adjust_tip, adjust_text).set_opacity(0.0)
+        feedback_loop.set_opacity(1.0)
+    elif phase in {"adjust", "repeat"}:
+        feedback_loop.set_opacity(1.0)
     else:
-        unseen_marker.set_opacity(0.0)
+        feedback_loop.set_opacity(0.0)
 
-    trained_text = Text("trained model", font_size=21, color=TEXT_SUB, weight=MEDIUM)
-    trained_text.next_to(curve, UP, buff=0.22)
-    trained_text.set_opacity(0.82 if show_trained_label else 0.0)
+    new_data = Dot(RIGHT * 3.18 + UP * 0.25, radius=0.07, color=SECONDARY)
+    new_data_text = Text("New data", font_size=18, color=TEXT_SUB, weight=MEDIUM)
+    new_data_text.next_to(new_data, UP, buff=0.12)
+    infer_in = Arrow(
+        RIGHT * 2.75 + UP * 0.18,
+        RIGHT * 0.84 + UP * 0.06,
+        buff=0.0,
+        color=SECONDARY,
+        stroke_width=3,
+        max_tip_length_to_length_ratio=0.08,
+    )
+    infer_out = Arrow(
+        RIGHT * 0.83 + DOWN * 0.08,
+        RIGHT * 2.5 + DOWN * 0.35,
+        buff=0.0,
+        color=PRIMARY,
+        stroke_width=3,
+        max_tip_length_to_length_ratio=0.08,
+    )
+    infer_pred = Dot(RIGHT * 2.72 + DOWN * 0.38, radius=0.065, color=PRIMARY)
+    infer_pred_text = Text("Prediction", font_size=18, color=TEXT_SUB, weight=MEDIUM)
+    infer_pred_text.next_to(infer_pred, DOWN, buff=0.12)
+    inference_flow = VGroup(new_data, new_data_text, infer_in, infer_out, infer_pred, infer_pred_text)
+    if phase in {"inference", "generalization_final"}:
+        inference_flow.set_opacity(1.0)
+    elif phase == "inference_hint":
+        inference_flow.set_opacity(0.32)
+    else:
+        inference_flow.set_opacity(0.0)
+
+    build_text = Text("build the model", font_size=22, color=HIGHLIGHT, weight=MEDIUM)
+    use_text = Text("use the model", font_size=22, color=SECONDARY, weight=MEDIUM)
+    build_text.move_to(LEFT * 2.5 + DOWN * 1.75)
+    use_text.move_to(RIGHT * 2.5 + DOWN * 1.75)
+    build_use = VGroup(build_text, use_text)
+    build_use.set_opacity(0.92 if phase == "build_use" else 0.0)
+
+    pattern_points_outer = [
+        LEFT * 1.9 + DOWN * 1.0,
+        LEFT * 1.0 + DOWN * 0.32,
+        ORIGIN + DOWN * 0.03,
+        RIGHT * 1.1 + UP * 0.30,
+        RIGHT * 2.0 + UP * 0.98,
+    ]
+    learned_pattern = VMobject()
+    learned_pattern.set_points_smoothly(pattern_points_outer)
+    learned_pattern.set_stroke(ACCENT, width=4.0, opacity=0.0)
+    pattern_glow = learned_pattern.copy().set_stroke(ACCENT, width=12, opacity=0.0)
+    if phase in {"generalization", "generalization_final"}:
+        pattern_glow.set_stroke(ACCENT, width=12, opacity=0.10)
+        learned_pattern.set_stroke(ACCENT, width=4.0, opacity=0.82)
+    pattern_group = VGroup(pattern_glow, learned_pattern)
+
     final_title = Text("Generalization", font_size=32, color=TEXT_MAIN, weight=BOLD)
     final_subtitle = Text("works on new examples", font_size=22, color=TEXT_SUB, weight=MEDIUM)
-    final_title.next_to(axes, DOWN, buff=0.36)
-    final_subtitle.next_to(final_title, DOWN, buff=0.11)
-    final_title.set_opacity(1.0 if show_final_text else 0.0)
-    final_subtitle.set_opacity(0.86 if show_final_text else 0.0)
-    final_text = VGroup(trained_text, final_title, final_subtitle)
+    final_text = VGroup(final_title, final_subtitle).arrange(DOWN, buff=0.12)
+    final_text.move_to(DOWN * 2.38)
+    final_text.set_opacity(1.0 if phase == "generalization_final" else 0.0)
 
     full = VGroup(
+        title,
         mode_labels,
-        axes,
-        training_points,
-        model_curve,
-        prediction_marker,
-        error_gap,
-        unseen_marker,
+        model_core,
+        training_flow,
+        feedback_loop,
+        inference_flow,
+        build_use,
+        pattern_group,
         final_text,
     )
     place_in_zone(full, zone)
