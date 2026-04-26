@@ -395,7 +395,9 @@
       "params": {
         "phase": "fixed",
         "model_progress": 1.0,
-        "show_fixed_label": true
+        "show_fixed_label": true,
+        "hide_internal_pattern": true,
+        "lock_opacity": 0.58
       },
       "offset": 0.0
     },
@@ -457,7 +459,7 @@
       "camera_scale": 0.98,
       "params": {
         "stage": "memory",
-        "examples_opacity": 0.30,
+        "examples_opacity": 0.26,
         "pattern_opacity": 0.0,
         "new_point_opacity": 0.0,
         "show_text": false
@@ -477,8 +479,8 @@
       "camera_scale": 0.98,
       "params": {
         "stage": "pattern",
-        "examples_opacity": 0.12,
-        "pattern_opacity": 0.86,
+        "examples_opacity": 0.16,
+        "pattern_opacity": 0.84,
         "new_point_opacity": 0.0,
         "show_text": false
       },
@@ -497,8 +499,8 @@
       "camera_scale": 0.98,
       "params": {
         "stage": "new_example",
-        "examples_opacity": 0.05,
-        "pattern_opacity": 0.9,
+        "examples_opacity": 0.08,
+        "pattern_opacity": 0.88,
         "new_point_opacity": 0.95,
         "show_text": false
       },
@@ -517,8 +519,8 @@
       "camera_scale": 0.98,
       "params": {
         "stage": "final",
-        "examples_opacity": 0.025,
-        "pattern_opacity": 0.92,
+        "examples_opacity": 0.04,
+        "pattern_opacity": 0.9,
         "new_point_opacity": 0.95,
         "show_text": true
       },
