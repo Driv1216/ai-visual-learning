@@ -905,7 +905,7 @@ def _scene4_model_core(params, zone):
     pattern.set_stroke(ACCENT, width=3.2, opacity=0.56 + 0.34 * progress)
 
     label = Text(params.get("label", "model"), font_size=18, color=TEXT_SUB, weight=MEDIUM)
-    label.move_to(UP * 0.48)
+    label.move_to(UP * 0.52)
     label.set_opacity(params.get("label_opacity", 0.72 if phase == "plastic" else 0.0))
 
     lock = VGroup(
@@ -919,11 +919,11 @@ def _scene4_model_core(params, zone):
             fill_color="#121926",
             fill_opacity=1.0,
         ).shift(DOWN * 0.17),
-    ).move_to(DOWN * 0.38)
+    ).move_to(DOWN * 0.28)
     lock.set_opacity(0.78 if phase == "fixed" else 0.0)
 
-    fixed = Text("Fixed model", font_size=20, color=TEXT_SUB, weight=MEDIUM)
-    fixed.next_to(shell, DOWN, buff=0.22)
+    fixed = Text("Fixed model", font_size=18, color=TEXT_SUB, weight=MEDIUM)
+    fixed.next_to(shell, DOWN, buff=0.32)
     fixed.set_opacity(0.82 if phase == "fixed" and params.get("show_fixed_label", True) else 0.0)
 
     core = VGroup(glow, shell, pattern, label, lock, fixed)
@@ -936,10 +936,10 @@ def make_show_model_core(params, zone):
 
 
 def make_show_phase_labels(params, zone):
-    title = Text(params.get("title", "Two lives of one system"), font_size=30, color=TEXT_MAIN, weight=MEDIUM)
-    title.move_to(UP * 2.55)
-    training = Text("Training", font_size=23, color=HIGHLIGHT, weight=MEDIUM).move_to(LEFT * 2.7 + UP * 2.0)
-    inference = Text("Inference", font_size=23, color=SECONDARY, weight=MEDIUM).move_to(RIGHT * 2.7 + UP * 2.0)
+    title = Text(params.get("title", "Two lives of one system"), font_size=28, color=TEXT_MAIN, weight=MEDIUM)
+    title.move_to(UP * 3.0)
+    training = Text("Training", font_size=22, color=HIGHLIGHT, weight=MEDIUM).move_to(LEFT * 3.4 + UP * 1.8)
+    inference = Text("Inference", font_size=22, color=SECONDARY, weight=MEDIUM).move_to(RIGHT * 3.4 + UP * 1.8)
     if params.get("active") == "training":
         inference.set_opacity(0.22)
     elif params.get("active") == "inference":
@@ -948,13 +948,13 @@ def make_show_phase_labels(params, zone):
         title.set_opacity(0.0)
     group = VGroup(title, training, inference)
     group.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(group, zone)
+    # Do not call place_in_zone — these are absolute screen anchors
     return group
 
 
 def make_show_training_examples(params, zone):
     count = max(1, min(3, int(params.get("count", 3))))
-    labels = params.get("examples", ["x1 -> y1", "x2 -> y2", "x3 -> y3"])
+    labels = params.get("examples", ["x₁ → y₁", "x₂ → y₂", "x₃ → y₃"])
     rows = VGroup()
     for index in range(count):
         dot = Dot(ORIGIN, radius=0.055, color=HIGHLIGHT)
@@ -962,120 +962,145 @@ def make_show_training_examples(params, zone):
         text.next_to(dot, RIGHT, buff=0.12)
         rows.add(VGroup(dot, text))
     rows.arrange(DOWN, aligned_edge=LEFT, buff=0.26)
-    known = Text("Known answers", font_size=18, color=TEXT_SUB, weight=MEDIUM)
-    known.next_to(rows, DOWN, buff=0.28)
+    known = Text("Known answers", font_size=16, color=TEXT_SUB, weight=MEDIUM)
+    known.next_to(rows, DOWN, buff=0.22)
+    # Arrow: from right edge of rows toward ORIGIN (model center). 
+    # We'll build this relative to rows center, then place_in_zone adjusts.
+    content = VGroup(rows, known)
+    content.move_to(LEFT * 2.8)
     arrow = Arrow(
-        rows.get_right() + RIGHT * 0.18,
-        RIGHT * 1.65,
+        content.get_right() + RIGHT * 0.15,
+        LEFT * 0.95,
         buff=0.0,
         color=HIGHLIGHT,
-        stroke_width=3.0,
+        stroke_width=2.8,
         max_tip_length_to_length_ratio=0.08,
     )
-    group = VGroup(rows, known, arrow)
-    group.move_to(LEFT * 2.18 + DOWN * 0.05)
+    group = VGroup(content, arrow)
     group.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(group, zone)
     return group
 
 
 def make_show_prediction_error(params, zone):
-    pred = Dot(LEFT * 0.1 + UP * 0.34, radius=0.065, color=PRIMARY)
-    pred_label = Text("Prediction", font_size=18, color=TEXT_SUB, weight=MEDIUM).next_to(pred, UP, buff=0.12)
-    true = Dot(LEFT * 0.1 + DOWN * params.get("gap", 0.34), radius=0.065, color=ACCENT)
-    true_label = Text("true", font_size=15, color=TEXT_SUB).next_to(true, DOWN, buff=0.08)
+    # These are positioned in absolute screen space, anchored to the right of the model at ORIGIN
+    pred = Dot(RIGHT * 2.6 + UP * 0.34, radius=0.065, color=PRIMARY)
+    pred_label = Text("Prediction", font_size=17, color=TEXT_SUB, weight=MEDIUM).next_to(pred, UP, buff=0.10)
+    true = Dot(RIGHT * 2.6 + DOWN * params.get("gap", 0.34), radius=0.065, color=ACCENT)
+    true_label = Text("true", font_size=14, color=TEXT_SUB).next_to(true, DOWN, buff=0.08)
+    # Arrow from model right edge toward prediction
     arrow = Arrow(
-        LEFT * 2.05 + UP * 0.08,
-        pred.get_left() + LEFT * 0.12,
+        RIGHT * 0.88 + UP * 0.08,
+        pred.get_left() + LEFT * 0.14,
         buff=0.0,
         color=PRIMARY,
-        stroke_width=3,
+        stroke_width=2.8,
         max_tip_length_to_length_ratio=0.08,
     )
-    gap = Line(pred.get_center(), true.get_center(), color=WARNING, stroke_width=3.4)
-    error = Text("Error", font_size=18, color=WARNING, weight=MEDIUM).next_to(gap, RIGHT, buff=0.12)
+    gap = Line(pred.get_center(), true.get_center(), color=WARNING, stroke_width=3.2)
+    error = Text("Error", font_size=17, color=WARNING, weight=MEDIUM).next_to(gap, RIGHT, buff=0.12)
     group = VGroup(arrow, pred, pred_label, true, true_label, gap, error)
-    group.move_to(RIGHT * 2.12 + DOWN * 0.04)
     group.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(group, zone)
     return group
 
 
 def make_show_adjustment_loop(params, zone):
-    start = RIGHT * 2.5 + DOWN * 0.28
-    end = RIGHT * 0.52 + DOWN * 0.58
-    arc = ArcBetweenPoints(start, end, angle=-PI / 2.8, color=WARNING, stroke_width=3)
+    # Arc from error side (right of model) back to model bottom-right — absolute coords
+    start = RIGHT * 2.55 + DOWN * 0.32
+    end = RIGHT * 0.6 + DOWN * 0.62
+    arc = ArcBetweenPoints(start, end, angle=-PI / 2.6, color=WARNING, stroke_width=2.8)
     tip = Triangle(color=WARNING, fill_color=WARNING, fill_opacity=1.0).scale(0.08)
     tip.rotate(-PI / 3.5)
     tip.move_to(end)
-    label = Text("Adjust", font_size=18, color=WARNING, weight=MEDIUM).move_to(RIGHT * 1.52 + DOWN * 1.0)
+    label = Text("Adjust", font_size=17, color=WARNING, weight=MEDIUM).move_to(RIGHT * 1.6 + DOWN * 1.1)
     group = VGroup(arc, tip, label)
     group.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(group, zone)
     return group
 
 
 def make_show_repeat_learning(params, zone):
     progress = max(0.0, min(1.0, params.get("model_progress", 0.65)))
-    example = Dot(LEFT * 2.6 + UP * 0.25, radius=0.055, color=HIGHLIGHT)
-    pred = Dot(RIGHT * 2.15 + UP * (0.42 - 0.16 * progress), radius=0.055, color=PRIMARY)
-    true = Dot(RIGHT * 2.15 + DOWN * (0.18 - 0.08 * progress), radius=0.055, color=ACCENT)
-    in_arrow = Arrow(LEFT * 2.35 + UP * 0.2, LEFT * 0.85 + UP * 0.06, buff=0, color=HIGHLIGHT, stroke_width=2.7)
-    out_arrow = Arrow(RIGHT * 0.85 + UP * 0.03, RIGHT * 1.95 + UP * (0.36 - 0.12 * progress), buff=0, color=PRIMARY, stroke_width=2.7)
-    gap = Line(pred.get_center(), true.get_center(), color=WARNING, stroke_width=2.8).set_opacity(0.78 - 0.28 * progress)
-    label = Text("again and again", font_size=18, color=TEXT_SUB, weight=MEDIUM).move_to(DOWN * 1.18)
+    example = Dot(LEFT * 2.6 + UP * 0.2, radius=0.055, color=HIGHLIGHT)
+    pred = Dot(RIGHT * 2.5 + UP * (0.38 - 0.14 * progress), radius=0.055, color=PRIMARY)
+    true = Dot(RIGHT * 2.5 + DOWN * (0.16 - 0.06 * progress), radius=0.055, color=ACCENT)
+    in_arrow = Arrow(LEFT * 2.38 + UP * 0.15, LEFT * 0.9 + UP * 0.04, buff=0, color=HIGHLIGHT, stroke_width=2.5)
+    out_arrow = Arrow(RIGHT * 0.9 + UP * 0.02, pred.get_left() + LEFT * 0.1, buff=0, color=PRIMARY, stroke_width=2.5)
+    gap = Line(pred.get_center(), true.get_center(), color=WARNING, stroke_width=2.6).set_opacity(0.76 - 0.26 * progress)
+    label = Text("again and again", font_size=17, color=TEXT_SUB, weight=MEDIUM).move_to(DOWN * 1.25)
     group = VGroup(example, in_arrow, out_arrow, pred, true, gap, label)
     group.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(group, zone)
     return group
 
 
 def make_show_inference_pass(params, zone):
-    new_data = Dot(LEFT * 0.0 + UP * 0.35, radius=0.07, color=SECONDARY)
-    new_label = Text("New data", font_size=18, color=TEXT_SUB, weight=MEDIUM).next_to(new_data, UP, buff=0.12)
-    pred = Dot(RIGHT * 1.95 + DOWN * 0.32, radius=0.065, color=PRIMARY)
-    pred_label = Text("Prediction", font_size=18, color=TEXT_SUB, weight=MEDIUM).next_to(pred, DOWN, buff=0.12)
-    in_arrow = Arrow(LEFT * 0.02 + UP * 0.26, LEFT * 1.62 + UP * 0.08, buff=0, color=SECONDARY, stroke_width=3)
-    out_arrow = Arrow(LEFT * 1.72 + DOWN * 0.05, pred.get_left() + LEFT * 0.1, buff=0, color=PRIMARY, stroke_width=3)
+    # New data arrives from the right, passes through fixed model at ORIGIN, outputs prediction to right
+    new_data = Dot(RIGHT * 3.2 + UP * 0.28, radius=0.07, color=SECONDARY)
+    new_label = Text("New data", font_size=17, color=TEXT_SUB, weight=MEDIUM).next_to(new_data, UP, buff=0.10)
+    pred = Dot(RIGHT * 3.2 + DOWN * 0.28, radius=0.065, color=PRIMARY)
+    pred_label = Text("Prediction", font_size=17, color=TEXT_SUB, weight=MEDIUM).next_to(pred, DOWN, buff=0.10)
+    # Arrow: new data → model (arriving from right)
+    in_arrow = Arrow(
+        new_data.get_left() + LEFT * 0.1,
+        RIGHT * 0.9 + UP * 0.08,
+        buff=0.0,
+        color=SECONDARY,
+        stroke_width=2.8,
+    )
+    # Arrow: model → prediction (exiting to right)
+    out_arrow = Arrow(
+        RIGHT * 0.9 + DOWN * 0.08,
+        pred.get_left() + LEFT * 0.1,
+        buff=0.0,
+        color=PRIMARY,
+        stroke_width=2.8,
+    )
     group = VGroup(new_data, new_label, in_arrow, out_arrow, pred, pred_label)
-    group.move_to(RIGHT * 2.15)
     group.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(group, zone)
     return group
 
 
 def make_show_build_use_summary(params, zone):
-    build = Text("Training = build", font_size=23, color=HIGHLIGHT, weight=MEDIUM).move_to(LEFT * 2.2 + DOWN * 1.6)
-    use = Text("Inference = use", font_size=23, color=SECONDARY, weight=MEDIUM).move_to(RIGHT * 2.2 + DOWN * 1.6)
+    build = Text("Training  =  build the model", font_size=21, color=HIGHLIGHT, weight=MEDIUM).move_to(LEFT * 1.8 + DOWN * 2.0)
+    use = Text("Inference  =  use the model", font_size=21, color=SECONDARY, weight=MEDIUM).move_to(RIGHT * 1.8 + DOWN * 2.0)
     group = VGroup(build, use)
     group.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(group, zone)
     return group
 
 
 def make_show_generalization_pattern(params, zone):
     show_text = params.get("show_text", False)
-    points = VGroup(
-        Dot(LEFT * 1.9 + DOWN * 0.95, radius=0.045, color=SECONDARY),
-        Dot(LEFT * 0.95 + DOWN * 0.28, radius=0.045, color=SECONDARY),
-        Dot(RIGHT * 0.15 + UP * 0.08, radius=0.045, color=SECONDARY),
-        Dot(RIGHT * 1.1 + UP * 0.34, radius=0.045, color=SECONDARY),
-        Dot(RIGHT * 1.9 + UP * 0.98, radius=0.06, color=ACCENT),
-    )
+    # Curve sweeps through and around the model at ORIGIN — going left-to-right
+    point_coords = [
+        LEFT * 3.2 + DOWN * 1.1,
+        LEFT * 1.8 + DOWN * 0.3,
+        LEFT * 0.5 + UP * 0.1,
+        RIGHT * 1.0 + UP * 0.5,
+        RIGHT * 2.6 + UP * 1.1,
+    ]
+    points = VGroup(*[
+        Dot(p, radius=0.045, color=SECONDARY) for p in point_coords
+    ])
     points.set_opacity(0.34 if not show_text else 0.72)
     curve = VMobject()
-    curve.set_points_smoothly([p.get_center() for p in points])
+    curve.set_points_smoothly(point_coords)
     curve.set_stroke(ACCENT, width=4.0, opacity=0.88)
-    glow = curve.copy().set_stroke(ACCENT, width=12, opacity=0.10)
-    arrow = Arrow(RIGHT * 2.15 + UP * 0.95, RIGHT * 2.72 + UP * 0.95, buff=0.0, color=PRIMARY, stroke_width=3)
-    prediction = Dot(RIGHT * 2.9 + UP * 0.95, radius=0.06, color=PRIMARY)
+    glow = curve.copy().set_stroke(ACCENT, width=14, opacity=0.10)
+
+    # New data dot arriving at end of curve
+    arrow = Arrow(
+        point_coords[-1] + RIGHT * 0.1,
+        point_coords[-1] + RIGHT * 0.72,
+        buff=0.0,
+        color=PRIMARY,
+        stroke_width=2.8,
+    )
+    prediction = Dot(point_coords[-1] + RIGHT * 0.82, radius=0.065, color=PRIMARY)
+
     title = Text("Generalization", font_size=32, color=TEXT_MAIN, weight=BOLD)
-    subtitle = Text("works on new examples", font_size=22, color=TEXT_SUB, weight=MEDIUM)
-    text = VGroup(title, subtitle).arrange(DOWN, buff=0.12).move_to(DOWN * 2.35)
+    subtitle = Text("works on new examples", font_size=21, color=TEXT_SUB, weight=MEDIUM)
+    text = VGroup(title, subtitle).arrange(DOWN, buff=0.12).move_to(DOWN * 2.55)
     text.set_opacity(1.0 if show_text else 0.0)
     group = VGroup(glow, curve, points, arrow, prediction, text)
     group.set_opacity(params.get("opacity", 1.0))
-    place_in_zone(group, zone)
     return group
 
 
