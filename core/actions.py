@@ -877,56 +877,71 @@ def _scene4_model_core(params, zone):
     phase = params.get("phase", "plastic")
     color = HIGHLIGHT if phase == "plastic" else SECONDARY if phase == "fixed" else ACCENT
 
+    # Outer shell — slightly larger for more presence
     shell = Circle(
-        radius=0.76,
+        radius=0.82,
         stroke_color=color,
-        stroke_width=3.4,
-        fill_color="#121926",
-        fill_opacity=0.94,
+        stroke_width=3.2,
+        fill_color="#0f1720",
+        fill_opacity=0.96,
     )
-    glow = Circle(radius=0.86, stroke_color=color, stroke_width=9).set_opacity(0.08 + 0.08 * progress)
+    # Subtle glow ring outside — grows as training progresses
+    glow = Circle(
+        radius=0.82 + 0.14,
+        stroke_color=color,
+        stroke_width=18,
+    ).set_opacity(0.05 + 0.10 * progress)
 
-    rough = [
-        LEFT * 0.44 + DOWN * 0.08,
-        LEFT * 0.22 + UP * 0.25,
-        RIGHT * 0.02 + DOWN * 0.18,
-        RIGHT * 0.30 + UP * 0.16,
-        RIGHT * 0.48 + DOWN * 0.02,
+    # Internal wave/pattern — the "brain" of the model
+    # rough = noisy/unlearned; smooth = clean learned curve
+    rough_pts = [
+        LEFT * 0.52 + DOWN * 0.12,
+        LEFT * 0.28 + UP * 0.22,
+        ORIGIN + DOWN * 0.14,
+        RIGHT * 0.26 + UP * 0.18,
+        RIGHT * 0.52 + DOWN * 0.06,
     ]
-    smooth = [
-        LEFT * 0.46 + DOWN * 0.22,
-        LEFT * 0.25 + DOWN * 0.02,
-        ORIGIN + UP * 0.08,
-        RIGHT * 0.25 + UP * 0.18,
-        RIGHT * 0.49 + UP * 0.30,
+    smooth_pts = [
+        LEFT * 0.52 + DOWN * 0.06,
+        LEFT * 0.26 + UP * 0.06,
+        ORIGIN + UP * 0.12,
+        RIGHT * 0.26 + UP * 0.22,
+        RIGHT * 0.52 + UP * 0.34,
     ]
+    blended = [a * (1 - progress) + b * progress for a, b in zip(rough_pts, smooth_pts)]
     pattern = VMobject()
-    pattern.set_points_smoothly([a * (1 - progress) + b * progress for a, b in zip(rough, smooth)])
-    pattern.set_stroke(ACCENT, width=3.2, opacity=0.56 + 0.34 * progress)
+    pattern.set_points_smoothly(blended)
+    # Color shifts from dim gold → bright gold as it learns
+    pattern.set_stroke(ACCENT, width=2.8 + 1.2 * progress, opacity=0.45 + 0.45 * progress)
 
-    label = Text(params.get("label", "model"), font_size=18, color=TEXT_SUB, weight=MEDIUM)
-    label.move_to(UP * 0.52)
-    label.set_opacity(params.get("label_opacity", 0.72 if phase == "plastic" else 0.0))
+    # "model" label — inside circle, top, only during plastic phase
+    label = Text("model", font_size=17, color=TEXT_SUB, weight=MEDIUM)
+    label.move_to(UP * 0.58)
+    label.set_opacity(params.get("label_opacity", 0.65 if phase == "plastic" else 0.0))
 
-    lock = VGroup(
-        Arc(radius=0.15, start_angle=0, angle=PI, color=TEXT_SUB, stroke_width=2.2),
-        RoundedRectangle(
-            corner_radius=0.03,
-            width=0.38,
-            height=0.24,
-            stroke_color=TEXT_SUB,
-            stroke_width=2,
-            fill_color="#121926",
-            fill_opacity=1.0,
-        ).shift(DOWN * 0.17),
-    ).move_to(DOWN * 0.28)
-    lock.set_opacity(0.78 if phase == "fixed" else 0.0)
+    # Lock icon — inside circle bottom, only during fixed phase
+    # Drawn cleanly so it doesn't overlap pattern
+    lock_shackle = Arc(
+        radius=0.13, start_angle=0, angle=PI,
+        color=TEXT_SUB, stroke_width=2.0
+    ).move_to(DOWN * 0.32 + UP * 0.13)
+    lock_body = RoundedRectangle(
+        corner_radius=0.04,
+        width=0.34, height=0.22,
+        stroke_color=TEXT_SUB, stroke_width=1.8,
+        fill_color="#0f1720", fill_opacity=1.0,
+    ).move_to(DOWN * 0.32)
+    lock = VGroup(lock_shackle, lock_body)
+    lock.set_opacity(0.72 if phase == "fixed" else 0.0)
 
-    fixed = Text("Fixed model", font_size=18, color=TEXT_SUB, weight=MEDIUM)
-    fixed.next_to(shell, DOWN, buff=0.32)
-    fixed.set_opacity(0.82 if phase == "fixed" and params.get("show_fixed_label", True) else 0.0)
+    # "Fixed model" label — outside circle, below, only during fixed phase
+    fixed_label = Text("Fixed model", font_size=17, color=TEXT_SUB, weight=MEDIUM)
+    fixed_label.next_to(shell, DOWN, buff=0.38)
+    fixed_label.set_opacity(
+        0.80 if phase == "fixed" and params.get("show_fixed_label", True) else 0.0
+    )
 
-    core = VGroup(glow, shell, pattern, label, lock, fixed)
+    core = VGroup(glow, shell, pattern, label, lock, fixed_label)
     place_in_zone(core, zone)
     return core
 
@@ -1032,74 +1047,144 @@ def make_show_repeat_learning(params, zone):
 
 
 def make_show_inference_pass(params, zone):
-    # New data arrives from the right, passes through fixed model at ORIGIN, outputs prediction to right
-    new_data = Dot(RIGHT * 3.2 + UP * 0.28, radius=0.07, color=SECONDARY)
-    new_label = Text("New data", font_size=17, color=TEXT_SUB, weight=MEDIUM).next_to(new_data, UP, buff=0.10)
-    pred = Dot(RIGHT * 3.2 + DOWN * 0.28, radius=0.065, color=PRIMARY)
-    pred_label = Text("Prediction", font_size=17, color=TEXT_SUB, weight=MEDIUM).next_to(pred, DOWN, buff=0.10)
-    # Arrow: new data → model (arriving from right)
+    opacity = params.get("opacity", 1.0)
+
+    # Layout: new data on the RIGHT side, flows LEFT into the fixed model at ORIGIN,
+    # prediction exits further RIGHT below. Clean, one-directional, no feedback.
+    #
+    #   [New data] ──────────────────► [model]
+    #                                     │
+    #                                     ▼
+    #                              [● Prediction]
+    #
+    # "New data" arrives from top-right. Output drops down-right from model.
+
+    new_data_pos = RIGHT * 3.0 + UP * 0.55
+    pred_pos = RIGHT * 2.2 + DOWN * 1.0
+
+    new_data = Dot(new_data_pos, radius=0.075, color=SECONDARY)
+    new_label = Text("New data", font_size=17, color=SECONDARY, weight=MEDIUM)
+    new_label.next_to(new_data, RIGHT, buff=0.18)
+
+    pred = Dot(pred_pos, radius=0.075, color=PRIMARY)
+    pred_label = Text("Prediction", font_size=17, color=TEXT_SUB, weight=MEDIUM)
+    pred_label.next_to(pred, RIGHT, buff=0.18)
+
+    # Arrow from new data → model right edge
     in_arrow = Arrow(
-        new_data.get_left() + LEFT * 0.1,
-        RIGHT * 0.9 + UP * 0.08,
+        new_data_pos + LEFT * 0.10,
+        RIGHT * 0.88 + UP * 0.14,
         buff=0.0,
         color=SECONDARY,
-        stroke_width=2.8,
+        stroke_width=2.6,
+        max_tip_length_to_length_ratio=0.10,
     )
-    # Arrow: model → prediction (exiting to right)
+    # Arrow from model bottom → prediction
     out_arrow = Arrow(
-        RIGHT * 0.9 + DOWN * 0.08,
-        pred.get_left() + LEFT * 0.1,
+        DOWN * 0.88,
+        pred_pos + UP * 0.12,
         buff=0.0,
         color=PRIMARY,
-        stroke_width=2.8,
+        stroke_width=2.6,
+        max_tip_length_to_length_ratio=0.10,
     )
-    group = VGroup(new_data, new_label, in_arrow, out_arrow, pred, pred_label)
-    group.set_opacity(params.get("opacity", 1.0))
+
+    group = VGroup(in_arrow, out_arrow, new_data, new_label, pred, pred_label)
+    group.set_opacity(opacity)
     return group
 
 
 def make_show_build_use_summary(params, zone):
-    build = Text("Training  =  build the model", font_size=21, color=HIGHLIGHT, weight=MEDIUM).move_to(LEFT * 1.8 + DOWN * 2.0)
-    use = Text("Inference  =  use the model", font_size=21, color=SECONDARY, weight=MEDIUM).move_to(RIGHT * 1.8 + DOWN * 2.0)
-    group = VGroup(build, use)
+    # Two clean lines below the model. Centered, not split across left/right.
+    # Uses a subtle separator dot between them for visual cleanliness.
+    build = Text("Training  ·  build the model", font_size=22, color=HIGHLIGHT, weight=MEDIUM)
+    use = Text("Inference  ·  use the model", font_size=22, color=SECONDARY, weight=MEDIUM)
+    group = VGroup(build, use).arrange(DOWN, buff=0.32)
+    group.move_to(DOWN * 2.2)
     group.set_opacity(params.get("opacity", 1.0))
     return group
 
 
 def make_show_generalization_pattern(params, zone):
     show_text = params.get("show_text", False)
-    # Curve sweeps through and around the model at ORIGIN — going left-to-right
-    point_coords = [
-        LEFT * 3.2 + DOWN * 1.1,
-        LEFT * 1.8 + DOWN * 0.3,
-        LEFT * 0.5 + UP * 0.1,
-        RIGHT * 1.0 + UP * 0.5,
-        RIGHT * 2.6 + UP * 1.1,
+
+    # --- Training scatter dots ---
+    # These are the noisy training observations — scattered around an underlying trend.
+    # They sit in a wide band across the screen, model at center.
+    # When show_text is False (pattern only), dots are bright but no curve text shown.
+    # When show_text is True, dots fade slightly — the CURVE is the star.
+    scatter_positions = [
+        LEFT * 3.6 + DOWN * 1.05,
+        LEFT * 3.1 + DOWN * 0.52,
+        LEFT * 2.7 + DOWN * 0.78,
+        LEFT * 2.2 + DOWN * 0.18,
+        LEFT * 1.8 + DOWN * 0.44,
+        LEFT * 1.3 + DOWN * 0.08,
+        LEFT * 0.9 + UP * 0.22,
+        LEFT * 0.4 + DOWN * 0.12,
+        RIGHT * 0.2 + UP * 0.34,
+        RIGHT * 0.7 + UP * 0.08,
+        RIGHT * 1.2 + UP * 0.52,
+        RIGHT * 1.7 + UP * 0.28,
+        RIGHT * 2.2 + UP * 0.68,
     ]
-    points = VGroup(*[
-        Dot(p, radius=0.045, color=SECONDARY) for p in point_coords
+    scatter = VGroup(*[
+        Dot(p, radius=0.055, color=SECONDARY).set_opacity(0.55 if not show_text else 0.28)
+        for p in scatter_positions
     ])
-    points.set_opacity(0.34 if not show_text else 0.72)
+
+    # --- The learned curve — threading through the scatter ---
+    # This is the pattern the model extracted. It passes THROUGH the model circle.
+    # Points are chosen to create a graceful rising S-curve from bottom-left to top-right.
+    curve_pts = [
+        LEFT * 3.8 + DOWN * 0.9,
+        LEFT * 2.6 + DOWN * 0.55,
+        LEFT * 1.4 + DOWN * 0.18,
+        LEFT * 0.2 + UP * 0.18,
+        RIGHT * 1.0 + UP * 0.40,
+        RIGHT * 2.2 + UP * 0.60,
+        RIGHT * 3.2 + UP * 1.05,
+    ]
     curve = VMobject()
-    curve.set_points_smoothly(point_coords)
-    curve.set_stroke(ACCENT, width=4.0, opacity=0.88)
-    glow = curve.copy().set_stroke(ACCENT, width=14, opacity=0.10)
+    curve.set_points_smoothly(curve_pts)
+    curve_opacity = 0.88 if show_text else 0.72
+    curve.set_stroke(ACCENT, width=4.2, opacity=curve_opacity)
 
-    # New data dot arriving at end of curve
-    arrow = Arrow(
-        point_coords[-1] + RIGHT * 0.1,
-        point_coords[-1] + RIGHT * 0.72,
+    # Soft halo under the curve — the signature 3B1B glow
+    curve_glow = VMobject()
+    curve_glow.set_points_smoothly(curve_pts)
+    curve_glow.set_stroke(ACCENT, width=18, opacity=0.09 if show_text else 0.05)
+
+    # --- New data point arriving at the right end of the curve ---
+    # It's a distinct dot (cyan) that sits ON the curve, demonstrating generalization
+    new_pt_pos = RIGHT * 2.95 + UP * 0.92
+    new_pt = Dot(new_pt_pos, radius=0.08, color=SECONDARY)
+    new_pt.set_opacity(0.92 if show_text else 0.0)
+
+    # Small arrow pointing to it: "new example"
+    new_arrow = Arrow(
+        new_pt_pos + RIGHT * 0.55 + DOWN * 0.18,
+        new_pt_pos + RIGHT * 0.12,
         buff=0.0,
-        color=PRIMARY,
-        stroke_width=2.8,
+        color=SECONDARY,
+        stroke_width=2.2,
+        max_tip_length_to_length_ratio=0.18,
     )
-    prediction = Dot(point_coords[-1] + RIGHT * 0.82, radius=0.065, color=PRIMARY)
+    new_arrow.set_opacity(0.82 if show_text else 0.0)
 
-    title = Text("Generalization", font_size=32, color=TEXT_MAIN, weight=BOLD)
-    subtitle = Text("works on new examples", font_size=21, color=TEXT_SUB, weight=MEDIUM)
-    text = VGroup(title, subtitle).arrange(DOWN, buff=0.12).move_to(DOWN * 2.55)
-    text.set_opacity(1.0 if show_text else 0.0)
-    group = VGroup(glow, curve, points, arrow, prediction, text)
+    # Prediction dot — where the curve predicts the output for the new point
+    pred_pos = RIGHT * 3.4 + UP * 1.12
+    pred_dot = Dot(pred_pos, radius=0.07, color=PRIMARY)
+    pred_dot.set_opacity(0.88 if show_text else 0.0)
+
+    # --- Final text — appears only at the very end ---
+    title = Text("Generalization", font_size=34, color=TEXT_MAIN, weight=BOLD)
+    subtitle = Text("works on new examples", font_size=20, color=TEXT_SUB, weight=MEDIUM)
+    text_group = VGroup(title, subtitle).arrange(DOWN, buff=0.14)
+    text_group.move_to(DOWN * 2.55)
+    text_group.set_opacity(1.0 if show_text else 0.0)
+
+    group = VGroup(curve_glow, curve, scatter, new_pt, new_arrow, pred_dot, text_group)
     group.set_opacity(params.get("opacity", 1.0))
     return group
 
