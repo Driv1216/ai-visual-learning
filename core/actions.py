@@ -1124,98 +1124,96 @@ def make_show_build_use_summary(params, zone):
 def make_show_generalization_pattern(params, zone):
     show_text = params.get("show_text", False)
 
-    # The visual concept:
-    # The model (at ORIGIN) looks DOWN at training scatter and extracted a pattern.
-    # The scatter lives in the LOWER portion of the screen (-0.8 to -2.2 vertically).
-    # The learned curve threads through the scatter below the model.
-    # A new cyan dot appears ON the curve (not seen during training) — still fits perfectly.
+    # Spatial concept:
+    # The model at ORIGIN is the anchor — it IS the thing that generalized.
+    # LEFT side: noisy training scatter (what the model learned FROM)
+    # RIGHT side: the smooth learned curve extending outward (what it can DO now)
+    # A new unseen point arrives on the right and lands exactly on the curve.
     #
-    # This separates model from data visually, making it readable as:
-    #   "model up here → learned pattern down there → new point also fits"
+    # Nothing touches the model circle (radius 0.82 + label ~1.3 below).
+    # All elements stay outside a clear radius of ~1.1 from ORIGIN.
 
-    # --- Scatter of training observations (lower screen, noisy cloud) ---
-    scatter_positions = [
-        LEFT * 3.5 + DOWN * 1.9,
-        LEFT * 2.9 + DOWN * 1.3,
-        LEFT * 2.4 + DOWN * 1.65,
-        LEFT * 1.9 + DOWN * 1.1,
-        LEFT * 1.4 + DOWN * 1.45,
-        LEFT * 0.8 + DOWN * 1.0,
-        LEFT * 0.2 + DOWN * 1.22,
-        RIGHT * 0.4 + DOWN * 0.9,
-        RIGHT * 1.0 + DOWN * 1.18,
-        RIGHT * 1.6 + DOWN * 0.85,
-        RIGHT * 2.2 + DOWN * 1.08,
-        RIGHT * 2.8 + DOWN * 0.72,
-        RIGHT * 3.3 + DOWN * 0.95,
+    # --- LEFT: training scatter cloud ---
+    # Noisy points scattered around an implied upward trend, left side only
+    # Spread vertically so they feel like real noisy data, not a line of dots
+    left_scatter_positions = [
+        LEFT * 3.6 + UP * 0.45,
+        LEFT * 3.1 + DOWN * 0.15,
+        LEFT * 3.4 + UP * 1.0,
+        LEFT * 2.8 + UP * 0.72,
+        LEFT * 2.5 + DOWN * 0.38,
+        LEFT * 2.2 + UP * 1.15,
+        LEFT * 1.9 + UP * 0.35,
+        LEFT * 1.6 + DOWN * 0.22,
+        LEFT * 1.3 + UP * 0.88,
+        LEFT * 1.15 + UP * 0.55,
     ]
-    # Dots are CYAN (SECONDARY) — same color as "new data", reinforcing "these were data"
-    scatter = VGroup(*[
-        Dot(p, radius=0.058, color=SECONDARY).set_opacity(0.50 if not show_text else 0.22)
-        for p in scatter_positions
+    left_scatter = VGroup(*[
+        Dot(p, radius=0.055, color=SECONDARY).set_opacity(
+            0.55 if not show_text else 0.30
+        )
+        for p in left_scatter_positions
     ])
 
-    # --- Learned curve — smooth trend through the scatter ---
-    # Stays in the lower half, never crosses through the model circle
+    # --- RIGHT: learned curve — exits the model going right and slightly up ---
+    # Starts just outside the model's right edge (~RIGHT * 1.1)
+    # Smooth arc rising gently — this is the GENERALIZED PATTERN
     curve_pts = [
-        LEFT * 3.8 + DOWN * 1.75,
-        LEFT * 2.5 + DOWN * 1.42,
-        LEFT * 1.2 + DOWN * 1.15,
-        ORIGIN + DOWN * 0.98,
-        RIGHT * 1.2 + DOWN * 0.82,
-        RIGHT * 2.5 + DOWN * 0.68,
-        RIGHT * 3.8 + DOWN * 0.52,
+        RIGHT * 1.15 + DOWN * 0.05,
+        RIGHT * 1.8 + UP * 0.22,
+        RIGHT * 2.5 + UP * 0.48,
+        RIGHT * 3.2 + UP * 0.72,
+        RIGHT * 3.9 + UP * 0.95,
     ]
     curve = VMobject()
     curve.set_points_smoothly(curve_pts)
-    curve.set_stroke(ACCENT, width=4.0, opacity=0.88 if show_text else 0.70)
+    curve.set_stroke(ACCENT, width=3.8, opacity=0.90 if show_text else 0.75)
 
     curve_glow = VMobject()
     curve_glow.set_points_smoothly(curve_pts)
-    curve_glow.set_stroke(ACCENT, width=20, opacity=0.08 if show_text else 0.04)
+    curve_glow.set_stroke(ACCENT, width=16, opacity=0.10 if show_text else 0.05)
 
-    # --- "New example" dot — arrives at the RIGHT end of the curve ---
-    # It was never in training, but it lands exactly on the pattern.
-    new_pt_pos = RIGHT * 3.5 + DOWN * 0.56
+    # --- New unseen point — arrives at end of curve, fits perfectly ---
+    new_pt_pos = RIGHT * 3.55 + UP * 0.78
     new_pt = Dot(new_pt_pos, radius=0.085, color=SECONDARY)
     new_pt.set_opacity(0.95 if show_text else 0.0)
 
-    # Tiny label "new" above it
-    new_pt_label = Text("new", font_size=14, color=SECONDARY, weight=MEDIUM)
-    new_pt_label.next_to(new_pt, UP, buff=0.10)
-    new_pt_label.set_opacity(0.85 if show_text else 0.0)
+    new_label = Text("new", font_size=14, color=SECONDARY, weight=MEDIUM)
+    new_label.next_to(new_pt, UP, buff=0.12)
+    new_label.set_opacity(0.85 if show_text else 0.0)
 
-    # A check-mark style indicator: small line from curve to dot showing it fits
-    fit_line = DashedLine(
-        RIGHT * 3.5 + DOWN * 0.60,
-        RIGHT * 3.5 + DOWN * 0.72,
+    # Small tick — visually confirms new point sits ON the curve
+    tick = Line(
+        new_pt_pos + DOWN * 0.14,
+        new_pt_pos + UP * 0.14,
         color=ACCENT,
-        stroke_width=2.0,
-        dash_length=0.06,
-    ).set_opacity(0.72 if show_text else 0.0)
+        stroke_width=2.2,
+    ).set_opacity(0.70 if show_text else 0.0)
 
-    # --- Visual connector: subtle line from model bottom toward curve ---
-    # Shows the model is the SOURCE of the pattern
-    connector = DashedLine(
-        DOWN * 0.88,        # model bottom edge
-        ORIGIN + DOWN * 0.96,  # top of curve
-        color=TEXT_SUB,
-        stroke_width=1.5,
-        dash_length=0.08,
-    ).set_opacity(0.28 if show_text else 0.0)
+    # --- Soft arrow from left scatter → model (training flow hint) ---
+    # Very subtle — just enough to say "those dots went in here"
+    flow_hint = Arrow(
+        LEFT * 1.05 + UP * 0.05,
+        LEFT * 0.92 + UP * 0.02,
+        buff=0.0,
+        color=SECONDARY,
+        stroke_width=1.6,
+        max_tip_length_to_length_ratio=0.20,
+    ).set_opacity(0.35 if not show_text else 0.18)
 
-    # --- Final text (only at very end) ---
+    # --- Final text ---
     title = Text("Generalization", font_size=34, color=TEXT_MAIN, weight=BOLD)
     subtitle = Text("works on new examples", font_size=20, color=TEXT_SUB, weight=MEDIUM)
     text_group = VGroup(title, subtitle).arrange(DOWN, buff=0.14)
-    text_group.move_to(DOWN * 2.78)
+    # Place below model — model bottom + fixed label is ~DOWN * 1.55 from center
+    text_group.move_to(DOWN * 2.35)
     text_group.set_opacity(1.0 if show_text else 0.0)
 
     group = VGroup(
         curve_glow, curve,
-        scatter,
-        connector,
-        new_pt, new_pt_label, fit_line,
+        left_scatter,
+        flow_hint,
+        new_pt, new_label, tick,
         text_group,
     )
     group.set_opacity(params.get("opacity", 1.0))
