@@ -10,6 +10,7 @@ from actions import (
     BG_COLOR,
     ZONE_POSITIONS,
     build_object,
+    make_manual_rule_force_indicator,
     make_links,
     place_in_zone,
     transition_in_for,
@@ -202,10 +203,24 @@ class JsonDrivenScene(MovingCameraScene):
                 target = ORIGIN
             return self.camera.frame.animate.move_to(target).set(width=width)
 
+        def vector_from_param(value, default=ORIGIN):
+            if isinstance(value, (list, tuple)) and len(value) >= 2:
+                z = value[2] if len(value) > 2 else 0
+                return np.array([value[0], value[1], z], dtype=float)
+            return default
+
+        def register_under_existing_id(source_id, zone_name, obj):
+            object_registry[source_id] = obj
+            step_zone_map[source_id] = zone_name
+            active_objects[zone_name] = obj
+
         special_actions = {
             "hold",
             "highlight_group",
             "dim_group",
+            "transform_manual_rule_card",
+            "mutate_manual_rule_card",
+            "pulse_manual_rule_ghost",
             "transform_box_label",
             "transform_arrow",
             "camera_focus",
@@ -280,6 +295,134 @@ class JsonDrivenScene(MovingCameraScene):
                             run_time=run_time,
                         )
                         current_time += run_time
+                    handled = True
+
+                elif step.action == "transform_manual_rule_card":
+                    source_id = step.params.get("source_id")
+                    source_obj = object_registry.get(source_id)
+                    if source_obj is None:
+                        print(
+                            f"[transform_manual_rule_card] WARNING: source_id={source_id} not found. Skipping."
+                        )
+                        handled = True
+                        continue
+
+                    source_zone = step_zone_map.get(source_id, step.zone)
+                    new_params = dict(step.params)
+                    new_params.pop("source_id", None)
+                    new_params.setdefault("position", source_obj.get_center().tolist())
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": new_params,
+                            "zone": source_zone,
+                        }
+                    )
+
+                    animations = [ReplacementTransform(source_obj, new_obj)]
+                    force_indicator = make_manual_rule_force_indicator(step.params, new_obj)
+                    if force_indicator is not None:
+                        animations.append(Succession(FadeIn(force_indicator), FadeOut(force_indicator)))
+
+                    self.play(AnimationGroup(*animations, lag_ratio=0.0), run_time=run_time)
+                    current_time += run_time
+
+                    for ref_id, registered in list(object_registry.items()):
+                        if registered is source_obj and ref_id != source_id:
+                            object_registry.pop(ref_id, None)
+                            step_zone_map.pop(ref_id, None)
+                    register_under_existing_id(source_id, source_zone, new_obj)
+                    object_registry[step.id] = new_obj
+                    step_zone_map[step.id] = source_zone
+                    handled = True
+
+                elif step.action == "mutate_manual_rule_card":
+                    source_id = step.params.get("source_id")
+                    obj = object_registry.get(source_id)
+                    if obj is None:
+                        print(
+                            f"[mutate_manual_rule_card] WARNING: source_id={source_id} not found. Skipping."
+                        )
+                        handled = True
+                        continue
+
+                    mode = step.params.get("mode", "dim")
+                    if mode == "pulse":
+                        peak_scale = step.params.get("peak_scale", 1.05)
+                        settle_opacity = step.params.get("settle_opacity", step.params.get("opacity", 1.0))
+                        peak_opacity = step.params.get("peak_opacity", settle_opacity)
+                        up = obj.animate.scale(peak_scale).set_opacity(peak_opacity)
+                        down = obj.animate.scale(1 / peak_scale).set_opacity(settle_opacity)
+                        if "peak_color" in step.params:
+                            up = up.set_color(step.params["peak_color"])
+                        if "settle_color" in step.params:
+                            down = down.set_color(step.params["settle_color"])
+                        self.play(Succession(up, down), run_time=run_time)
+                        current_time += run_time
+                        handled = True
+                        continue
+
+                    anim = obj.animate
+                    if mode == "dim":
+                        if "target_opacity" in step.params:
+                            anim = anim.set_opacity(step.params["target_opacity"])
+                        if "target_color" in step.params:
+                            anim = anim.set_color(step.params["target_color"])
+                        if "scale_factor" in step.params:
+                            anim = anim.scale(step.params["scale_factor"])
+                    elif mode == "drift":
+                        target_position = vector_from_param(
+                            step.params.get("target_position"),
+                            ZONE_POSITIONS.get(step.params.get("target_zone", step.zone), obj.get_center()),
+                        )
+                        anim = anim.move_to(target_position)
+                        if "target_opacity" in step.params:
+                            anim = anim.set_opacity(step.params["target_opacity"])
+                    elif mode == "fade":
+                        anim = anim.set_opacity(step.params.get("target_opacity", 0.03))
+                    else:
+                        print(f"[mutate_manual_rule_card] WARNING: unsupported mode={mode}. Skipping.")
+                        handled = True
+                        continue
+
+                    self.play(AnimationGroup(anim, lag_ratio=0.0), run_time=run_time)
+                    current_time += run_time
+
+                    if mode == "drift":
+                        new_zone = step.params.get("target_zone")
+                        if new_zone in active_objects:
+                            old_zone = step_zone_map.get(source_id)
+                            if old_zone is not None and active_objects.get(old_zone) is obj:
+                                active_objects[old_zone] = None
+                            active_objects[new_zone] = obj
+                            step_zone_map[source_id] = new_zone
+                    object_registry[step.id] = obj
+                    step_zone_map[step.id] = step_zone_map.get(source_id, step.zone)
+                    handled = True
+
+                elif step.action == "pulse_manual_rule_ghost":
+                    source_id = step.params.get("source_id")
+                    ghost_key = step.params.get("ghost")
+                    group = object_registry.get(source_id)
+                    ghost_items = getattr(group, "ghost_items", {}) if group is not None else {}
+                    ghost = ghost_items.get(ghost_key)
+                    if ghost is None:
+                        print(
+                            f"[pulse_manual_rule_ghost] WARNING: source_id={source_id}, ghost={ghost_key} not found. Skipping."
+                        )
+                        handled = True
+                        continue
+                    base_opacity = step.params.get("base_opacity", 0.3)
+                    peak_opacity = step.params.get("peak_opacity", 0.6)
+                    self.play(
+                        Succession(
+                            ghost.animate.set_opacity(peak_opacity),
+                            ghost.animate.set_opacity(base_opacity),
+                        ),
+                        run_time=run_time,
+                    )
+                    current_time += run_time
                     handled = True
 
                 elif step.action in {"transform_box_label", "transform_arrow", "transform_box_to_pattern"}:

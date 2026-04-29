@@ -1,0 +1,398 @@
+{
+  "scene_id": "scene05_limits_of_manual_logic",
+  "video_title": "What Is Machine Learning?",
+  "scene_title": "The Limits of Manual Logic",
+  "order": 5,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s5_01",
+      "text": "You might ask: if traditional programming works so well, why do we need machine learning at all?"
+    },
+    {
+      "id": "s5_02",
+      "text": "The answer is that many real-world problems are too messy for hand-written rules."
+    },
+    {
+      "id": "s5_03",
+      "text": "Take spam detection. At first, you might write a simple rule: if the email contains the word Winner, mark it as spam."
+    },
+    {
+      "id": "s5_04",
+      "text": "But then spammers change the spelling. Then they use images. Then they use symbols. Then they hide the message in other ways."
+    },
+    {
+      "id": "s5_05",
+      "text": "Very quickly, the rule set becomes complicated and weak."
+    },
+    {
+      "id": "s5_06",
+      "text": "The same problem appears in many other areas."
+    },
+    {
+      "id": "s5_07",
+      "text": "How do we write rules to detect a pedestrian in a self-driving car system? How do we detect a small tumor in a noisy medical scan? How do we recommend a movie or song based on a person's behavior?"
+    },
+    {
+      "id": "s5_08",
+      "text": "These tasks involve many variables at once. They are hard to describe with fixed rules, but often easier to learn from data."
+    },
+    {
+      "id": "s5_09",
+      "text": "That is why machine learning exists. It helps us work with patterns that are too complex for manual rule-writing."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "s5_v01_rule_card",
+      "anchor": "s5_01",
+      "action": "show_manual_rule_card",
+      "zone": "center",
+      "transition_in": "write",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 0.6,
+      "camera_scale": 1.0,
+      "params": {
+        "state": 0,
+        "label": "IF \"Winner\" → SPAM",
+        "color": "#F8FAFC",
+        "text_color": "#F8FAFC",
+        "fill_color": "#111827",
+        "fill_opacity": 0.08,
+        "stroke_width": 3.0,
+        "opacity": 1.0,
+        "scale": 1.0
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s5_v02_messy_tremor",
+      "anchor": "s5_02",
+      "action": "mutate_manual_rule_card",
+      "zone": "center",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.3,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "mode": "pulse",
+        "peak_scale": 1.05,
+        "peak_opacity": 1.0,
+        "settle_opacity": 1.0
+      },
+      "offset": 1.05
+    },
+    {
+      "id": "s5_v03_false_resolution",
+      "anchor": "s5_03",
+      "action": "mutate_manual_rule_card",
+      "zone": "center",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.4,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "mode": "pulse",
+        "peak_scale": 1.0,
+        "peak_opacity": 1.0,
+        "peak_color": "#FFFFFF",
+        "settle_opacity": 1.0,
+        "settle_color": "#F8FAFC"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s5_v04_distortion_1",
+      "anchor": "s5_04",
+      "action": "transform_manual_rule_card",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.4,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "state": 1,
+        "label": "IF \"Winner\" → SPAM",
+        "color": "#F8FAFC",
+        "text_color": "#F8FAFC",
+        "fill_color": "#111827",
+        "fill_opacity": 0.08,
+        "stroke_width": 3.0,
+        "force_indicator": "left",
+        "force_color": "#4EA1FF"
+      },
+      "offset": 0.48
+    },
+    {
+      "id": "s5_v05_distortion_2",
+      "anchor": "s5_04",
+      "action": "transform_manual_rule_card",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.4,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "state": 2,
+        "label": "IF \"Winner\" → SPAM",
+        "color": "#F8FAFC",
+        "text_color": "#F8FAFC",
+        "fill_color": "#111827",
+        "fill_opacity": 0.08,
+        "stroke_width": 3.0,
+        "force_indicator": "top_right",
+        "force_color": "#4EA1FF"
+      },
+      "offset": 0.78
+    },
+    {
+      "id": "s5_v06_distortion_3",
+      "anchor": "s5_04",
+      "action": "transform_manual_rule_card",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.4,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "state": 3,
+        "label": "IF \"Winner\" → SPAM",
+        "color": "#F8FAFC",
+        "text_color": "#F8FAFC",
+        "fill_color": "#111827",
+        "fill_opacity": 0.08,
+        "stroke_width": 3.0,
+        "force_indicator": "bottom",
+        "force_color": "#4EA1FF"
+      },
+      "offset": 1.08
+    },
+    {
+      "id": "s5_v07_distortion_4",
+      "anchor": "s5_04",
+      "action": "transform_manual_rule_card",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.5,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "state": 4,
+        "label": "IF \"Winner\" → SPAM",
+        "color": "#F8FAFC",
+        "text_color": "#F8FAFC",
+        "fill_color": "#111827",
+        "fill_opacity": 0.08,
+        "stroke_width": 3.0
+      },
+      "offset": 1.38
+    },
+    {
+      "id": "s5_v08_card_exhausted",
+      "anchor": "s5_05",
+      "action": "mutate_manual_rule_card",
+      "zone": "center",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.8,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "mode": "dim",
+        "target_opacity": 0.75,
+        "target_color": "#AAB2BF",
+        "scale_factor": 0.95
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s5_v09_domain_ghosts",
+      "anchor": "s5_06",
+      "action": "show_manual_rule_ghosts",
+      "zone": "center_span",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_span",
+      "duration": 0.5,
+      "camera_scale": 1.0,
+      "params": {
+        "labels": ["Pedestrian", "Tumor", "Recommendation"],
+        "positions": [[-3.55, -1.05, 0], [0.0, -2.2, 0], [3.55, -1.05, 0]],
+        "state": 4,
+        "scale": 0.4,
+        "opacity": 0.3,
+        "color": "#9AA4B2",
+        "fill_color": "#111827",
+        "fill_opacity": 0.05,
+        "stroke_width": 2.0,
+        "font_size": 18
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s5_v10_pedestrian_pulse",
+      "anchor": "s5_07",
+      "action": "pulse_manual_rule_ghost",
+      "zone": "center_span",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.3,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v09_domain_ghosts",
+        "ghost": "pedestrian",
+        "base_opacity": 0.3,
+        "peak_opacity": 0.6
+      },
+      "offset": 0.18
+    },
+    {
+      "id": "s5_v11_tumor_pulse",
+      "anchor": "s5_07",
+      "action": "pulse_manual_rule_ghost",
+      "zone": "center_span",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.3,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v09_domain_ghosts",
+        "ghost": "tumor",
+        "base_opacity": 0.3,
+        "peak_opacity": 0.6
+      },
+      "offset": 0.68
+    },
+    {
+      "id": "s5_v12_recommendation_pulse",
+      "anchor": "s5_07",
+      "action": "pulse_manual_rule_ghost",
+      "zone": "center_span",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.3,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v09_domain_ghosts",
+        "ghost": "recommendation",
+        "base_opacity": 0.3,
+        "peak_opacity": 0.6
+      },
+      "offset": 1.18
+    },
+    {
+      "id": "s5_v13_ghosts_fade",
+      "anchor": "s5_07",
+      "action": "fade_out",
+      "zone": "center_span",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.8,
+      "camera_scale": 1.0,
+      "params": {
+        "zones": ["center_span"]
+      },
+      "offset": 1.52
+    },
+    {
+      "id": "s5_v14_card_drift_left",
+      "anchor": "s5_08",
+      "action": "mutate_manual_rule_card",
+      "zone": "center",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 2.3,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "mode": "drift",
+        "target_zone": "left-center",
+        "target_opacity": 0.55
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s5_v15_curve_draw",
+      "anchor": "s5_09",
+      "action": "show_axis_free_curve",
+      "zone": "center_right",
+      "transition_in": "create",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center_right",
+      "duration": 1.35,
+      "camera_scale": 1.0,
+      "params": {
+        "points": [[-1.45, -0.58, 0], [-0.62, -0.12, 0], [0.32, 0.12, 0], [1.45, 0.72, 0]],
+        "color": "#4EA1FF",
+        "stroke_width": 4.2,
+        "opacity": 1.0,
+        "scale": 1.05
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s5_v16_card_recedes",
+      "anchor": "s5_09",
+      "action": "mutate_manual_rule_card",
+      "zone": "center",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.8,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "mode": "fade",
+        "target_opacity": 0.04
+      },
+      "offset": 1.35
+    },
+    {
+      "id": "s5_v17_scene_fade",
+      "anchor": "s5_09",
+      "action": "fade_out",
+      "zone": "center_span",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.8,
+      "camera_scale": 1.0,
+      "params": {
+        "zones": ["left-center", "center_right"]
+      },
+      "offset": 3.65
+    }
+  ],
+  "notes": {
+    "tone": "Restrained, precise, and increasingly strained until the curve resolves the scene.",
+    "pacing": "One rule card stays alive from S1 through S9, deforming quickly in S4, weakening in S5, making room in S8, and receding behind the curve in S9.",
+    "animation_guidelines": "Do not replace the rule card. Keep the ghost domain shapes faint and temporary. The final curve has no axes, no labels, and no companion text."
+  }
+}

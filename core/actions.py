@@ -22,12 +22,22 @@ ZONE_POSITIONS = {
     "center_mid_left": LEFT * 1.5,
     "center_mid_right": RIGHT * 1.5,
     "center_right": RIGHT * 3.2,
+    "left-center": LEFT * 2.25,
     "center_band": ORIGIN,
     "center_left_center": LEFT * 1.8,
     "center_span": ORIGIN,
     # FIX: added missing zone used by v18_rules_to_pattern
     "pattern_right_compact": RIGHT * 2.8,
 }
+
+
+def _as_vector(value, default=ORIGIN):
+    if value is None:
+        return default
+    if isinstance(value, (list, tuple)) and len(value) >= 2:
+        z = value[2] if len(value) > 2 else 0
+        return np.array([value[0], value[1], z], dtype=float)
+    return default
 
 
 def place_in_zone(obj, zone: str):
@@ -258,6 +268,166 @@ def make_transform_text(params, zone):
     obj.set_opacity(params.get("opacity", 1.0))
     place_in_zone(obj, zone)
     return obj
+
+
+def _manual_rule_card_points(state: int, width: float, height: float):
+    half_w = width / 2
+    half_h = height / 2
+    states = {
+        0: [
+            [-half_w, half_h, 0],
+            [half_w, half_h, 0],
+            [half_w, -half_h, 0],
+            [-half_w, -half_h, 0],
+        ],
+        1: [
+            [-half_w * 1.15, half_h * 0.98, 0],
+            [half_w, half_h, 0],
+            [half_w, -half_h, 0],
+            [-half_w * 1.15, -half_h * 1.02, 0],
+        ],
+        2: [
+            [-half_w * 1.15, half_h * 0.98, 0],
+            [half_w * 0.98, half_h * 1.12, 0],
+            [half_w, -half_h, 0],
+            [-half_w * 1.15, -half_h * 1.02, 0],
+        ],
+        3: [
+            [-half_w * 1.15, half_h * 0.98, 0],
+            [half_w * 0.98, half_h * 1.12, 0],
+            [half_w * 0.98, -half_h * 0.82, 0],
+            [-half_w * 1.10, -half_h * 0.86, 0],
+        ],
+        4: [
+            [-half_w * 1.12, half_h * 0.92, 0],
+            [half_w * 0.95, half_h * 1.10, 0],
+            [half_w * 1.08, -half_h * 0.78, 0],
+            [-half_w * 0.92, -half_h * 0.96, 0],
+        ],
+    }
+    return [np.array(point, dtype=float) for point in states.get(state, states[0])]
+
+
+def make_manual_rule_card(params, zone):
+    state = int(params.get("state", 0))
+    width = params.get("width", 3.25)
+    height = params.get("height", 1.22)
+    color = params.get("color", TEXT_MAIN)
+    fill_color = params.get("fill_color", "#111827")
+    stroke_width = params.get("stroke_width", 3.0)
+    fill_opacity = params.get("fill_opacity", 0.12)
+    opacity = params.get("opacity", 1.0)
+
+    card = Polygon(
+        *_manual_rule_card_points(state, width, height),
+        color=color,
+        stroke_width=stroke_width,
+    )
+    card.set_fill(fill_color, opacity=fill_opacity)
+
+    label = Text(
+        params.get("label", 'IF "Winner" → SPAM'),
+        font_size=params.get("font_size", 24),
+        color=params.get("text_color", color),
+        weight=params.get("weight", MEDIUM),
+    )
+    fit_to_width(label, width * 0.78)
+    label.move_to(card.get_center())
+
+    group = VGroup(card, label)
+    group.set_opacity(opacity)
+    group.scale(params.get("scale", 1.0))
+
+    position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
+    group.move_to(position)
+    return group
+
+
+def make_manual_rule_force_indicator(params, source_obj):
+    direction = params.get("force_indicator")
+    if not direction:
+        return None
+
+    color = params.get("force_color", ACCENT)
+    stroke_width = params.get("force_stroke_width", 2.2)
+    length = params.get("force_length", 0.62)
+    buff = params.get("force_buff", 0.08)
+
+    if direction == "left":
+        end = source_obj.get_left() + LEFT * buff
+        start = end + LEFT * length
+    elif direction == "top_right":
+        end = source_obj.get_corner(UR) + normalize(UP + RIGHT) * buff
+        start = end + normalize(UP + RIGHT) * length
+    elif direction == "bottom":
+        end = source_obj.get_bottom() + DOWN * buff
+        start = end + DOWN * length
+    else:
+        return None
+
+    line = Line(start, end, color=color, stroke_width=stroke_width)
+    line.set_opacity(params.get("force_opacity", 0.72))
+    return line
+
+
+def make_manual_rule_ghosts(params, zone):
+    labels = params.get("labels", ["Pedestrian", "Tumor", "Recommendation"])
+    positions = params.get(
+        "positions",
+        [[-3.65, -1.05, 0], [0, -2.35, 0], [3.65, -1.05, 0]],
+    )
+    scale = params.get("scale", 0.4)
+    opacity = params.get("opacity", 0.3)
+    color = params.get("color", MUTED)
+
+    ghosts = VGroup()
+    ghost_items = {}
+    for label_text, position in zip(labels, positions):
+        ghost = make_manual_rule_card(
+            {
+                "state": params.get("state", 4),
+                "width": params.get("width", 3.25),
+                "height": params.get("height", 1.22),
+                "label": label_text,
+                "font_size": params.get("font_size", 18),
+                "color": color,
+                "text_color": color,
+                "fill_color": params.get("fill_color", "#111827"),
+                "fill_opacity": params.get("fill_opacity", 0.08),
+                "stroke_width": params.get("stroke_width", 2.0),
+                "scale": scale,
+                "opacity": opacity,
+                "position": position,
+            },
+            "center",
+        )
+        key = label_text.lower()
+        ghost.ghost_key = key
+        ghost_items[key] = ghost
+        ghosts.add(ghost)
+
+    ghosts.ghost_items = ghost_items
+    ghosts.set_opacity(opacity)
+    return ghosts
+
+
+def make_axis_free_curve(params, zone):
+    raw_points = params.get(
+        "points",
+        [[-1.35, -0.55, 0], [-0.55, -0.10, 0], [0.35, 0.16, 0], [1.35, 0.70, 0]],
+    )
+    points = [_as_vector(point) for point in raw_points]
+    curve = VMobject()
+    curve.set_points_smoothly(points)
+    curve.set_stroke(
+        params.get("color", ACCENT),
+        width=params.get("stroke_width", 4.0),
+        opacity=params.get("opacity", 1.0),
+    )
+    curve.scale(params.get("scale", 1.0))
+    position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
+    curve.move_to(position)
+    return curve
 
 
 def make_square_stage_sequence(params, zone):
@@ -1767,6 +1937,15 @@ def build_object(step_dict):
 
     if action == "transform_text":
         return make_transform_text(params, zone)
+
+    if action in {"show_manual_rule_card", "transform_manual_rule_card"}:
+        return make_manual_rule_card(params, zone)
+
+    if action == "show_manual_rule_ghosts":
+        return make_manual_rule_ghosts(params, zone)
+
+    if action == "show_axis_free_curve":
+        return make_axis_free_curve(params, zone)
 
     if action == "square_stage_sequence":
         return make_square_stage_sequence(params, zone)
