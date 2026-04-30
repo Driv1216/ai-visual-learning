@@ -73,6 +73,25 @@
       "offset": 0.0
     },
     {
+      "id": "s5_v01b_ambient_breath",
+      "anchor": "s5_01",
+      "action": "mutate_manual_rule_card",
+      "zone": "center",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 2.5,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "mode": "pulse",
+        "peak_scale": 1.02,
+        "peak_opacity": 1.0,
+        "settle_opacity": 1.0
+      },
+      "offset": 1.5
+    },
+    {
       "id": "s5_v02_messy_tremor",
       "anchor": "s5_02",
       "action": "mutate_manual_rule_card",
@@ -111,6 +130,27 @@
         "settle_color": "#F8FAFC"
       },
       "offset": 0.0
+    },
+    {
+      "id": "s5_v03b_second_confidence_pulse",
+      "anchor": "s5_03",
+      "action": "mutate_manual_rule_card",
+      "zone": "center",
+      "transition_in": "none",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.2,
+      "camera_scale": 1.0,
+      "params": {
+        "source_id": "s5_v01_rule_card",
+        "mode": "pulse",
+        "peak_scale": 1.0,
+        "peak_opacity": 1.0,
+        "peak_color": "#FFFFFF",
+        "settle_opacity": 1.0,
+        "settle_color": "#F8FAFC"
+      },
+      "offset": 2.2
     },
     {
       "id": "s5_v04_distortion_1",
@@ -333,6 +373,7 @@
         "source_id": "s5_v01_rule_card",
         "mode": "drift",
         "target_zone": "left-center",
+        "target_position": [-2.25, 0.0, 0.0],
         "target_opacity": 0.55
       },
       "offset": 0.0

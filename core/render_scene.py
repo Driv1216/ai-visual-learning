@@ -218,6 +218,7 @@ class JsonDrivenScene(MovingCameraScene):
             "hold",
             "highlight_group",
             "dim_group",
+            "show_manual_rule_card",
             "transform_manual_rule_card",
             "mutate_manual_rule_card",
             "pulse_manual_rule_ghost",
@@ -297,6 +298,42 @@ class JsonDrivenScene(MovingCameraScene):
                         current_time += run_time
                     handled = True
 
+                elif step.action == "show_manual_rule_card":
+                    merged_params = dict(step.params)
+                    if isinstance(getattr(step, "content", None), str):
+                        merged_params.setdefault("label", step.content)
+                    elif isinstance(getattr(step, "content", None), dict):
+                        merged_params.update(step.content)
+                    if isinstance(getattr(step, "style", None), dict):
+                        merged_params.update(step.style)
+
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": merged_params,
+                            "zone": step.zone,
+                        }
+                    )
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+
+                    self.play(
+                        AnimationGroup(*outgoing_anims, FadeIn(new_obj), lag_ratio=0.0),
+                        run_time=run_time,
+                    )
+                    current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
                 elif step.action == "transform_manual_rule_card":
                     source_id = step.params.get("source_id")
                     source_obj = object_registry.get(source_id)
@@ -310,7 +347,8 @@ class JsonDrivenScene(MovingCameraScene):
                     source_zone = step_zone_map.get(source_id, step.zone)
                     new_params = dict(step.params)
                     new_params.pop("source_id", None)
-                    new_params.setdefault("position", source_obj.get_center().tolist())
+                    source_anchor = getattr(source_obj, "manual_anchor", source_obj.get_center())
+                    new_params.setdefault("position", source_anchor.tolist())
                     new_obj = build_object(
                         {
                             "id": step.id,
@@ -319,6 +357,7 @@ class JsonDrivenScene(MovingCameraScene):
                             "zone": source_zone,
                         }
                     )
+                    new_obj.manual_anchor = source_anchor
 
                     animations = [ReplacementTransform(source_obj, new_obj)]
                     force_indicator = make_manual_rule_force_indicator(step.params, new_obj)
@@ -372,9 +411,10 @@ class JsonDrivenScene(MovingCameraScene):
                         if "scale_factor" in step.params:
                             anim = anim.scale(step.params["scale_factor"])
                     elif mode == "drift":
+                        current_anchor = getattr(obj, "manual_anchor", obj.get_center())
                         target_position = vector_from_param(
                             step.params.get("target_position"),
-                            ZONE_POSITIONS.get(step.params.get("target_zone", step.zone), obj.get_center()),
+                            ZONE_POSITIONS.get(step.params.get("target_zone", step.zone), current_anchor),
                         )
                         anim = anim.move_to(target_position)
                         if "target_opacity" in step.params:
@@ -390,6 +430,7 @@ class JsonDrivenScene(MovingCameraScene):
                     current_time += run_time
 
                     if mode == "drift":
+                        obj.manual_anchor = target_position
                         new_zone = step.params.get("target_zone")
                         if new_zone in active_objects:
                             old_zone = step_zone_map.get(source_id)

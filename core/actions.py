@@ -340,10 +340,11 @@ def make_manual_rule_card(params, zone):
 
     position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
     group.move_to(position)
+    group.manual_anchor = position
     return group
 
 
-def make_manual_rule_force_indicator(params, source_obj):
+def make_manual_rule_force_indicator(params, card_obj):
     direction = params.get("force_indicator")
     if not direction:
         return None
@@ -354,13 +355,13 @@ def make_manual_rule_force_indicator(params, source_obj):
     buff = params.get("force_buff", 0.08)
 
     if direction == "left":
-        end = source_obj.get_left() + LEFT * buff
+        end = card_obj.get_left() + LEFT * buff
         start = end + LEFT * length
     elif direction == "top_right":
-        end = source_obj.get_corner(UR) + normalize(UP + RIGHT) * buff
+        end = card_obj.get_corner(UR) + normalize(UP + RIGHT) * buff
         start = end + normalize(UP + RIGHT) * length
     elif direction == "bottom":
-        end = source_obj.get_bottom() + DOWN * buff
+        end = card_obj.get_bottom() + DOWN * buff
         start = end + DOWN * length
     else:
         return None
@@ -417,6 +418,11 @@ def make_axis_free_curve(params, zone):
         [[-1.35, -0.55, 0], [-0.55, -0.10, 0], [0.35, 0.16, 0], [1.35, 0.70, 0]],
     )
     points = [_as_vector(point) for point in raw_points]
+    if not params.get("absolute_points", False):
+        min_corner = np.min(points, axis=0)
+        max_corner = np.max(points, axis=0)
+        local_center = (min_corner + max_corner) / 2
+        points = [point - local_center for point in points]
     curve = VMobject()
     curve.set_points_smoothly(points)
     curve.set_stroke(
@@ -425,8 +431,9 @@ def make_axis_free_curve(params, zone):
         opacity=params.get("opacity", 1.0),
     )
     curve.scale(params.get("scale", 1.0))
-    position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
-    curve.move_to(position)
+    if not params.get("absolute_points", False):
+        position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
+        curve.move_to(position)
     return curve
 
 
