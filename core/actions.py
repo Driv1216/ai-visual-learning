@@ -341,6 +341,7 @@ def make_manual_rule_card(params, zone):
     position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
     group.move_to(position)
     group.manual_anchor = position
+    group.current_scale = params.get("scale", 1.0)
     return group
 
 

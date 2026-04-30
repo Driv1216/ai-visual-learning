@@ -160,7 +160,7 @@
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.4,
+      "duration": 0.46,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v01_rule_card",
@@ -184,7 +184,7 @@
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.4,
+      "duration": 0.46,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v01_rule_card",
@@ -208,7 +208,7 @@
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.4,
+      "duration": 0.46,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v01_rule_card",
@@ -306,7 +306,7 @@
         "base_opacity": 0.3,
         "peak_opacity": 0.6
       },
-      "offset": 0.18
+      "offset": 1.45
     },
     {
       "id": "s5_v11_tumor_pulse",
@@ -324,7 +324,7 @@
         "base_opacity": 0.3,
         "peak_opacity": 0.6
       },
-      "offset": 0.68
+      "offset": 4.95
     },
     {
       "id": "s5_v12_recommendation_pulse",
@@ -342,7 +342,7 @@
         "base_opacity": 0.3,
         "peak_opacity": 0.6
       },
-      "offset": 1.18
+      "offset": 8.25
     },
     {
       "id": "s5_v13_ghosts_fade",
@@ -357,7 +357,7 @@
       "params": {
         "zones": ["center_span"]
       },
-      "offset": 1.52
+      "offset": 9.45
     },
     {
       "id": "s5_v14_card_drift_left",
@@ -394,7 +394,8 @@
         "color": "#4EA1FF",
         "stroke_width": 4.2,
         "opacity": 1.0,
-        "scale": 1.05
+        "scale": 1.05,
+        "position": [2.55, 0.0, 0.0]
       },
       "offset": 0.0
     },
@@ -411,7 +412,8 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "mode": "fade",
-        "target_opacity": 0.04
+        "target_opacity": 0.04,
+        "target_text_opacity": 0.0
       },
       "offset": 1.35
     },

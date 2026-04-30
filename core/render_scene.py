@@ -214,11 +214,35 @@ class JsonDrivenScene(MovingCameraScene):
             step_zone_map[source_id] = zone_name
             active_objects[zone_name] = obj
 
+        def apply_manual_rule_display_color(obj, color):
+            if hasattr(obj, "submobjects") and len(obj.submobjects) >= 2:
+                card_shape = obj.submobjects[0]
+                label = obj.submobjects[1]
+                if hasattr(card_shape, "set_stroke"):
+                    card_shape.set_stroke(color=color)
+                if hasattr(label, "set_color"):
+                    label.set_color(color)
+            elif hasattr(obj, "set_color"):
+                obj.set_color(color)
+
+        def animate_manual_rule_display_color(obj, color):
+            if hasattr(obj, "submobjects") and len(obj.submobjects) >= 2:
+                card_shape = obj.submobjects[0]
+                label = obj.submobjects[1]
+                anims = []
+                if hasattr(card_shape, "animate"):
+                    anims.append(card_shape.animate.set_stroke(color=color))
+                if hasattr(label, "animate"):
+                    anims.append(label.animate.set_color(color))
+                return anims
+            return [obj.animate.set_color(color)]
+
         special_actions = {
             "hold",
             "highlight_group",
             "dim_group",
             "show_manual_rule_card",
+            "show_manual_rule_ghosts",
             "transform_manual_rule_card",
             "mutate_manual_rule_card",
             "pulse_manual_rule_ghost",
@@ -334,6 +358,40 @@ class JsonDrivenScene(MovingCameraScene):
                     register_object(step.id, step.zone, new_obj)
                     handled = True
 
+                elif step.action == "show_manual_rule_ghosts":
+                    merged_params = dict(step.params)
+                    if isinstance(getattr(step, "content", None), dict):
+                        merged_params.update(step.content)
+                    if isinstance(getattr(step, "style", None), dict):
+                        merged_params.update(step.style)
+
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": merged_params,
+                            "zone": step.zone,
+                        }
+                    )
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+
+                    self.play(
+                        AnimationGroup(*outgoing_anims, FadeIn(new_obj), lag_ratio=0.0),
+                        run_time=run_time,
+                    )
+                    current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
                 elif step.action == "transform_manual_rule_card":
                     source_id = step.params.get("source_id")
                     source_obj = object_registry.get(source_id)
@@ -348,7 +406,9 @@ class JsonDrivenScene(MovingCameraScene):
                     new_params = dict(step.params)
                     new_params.pop("source_id", None)
                     source_anchor = getattr(source_obj, "manual_anchor", source_obj.get_center())
+                    source_scale = getattr(source_obj, "current_scale", 1.0)
                     new_params.setdefault("position", source_anchor.tolist())
+                    new_params.setdefault("scale", source_scale)
                     new_obj = build_object(
                         {
                             "id": step.id,
@@ -358,14 +418,23 @@ class JsonDrivenScene(MovingCameraScene):
                         }
                     )
                     new_obj.manual_anchor = source_anchor
+                    new_obj.current_scale = source_scale
 
-                    animations = [ReplacementTransform(source_obj, new_obj)]
                     force_indicator = make_manual_rule_force_indicator(step.params, new_obj)
                     if force_indicator is not None:
-                        animations.append(Succession(FadeIn(force_indicator), FadeOut(force_indicator)))
-
-                    self.play(AnimationGroup(*animations, lag_ratio=0.0), run_time=run_time)
+                        self.play(
+                            AnimationGroup(
+                                ReplacementTransform(source_obj, new_obj),
+                                FadeIn(force_indicator),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time * 0.82,
+                        )
+                        self.play(FadeOut(force_indicator), run_time=run_time * 0.18)
+                    else:
+                        self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
                     current_time += run_time
+                    new_obj.manual_anchor = new_obj.get_center()
 
                     for ref_id, registered in list(object_registry.items()):
                         if registered is source_obj and ref_id != source_id:
@@ -389,27 +458,47 @@ class JsonDrivenScene(MovingCameraScene):
                     mode = step.params.get("mode", "dim")
                     if mode == "pulse":
                         peak_scale = step.params.get("peak_scale", 1.05)
+                        current_scale = getattr(obj, "current_scale", 1.0)
                         settle_opacity = step.params.get("settle_opacity", step.params.get("opacity", 1.0))
                         peak_opacity = step.params.get("peak_opacity", settle_opacity)
-                        up = obj.animate.scale(peak_scale).set_opacity(peak_opacity)
-                        down = obj.animate.scale(1 / peak_scale).set_opacity(settle_opacity)
+                        anchor = getattr(obj, "manual_anchor", obj.get_center())
+                        peak_obj = obj.copy()
+                        if current_scale:
+                            peak_obj.scale(peak_scale / current_scale, about_point=anchor)
+                        peak_obj.set_opacity(peak_opacity)
                         if "peak_color" in step.params:
-                            up = up.set_color(step.params["peak_color"])
+                            apply_manual_rule_display_color(peak_obj, step.params["peak_color"])
+                        settle_obj = obj.copy()
+                        settle_obj.set_opacity(settle_opacity)
                         if "settle_color" in step.params:
-                            down = down.set_color(step.params["settle_color"])
-                        self.play(Succession(up, down), run_time=run_time)
+                            apply_manual_rule_display_color(settle_obj, step.params["settle_color"])
+                        settle_obj.manual_anchor = anchor
+                        self.play(
+                            Succession(
+                                Transform(obj, peak_obj),
+                                Transform(obj, settle_obj),
+                            ),
+                            run_time=run_time,
+                        )
+                        obj.manual_anchor = obj.get_center()
+                        obj.current_scale = current_scale
                         current_time += run_time
                         handled = True
                         continue
 
                     anim = obj.animate
+                    color_anims = []
+                    extra_anims = []
+                    persistent_scale_factor = None
                     if mode == "dim":
                         if "target_opacity" in step.params:
                             anim = anim.set_opacity(step.params["target_opacity"])
                         if "target_color" in step.params:
-                            anim = anim.set_color(step.params["target_color"])
+                            color_anims = animate_manual_rule_display_color(obj, step.params["target_color"])
                         if "scale_factor" in step.params:
-                            anim = anim.scale(step.params["scale_factor"])
+                            persistent_scale_factor = step.params["scale_factor"]
+                            anchor = getattr(obj, "manual_anchor", obj.get_center())
+                            anim = anim.scale(persistent_scale_factor, about_point=anchor)
                     elif mode == "drift":
                         current_anchor = getattr(obj, "manual_anchor", obj.get_center())
                         target_position = vector_from_param(
@@ -420,17 +509,27 @@ class JsonDrivenScene(MovingCameraScene):
                         if "target_opacity" in step.params:
                             anim = anim.set_opacity(step.params["target_opacity"])
                     elif mode == "fade":
-                        anim = anim.set_opacity(step.params.get("target_opacity", 0.03))
+                        target_opacity = step.params.get("target_opacity", 0.03)
+                        if "target_text_opacity" in step.params and hasattr(obj, "submobjects") and len(obj.submobjects) >= 2:
+                            card_shape = obj.submobjects[0]
+                            label = obj.submobjects[1]
+                            anim = card_shape.animate.set_opacity(target_opacity)
+                            extra_anims.append(label.animate.set_opacity(step.params["target_text_opacity"]))
+                        else:
+                            anim = anim.set_opacity(target_opacity)
                     else:
                         print(f"[mutate_manual_rule_card] WARNING: unsupported mode={mode}. Skipping.")
                         handled = True
                         continue
 
-                    self.play(AnimationGroup(anim, lag_ratio=0.0), run_time=run_time)
+                    self.play(AnimationGroup(anim, *color_anims, *extra_anims, lag_ratio=0.0), run_time=run_time)
                     current_time += run_time
 
+                    obj.manual_anchor = obj.get_center()
+                    if persistent_scale_factor is not None:
+                        obj.current_scale = getattr(obj, "current_scale", 1.0) * persistent_scale_factor
+
                     if mode == "drift":
-                        obj.manual_anchor = target_position
                         new_zone = step.params.get("target_zone")
                         if new_zone in active_objects:
                             old_zone = step_zone_map.get(source_id)
