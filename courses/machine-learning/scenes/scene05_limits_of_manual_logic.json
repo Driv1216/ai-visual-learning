@@ -174,7 +174,7 @@
         "force_indicator": "left",
         "force_color": "#4EA1FF"
       },
-      "offset": 0.48
+      "offset": 0.3
     },
     {
       "id": "s5_v05_distortion_2",
@@ -198,7 +198,7 @@
         "force_indicator": "top_right",
         "force_color": "#4EA1FF"
       },
-      "offset": 0.78
+      "offset": 1.2
     },
     {
       "id": "s5_v06_distortion_3",
@@ -222,7 +222,7 @@
         "force_indicator": "bottom",
         "force_color": "#4EA1FF"
       },
-      "offset": 1.08
+      "offset": 2.1
     },
     {
       "id": "s5_v07_distortion_4",
@@ -244,7 +244,7 @@
         "fill_opacity": 0.08,
         "stroke_width": 3.0
       },
-      "offset": 1.38
+      "offset": 3.0
     },
     {
       "id": "s5_v08_card_exhausted",
@@ -278,11 +278,11 @@
       "camera_scale": 1.0,
       "params": {
         "labels": ["Pedestrian", "Tumor", "Recommendation"],
-        "positions": [[-3.55, -1.05, 0], [0.0, -2.2, 0], [3.55, -1.05, 0]],
+        "positions": [[-4.5, -2.2, 0], [0.0, -3.0, 0], [4.5, -2.2, 0]],
         "state": 4,
         "scale": 0.4,
         "opacity": 0.3,
-        "color": "#9AA4B2",
+        "color": "#687386",
         "fill_color": "#111827",
         "fill_opacity": 0.05,
         "stroke_width": 2.0,
@@ -390,12 +390,12 @@
       "duration": 1.35,
       "camera_scale": 1.0,
       "params": {
-        "points": [[-1.45, -0.58, 0], [-0.62, -0.12, 0], [0.32, 0.12, 0], [1.45, 0.72, 0]],
+        "points": [[-1.35, -0.32, 0], [-0.55, 0.02, 0], [0.32, 0.18, 0], [1.35, 0.58, 0]],
         "color": "#4EA1FF",
         "stroke_width": 4.2,
         "opacity": 1.0,
         "scale": 1.05,
-        "position": [2.55, 0.0, 0.0]
+        "position": [2.0, 0.2, 0.0]
       },
       "offset": 0.0
     },

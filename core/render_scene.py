@@ -422,19 +422,18 @@ class JsonDrivenScene(MovingCameraScene):
 
                     force_indicator = make_manual_rule_force_indicator(step.params, new_obj)
                     if force_indicator is not None:
+                        self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time * 0.78)
                         self.play(
-                            AnimationGroup(
-                                ReplacementTransform(source_obj, new_obj),
+                            Succession(
                                 FadeIn(force_indicator),
-                                lag_ratio=0.0,
+                                FadeOut(force_indicator),
                             ),
-                            run_time=run_time * 0.82,
+                            run_time=run_time * 0.22,
                         )
-                        self.play(FadeOut(force_indicator), run_time=run_time * 0.18)
                     else:
                         self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
                     current_time += run_time
-                    new_obj.manual_anchor = new_obj.get_center()
+                    new_obj.manual_anchor = source_anchor.copy()
 
                     for ref_id, registered in list(object_registry.items()):
                         if registered is source_obj and ref_id != source_id:
@@ -480,7 +479,7 @@ class JsonDrivenScene(MovingCameraScene):
                             ),
                             run_time=run_time,
                         )
-                        obj.manual_anchor = obj.get_center()
+                        obj.manual_anchor = anchor.copy()
                         obj.current_scale = current_scale
                         current_time += run_time
                         handled = True
@@ -525,7 +524,8 @@ class JsonDrivenScene(MovingCameraScene):
                     self.play(AnimationGroup(anim, *color_anims, *extra_anims, lag_ratio=0.0), run_time=run_time)
                     current_time += run_time
 
-                    obj.manual_anchor = obj.get_center()
+                    if mode == "drift":
+                        obj.manual_anchor = target_position.copy()
                     if persistent_scale_factor is not None:
                         obj.current_scale = getattr(obj, "current_scale", 1.0) * persistent_scale_factor
 
