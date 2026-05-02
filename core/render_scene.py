@@ -382,6 +382,10 @@ class JsonDrivenScene(MovingCameraScene):
                             "zone": step.zone,
                         }
                     )
+                    # Defensive: set tracking attributes on ghost group
+                    # (individual ghost items already have these from make_manual_rule_card)
+                    new_obj.manual_anchor = np.array([0.0, 0.0, 0.0])
+                    new_obj.current_scale = merged_params.get("scale", 0.4)
 
                     replace_zone = step.replace
                     outgoing_anims = []
@@ -393,6 +397,8 @@ class JsonDrivenScene(MovingCameraScene):
                                 outgoing_anims.append(outgoing)
                             clear_zone(replace_zone)
 
+                    # FadeIn directly — do NOT touch any other active objects.
+                    # The rule card must remain at its current opacity throughout.
                     self.play(
                         AnimationGroup(*outgoing_anims, FadeIn(new_obj), lag_ratio=0.0),
                         run_time=run_time,

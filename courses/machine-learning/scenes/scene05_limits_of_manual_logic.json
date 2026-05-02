@@ -61,7 +61,7 @@
       "camera_scale": 1.0,
       "params": {
         "state": 0,
-        "label": "IF \"Winner\" \u2192 SPAM",
+        "label": "IF \"Winner\" → SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
@@ -165,7 +165,7 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "state": 1,
-        "label": "IF \"Winner\" \u2192 SPAM",
+        "label": "IF \"Winner\" → SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
@@ -191,7 +191,7 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "state": 2,
-        "label": "IF \"Winner\" \u2192 SPAM",
+        "label": "IF \"Winner\" → SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
@@ -217,7 +217,7 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "state": 3,
-        "label": "IF \"Winner\" \u2192 SPAM",
+        "label": "IF \"Winner\" → SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
@@ -243,7 +243,7 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "state": 4,
-        "label": "IF \"Winner\" \u2192 SPAM",
+        "label": "IF \"Winner\" → SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
@@ -283,8 +283,28 @@
       "duration": 0.5,
       "camera_scale": 1.0,
       "params": {
-        "labels": ["Pedestrian", "Tumor", "Recommendation"],
-        "positions": [[-4.5, -2.2, 0], [0.0, -3.0, 0], [4.5, -2.2, 0]],
+        "labels": [
+          "Pedestrian",
+          "Tumor",
+          "Recommendation"
+        ],
+        "positions": [
+          [
+            -4.5,
+            -2.2,
+            0
+          ],
+          [
+            0.0,
+            -3.0,
+            0
+          ],
+          [
+            4.5,
+            -2.2,
+            0
+          ]
+        ],
         "state": 4,
         "scale": 0.38,
         "opacity": 0.25,
@@ -304,7 +324,7 @@
       "transition_in": "none",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.3,
+      "duration": 0.5,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v09_domain_ghosts",
@@ -322,7 +342,7 @@
       "transition_in": "none",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.3,
+      "duration": 0.5,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v09_domain_ghosts",
@@ -340,7 +360,7 @@
       "transition_in": "none",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.3,
+      "duration": 0.5,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v09_domain_ghosts",
@@ -361,7 +381,9 @@
       "duration": 0.8,
       "camera_scale": 1.0,
       "params": {
-        "zones": ["center_span"]
+        "zones": [
+          "center_span"
+        ]
       },
       "offset": 9.45
     },
@@ -379,7 +401,11 @@
         "source_id": "s5_v01_rule_card",
         "mode": "drift",
         "target_zone": "left-center",
-        "target_position": [-2.25, 0.0, 0.0],
+        "target_position": [
+          -2.25,
+          0.0,
+          0.0
+        ],
         "target_opacity": 0.55
       },
       "offset": 0.0
@@ -396,12 +422,37 @@
       "duration": 1.35,
       "camera_scale": 1.0,
       "params": {
-        "points": [[-1.2, -0.4, 0], [-0.4, 0.0, 0], [0.4, 0.2, 0], [1.2, 0.55, 0]],
+        "points": [
+          [
+            -1.2,
+            -0.4,
+            0
+          ],
+          [
+            -0.4,
+            0.0,
+            0
+          ],
+          [
+            0.4,
+            0.2,
+            0
+          ],
+          [
+            1.2,
+            0.55,
+            0
+          ]
+        ],
         "color": "#4EA1FF",
         "stroke_width": 4.5,
         "opacity": 1.0,
         "scale": 1.0,
-        "position": [2.2, 0.1, 0.0]
+        "position": [
+          2.2,
+          0.1,
+          0.0
+        ]
       },
       "offset": 0.0
     },
@@ -434,7 +485,10 @@
       "duration": 0.8,
       "camera_scale": 1.0,
       "params": {
-        "zones": ["left-center", "center_right"]
+        "zones": [
+          "left-center",
+          "center_right"
+        ]
       },
       "offset": 3.65
     }
