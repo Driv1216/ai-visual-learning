@@ -29,6 +29,9 @@ COMPOSITE_ZONES = {
     "center_left_center",
     "pattern_right_compact",
     "center_span",
+    # Scene 5 zones — bypass generic focus-dimming so the rule card
+    # is never auto-dimmed when ghosts or curve appear in adjacent zones
+    "left-center",
 }
 
 
@@ -243,6 +246,7 @@ class JsonDrivenScene(MovingCameraScene):
             "dim_group",
             "show_manual_rule_card",
             "show_manual_rule_ghosts",
+            "show_axis_free_curve",
             "transform_manual_rule_card",
             "mutate_manual_rule_card",
             "pulse_manual_rule_ghost",
@@ -339,6 +343,11 @@ class JsonDrivenScene(MovingCameraScene):
                             "zone": step.zone,
                         }
                     )
+                    # CRITICAL: set stable anchor at creation time.
+                    # This must be ORIGIN (zone center) — never get_center() on
+                    # distorted geometry. All subsequent transforms preserve this.
+                    new_obj.manual_anchor = np.array([0.0, 0.0, 0.0])
+                    new_obj.current_scale = merged_params.get("scale", 1.0)
 
                     replace_zone = step.replace
                     outgoing_anims = []
@@ -405,9 +414,12 @@ class JsonDrivenScene(MovingCameraScene):
                     source_zone = step_zone_map.get(source_id, step.zone)
                     new_params = dict(step.params)
                     new_params.pop("source_id", None)
-                    source_anchor = getattr(source_obj, "manual_anchor", source_obj.get_center())
+                    # CRITICAL: always use the stored manual_anchor — never get_center()
+                    # on distorted polygon geometry. The anchor is set at card creation
+                    # and must remain ORIGIN throughout all transforms.
+                    source_anchor = getattr(source_obj, "manual_anchor", np.array([0.0, 0.0, 0.0]))
                     source_scale = getattr(source_obj, "current_scale", 1.0)
-                    new_params.setdefault("position", source_anchor.tolist())
+                    new_params["position"] = source_anchor.tolist()
                     new_params.setdefault("scale", source_scale)
                     new_obj = build_object(
                         {
@@ -417,23 +429,29 @@ class JsonDrivenScene(MovingCameraScene):
                             "zone": source_zone,
                         }
                     )
-                    new_obj.manual_anchor = source_anchor
+                    # Preserve ORIGIN anchor — never overwrite with distorted get_center()
+                    new_obj.manual_anchor = source_anchor.copy()
                     new_obj.current_scale = source_scale
 
                     force_indicator = make_manual_rule_force_indicator(step.params, new_obj)
                     if force_indicator is not None:
-                        self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time * 0.78)
+                        # Phase 1: morph the card shape cleanly
+                        self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
+                        current_time += run_time
+                        # Phase 2: force indicator appears AFTER transform settles
+                        # Minimum 0.35s so it is actually readable
+                        indicator_time = max(0.35, run_time * 0.5)
                         self.play(
                             Succession(
-                                FadeIn(force_indicator),
-                                FadeOut(force_indicator),
+                                FadeIn(force_indicator, run_time=indicator_time * 0.4),
+                                FadeOut(force_indicator, run_time=indicator_time * 0.6),
                             ),
-                            run_time=run_time * 0.22,
+                            run_time=indicator_time,
                         )
+                        current_time += indicator_time
                     else:
                         self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
-                    current_time += run_time
-                    new_obj.manual_anchor = source_anchor.copy()
+                        current_time += run_time
 
                     for ref_id, registered in list(object_registry.items()):
                         if registered is source_obj and ref_id != source_id:
@@ -563,6 +581,35 @@ class JsonDrivenScene(MovingCameraScene):
                         run_time=run_time,
                     )
                     current_time += run_time
+                    handled = True
+
+                elif step.action == "show_axis_free_curve":
+                    merged_params = dict(step.params)
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": merged_params,
+                            "zone": step.zone,
+                        }
+                    )
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+                    # Use Create so the curve draws itself left-to-right
+                    # Do NOT touch any other active objects — card must remain at current opacity
+                    if outgoing_anims:
+                        self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=0.3)
+                        current_time += 0.3
+                    self.play(Create(new_obj), run_time=run_time)
+                    current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
                     handled = True
 
                 elif step.action in {"transform_box_label", "transform_arrow", "transform_box_to_pattern"}:

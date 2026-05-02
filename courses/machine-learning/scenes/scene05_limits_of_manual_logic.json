@@ -53,7 +53,7 @@
       "anchor": "s5_01",
       "action": "show_manual_rule_card",
       "zone": "center",
-      "transition_in": "write",
+      "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
       "replace": "center",
@@ -61,7 +61,7 @@
       "camera_scale": 1.0,
       "params": {
         "state": 0,
-        "label": "IF \"Winner\" → SPAM",
+        "label": "IF \"Winner\" \u2192 SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
@@ -165,14 +165,16 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "state": 1,
-        "label": "IF \"Winner\" → SPAM",
+        "label": "IF \"Winner\" \u2192 SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
         "fill_opacity": 0.08,
         "stroke_width": 3.0,
         "force_indicator": "left",
-        "force_color": "#4EA1FF"
+        "force_color": "#4EA1FF",
+        "force_length": 0.55,
+        "force_opacity": 0.9
       },
       "offset": 0.3
     },
@@ -189,16 +191,18 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "state": 2,
-        "label": "IF \"Winner\" → SPAM",
+        "label": "IF \"Winner\" \u2192 SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
         "fill_opacity": 0.08,
         "stroke_width": 3.0,
         "force_indicator": "top_right",
-        "force_color": "#4EA1FF"
+        "force_color": "#4EA1FF",
+        "force_length": 0.55,
+        "force_opacity": 0.9
       },
-      "offset": 1.2
+      "offset": 1.41
     },
     {
       "id": "s5_v06_distortion_3",
@@ -213,16 +217,18 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "state": 3,
-        "label": "IF \"Winner\" → SPAM",
+        "label": "IF \"Winner\" \u2192 SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
         "fill_opacity": 0.08,
         "stroke_width": 3.0,
         "force_indicator": "bottom",
-        "force_color": "#4EA1FF"
+        "force_color": "#4EA1FF",
+        "force_length": 0.55,
+        "force_opacity": 0.9
       },
-      "offset": 2.1
+      "offset": 2.52
     },
     {
       "id": "s5_v07_distortion_4",
@@ -237,14 +243,14 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "state": 4,
-        "label": "IF \"Winner\" → SPAM",
+        "label": "IF \"Winner\" \u2192 SPAM",
         "color": "#F8FAFC",
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
         "fill_opacity": 0.08,
         "stroke_width": 3.0
       },
-      "offset": 3.0
+      "offset": 3.63
     },
     {
       "id": "s5_v08_card_exhausted",
@@ -280,13 +286,13 @@
         "labels": ["Pedestrian", "Tumor", "Recommendation"],
         "positions": [[-4.5, -2.2, 0], [0.0, -3.0, 0], [4.5, -2.2, 0]],
         "state": 4,
-        "scale": 0.4,
-        "opacity": 0.3,
-        "color": "#687386",
+        "scale": 0.38,
+        "opacity": 0.25,
+        "color": "#4B5563",
         "fill_color": "#111827",
-        "fill_opacity": 0.05,
-        "stroke_width": 2.0,
-        "font_size": 18
+        "fill_opacity": 0.04,
+        "stroke_width": 1.5,
+        "font_size": 16
       },
       "offset": 0.0
     },
@@ -303,8 +309,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "pedestrian",
-        "base_opacity": 0.3,
-        "peak_opacity": 0.6
+        "base_opacity": 0.25,
+        "peak_opacity": 0.55
       },
       "offset": 1.45
     },
@@ -321,8 +327,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "tumor",
-        "base_opacity": 0.3,
-        "peak_opacity": 0.6
+        "base_opacity": 0.25,
+        "peak_opacity": 0.55
       },
       "offset": 4.95
     },
@@ -339,8 +345,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "recommendation",
-        "base_opacity": 0.3,
-        "peak_opacity": 0.6
+        "base_opacity": 0.25,
+        "peak_opacity": 0.55
       },
       "offset": 8.25
     },
@@ -390,12 +396,12 @@
       "duration": 1.35,
       "camera_scale": 1.0,
       "params": {
-        "points": [[-1.35, -0.32, 0], [-0.55, 0.02, 0], [0.32, 0.18, 0], [1.35, 0.58, 0]],
+        "points": [[-1.2, -0.4, 0], [-0.4, 0.0, 0], [0.4, 0.2, 0], [1.2, 0.55, 0]],
         "color": "#4EA1FF",
-        "stroke_width": 4.2,
+        "stroke_width": 4.5,
         "opacity": 1.0,
-        "scale": 1.05,
-        "position": [2.0, 0.2, 0.0]
+        "scale": 1.0,
+        "position": [2.2, 0.1, 0.0]
       },
       "offset": 0.0
     },
