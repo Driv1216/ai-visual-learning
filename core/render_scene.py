@@ -8,6 +8,7 @@ from scene_schema import SceneSpec
 from actions import (
     ACCENT,
     BG_COLOR,
+    TAXONOMY_COLORS,
     ZONE_POSITIONS,
     build_object,
     make_manual_rule_force_indicator,
@@ -100,6 +101,7 @@ def get_default_run_time(step, segment_duration: float) -> float:
         "show_inference_pass",
         "show_build_use_summary",
         "show_generalization_pattern",
+        "show_taxonomy_field",
     }:
         return min(1.0, max(0.6, segment_duration * 0.14))
     if action == "highlight_text":
@@ -260,6 +262,7 @@ class JsonDrivenScene(MovingCameraScene):
             "animate_step_sequence",
             "highlight_inference_side",
             "transform_split_to_clean_flow",
+            "show_taxonomy_field",
         }
 
         for idx, step in enumerate(visual_steps):
@@ -896,6 +899,276 @@ class JsonDrivenScene(MovingCameraScene):
                             run_time=run_time,
                         )
                         current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "show_taxonomy_field":
+                    source_id = step.params.get("source_id")
+                    source_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+                    base_params = dict(getattr(source_obj, "taxonomy_params", {})) if source_obj is not None else {}
+                    merged_params = {**base_params, **step.params}
+                    merged_params.pop("source_id", None)
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": merged_params,
+                            "zone": step.zone,
+                        }
+                    )
+                    stage = merged_params.get("stage", "field_intro")
+
+                    if source_obj is None:
+                        self.play(FadeIn(new_obj), run_time=run_time)
+                        current_time += run_time
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "supervised_full":
+                        dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
+                        classes = merged_params.get("classes", [])
+                        points = merged_params.get("points", [])
+                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        label_anims = [
+                            label.animate.set_opacity(opacity)
+                            for label, opacity in zip(labels, [0.92, 0.13, 0.13, 0.13])
+                        ]
+                        ordered = sorted(range(len(dot_items)), key=lambda index: points[index][0] if index < len(points) else 0)
+                        waves = []
+                        wave_count = 9
+                        for wave_index in range(wave_count):
+                            wave_indices = ordered[
+                                wave_index * len(ordered) // wave_count:
+                                (wave_index + 1) * len(ordered) // wave_count
+                            ]
+                            wave_anims = []
+                            for point_index in wave_indices:
+                                if point_index >= len(classes):
+                                    continue
+                                color = TAXONOMY_COLORS["amber"] if classes[point_index] == "a" else TAXONOMY_COLORS["blue"]
+                                wave_anims.append(dot_items[point_index].animate.set_color(color).set_opacity(0.92))
+                            if wave_anims:
+                                waves.append(AnimationGroup(*wave_anims, lag_ratio=0.0))
+                        self.play(AnimationGroup(Succession(*waves), *label_anims, lag_ratio=0.0), run_time=run_time)
+                        current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "label_intro":
+                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        label_anims = [
+                            label.animate.set_opacity(opacity)
+                            for label, opacity in zip(labels, [0.28, 0.28, 0.28, 0.28])
+                        ]
+                        if label_anims:
+                            self.play(Succession(*label_anims), run_time=run_time)
+                            current_time += run_time
+                        source_obj.taxonomy_params = merged_params
+                        source_obj.taxonomy_stage = stage
+                        object_registry[step.id] = source_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = source_obj
+                        handled = True
+                        continue
+
+                    if stage == "unsupervised_neutral":
+                        dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
+                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        glows = getattr(source_obj, "taxonomy_glows", VGroup())
+                        dot_anims = [
+                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.46)
+                            for dot in dot_items
+                        ]
+                        label_anims = [
+                            label.animate.set_opacity(opacity)
+                            for label, opacity in zip(labels, [0.13, 0.92, 0.13, 0.13])
+                        ]
+                        glow_anims = [FadeOut(glows)] if len(glows) != 0 else []
+                        self.play(
+                            AnimationGroup(*dot_anims, *label_anims, *glow_anims, lag_ratio=0.0),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "unsupervised_clusters":
+                        point_source = getattr(source_obj, "taxonomy_points", None)
+                        point_target = getattr(new_obj, "taxonomy_points", None)
+                        glows = getattr(new_obj, "taxonomy_glows", VGroup())
+                        anims = []
+                        if point_source is not None and point_target is not None:
+                            anims.append(Transform(point_source, point_target))
+                        if len(glows) != 0:
+                            self.add(glows)
+                            anims.append(FadeIn(glows))
+                        if anims:
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
+                            current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "unsupervised_hold":
+                        source_glows = getattr(source_obj, "taxonomy_glows", VGroup())
+                        target_glows = getattr(new_obj, "taxonomy_glows", VGroup())
+                        if len(source_glows) != 0:
+                            pulse_glows = source_glows.copy()
+                            for glow in pulse_glows:
+                                if hasattr(glow, "set_fill") and hasattr(glow, "get_fill_opacity"):
+                                    glow.set_fill(opacity=min(glow.get_fill_opacity() * 1.18, glow.get_fill_opacity() + 0.035))
+                            self.play(
+                                Succession(
+                                    Transform(source_glows, pulse_glows),
+                                    Transform(source_glows, target_glows),
+                                ),
+                                run_time=run_time,
+                            )
+                            current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "semi_anchors":
+                        dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
+                        anims = []
+                        for anchor in merged_params.get("anchors", []):
+                            anchor_index = anchor.get("index")
+                            if anchor_index is None or not 0 <= anchor_index < len(dot_items):
+                                continue
+                            color = TAXONOMY_COLORS["amber"] if anchor.get("class", "a") == "a" else TAXONOMY_COLORS["blue"]
+                            anims.append(dot_items[anchor_index].animate.set_color(color).set_opacity(0.98).scale(1.35))
+                        if anims:
+                            self.play(Succession(*anims), run_time=run_time)
+                            current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "semi_influence":
+                        influence = getattr(new_obj, "taxonomy_influence", VGroup())
+                        point_source = getattr(source_obj, "taxonomy_points", None)
+                        point_target = getattr(new_obj, "taxonomy_points", None)
+                        anims = []
+                        if point_source is not None and point_target is not None:
+                            anims.append(Transform(point_source, point_target))
+                        anims.extend([GrowFromCenter(circle) for circle in influence])
+                        if len(influence) != 0:
+                            self.add(influence)
+                        self.play(AnimationGroup(*anims, lag_ratio=0.02), run_time=run_time)
+                        current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "semi_hold":
+                        dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
+                        anchors = merged_params.get("anchors", [])
+                        anchor_anims = []
+                        for anchor in anchors:
+                            anchor_index = anchor.get("index")
+                            if anchor_index is not None and 0 <= anchor_index < len(dot_items):
+                                anchor_anims.append(Indicate(dot_items[anchor_index], scale_factor=1.25, color=None))
+                        if anchor_anims:
+                            self.play(AnimationGroup(*anchor_anims, lag_ratio=0.05), run_time=run_time)
+                            current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "rl_resolution":
+                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        source_glows = getattr(source_obj, "taxonomy_glows", VGroup())
+                        target_glows = getattr(new_obj, "taxonomy_glows", VGroup())
+                        anims = [
+                            label.animate.set_opacity(opacity)
+                            for label, opacity in zip(labels, [0.05, 0.05, 0.05, 0.08])
+                        ]
+                        if len(source_glows) != 0 and len(target_glows) != 0:
+                            anims.append(Transform(source_glows, target_glows))
+                        elif len(target_glows) != 0:
+                            self.add(target_glows)
+                            anims.append(FadeIn(target_glows))
+                        if anims:
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
+                            current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    if stage == "rl_navigation":
+                        path_points = [vector_from_param(point) for point in merged_params.get("agent_path", [])]
+                        if len(path_points) >= 2:
+                            path_curve = VMobject()
+                            path_curve.set_points_smoothly(path_points)
+                            trail = getattr(new_obj, "taxonomy_trail", VGroup())
+                            agent = getattr(source_obj, "taxonomy_agent", None)
+                            destination_glow = getattr(new_obj, "taxonomy_glows", VGroup())
+                            flash_anims = []
+                            for flash in merged_params.get("feedback_flashes", []):
+                                flash_color = TAXONOMY_COLORS["reward"] if flash.get("kind") == "reward" else TAXONOMY_COLORS["penalty"]
+                                flash_circle = Circle(radius=flash.get("radius", 0.34), stroke_width=0)
+                                flash_circle.set_fill(flash_color, opacity=flash.get("opacity", 0.16))
+                                flash_circle.move_to(vector_from_param(flash.get("point")))
+                                delay = max(0.0, min(0.95, flash.get("at", 0.0)))
+                                flash_anims.append(
+                                    Succession(
+                                        Wait(run_time * delay),
+                                        FadeIn(flash_circle, run_time=0.08),
+                                        FadeOut(flash_circle, run_time=0.22),
+                                    )
+                                )
+                            parts = [Create(trail)]
+                            if agent is not None:
+                                parts.append(MoveAlongPath(agent, path_curve))
+                            if len(destination_glow) != 0:
+                                destination_glow.set_opacity(0)
+                                self.add(destination_glow)
+                                parts.append(Succession(Wait(run_time * 0.72), destination_glow.animate.set_opacity(1.0)))
+                            parts.extend(flash_anims)
+                            self.add(trail)
+                            self.play(AnimationGroup(*parts, lag_ratio=0.0), run_time=run_time)
+                            current_time += run_time
+                        else:
+                            self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
+                            current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
+                    self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
+                    current_time += run_time
+                    forget_object(source_obj)
                     register_object(step.id, step.zone, new_obj)
                     handled = True
 

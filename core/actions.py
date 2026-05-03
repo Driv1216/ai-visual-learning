@@ -1592,6 +1592,251 @@ def make_show_generalization_pattern(params, zone):
     return group
 
 
+TAXONOMY_COLORS = {
+    "background": BG_COLOR,
+    "neutral": "#6B7280",
+    "amber": "#F5B14C",
+    "blue": "#5B8CFF",
+    "cluster": "#F8F2DF",
+    "agent": "#FFFFFF",
+    "trail": "#FFFFFF",
+    "reward": "#F6C453",
+    "penalty": "#6F8FBF",
+    "label": "#FFFFFF",
+}
+
+
+def _taxonomy_point_position(point, params, drift_factor=0.0):
+    base = _as_vector(point)
+    if drift_factor <= 0:
+        return base
+
+    clusters = params.get("clusters", [])
+    if not clusters:
+        return base
+
+    nearest = min(
+        clusters,
+        key=lambda cluster: np.linalg.norm(base - _as_vector(cluster.get("center"))),
+    )
+    center = _as_vector(nearest.get("center"))
+    return base + (center - base) * drift_factor
+
+
+def _mix_hex(color_a, color_b, amount):
+    amount = max(0.0, min(1.0, amount))
+
+    def parts(color):
+        color = color.lstrip("#")
+        return np.array([int(color[i:i + 2], 16) for i in (0, 2, 4)], dtype=float)
+
+    mixed = parts(color_a) * (1 - amount) + parts(color_b) * amount
+    return "#" + "".join(f"{int(round(value)):02X}" for value in mixed)
+
+
+def _taxonomy_label_opacities(stage):
+    dim = 0.28
+    low = 0.13
+    bright = 0.92
+    states = {
+        "field_intro": [0.0, 0.0, 0.0, 0.0],
+        "label_intro": [dim, dim, dim, dim],
+        "supervised_full": [bright, low, low, low],
+        "supervised_boundary": [bright, low, low, low],
+        "unsupervised_neutral": [low, bright, low, low],
+        "unsupervised_clusters": [low, bright, low, low],
+        "unsupervised_hold": [low, bright, low, low],
+        "semi_neutral": [low, low, bright, low],
+        "semi_anchors": [low, low, bright, low],
+        "semi_influence": [low, low, bright, low],
+        "semi_hold": [low, low, 0.58, low],
+        "rl_neutral": [low, low, low, bright],
+        "rl_agent": [low, low, low, bright],
+        "rl_navigation": [low, low, low, bright],
+        "rl_resolution": [0.05, 0.05, 0.05, 0.08],
+    }
+    return states.get(stage, [dim, dim, dim, dim])
+
+
+def _taxonomy_labels(stage):
+    names = [
+        "supervised learning",
+        "unsupervised learning",
+        "semi-supervised learning",
+        "reinforcement learning",
+    ]
+    positions = [
+        LEFT * 4.65 + UP * 3.05,
+        RIGHT * 4.55 + UP * 3.05,
+        LEFT * 4.65 + DOWN * 3.05,
+        RIGHT * 4.35 + DOWN * 3.05,
+    ]
+    labels = VGroup()
+    label_items = {}
+    for name, position, opacity in zip(names, positions, _taxonomy_label_opacities(stage)):
+        label = Text(name, font_size=18, color=TAXONOMY_COLORS["label"], weight=MEDIUM)
+        label.move_to(position)
+        label.set_opacity(opacity)
+        labels.add(label)
+        label_items[name] = label
+    labels.label_items = label_items
+    return labels
+
+
+def _taxonomy_glows(params, stage):
+    glows = VGroup()
+    cluster_opacity = {
+        "unsupervised_clusters": 0.15,
+        "unsupervised_hold": 0.18,
+        "rl_navigation": 0.08,
+        "rl_resolution": 0.18,
+    }.get(stage, 0.0)
+
+    if cluster_opacity:
+        clusters = params.get("clusters", [])
+        destination_index = params.get("destination_cluster_index")
+        for index, cluster in enumerate(clusters):
+            if stage in {"rl_navigation", "rl_resolution"} and index != destination_index:
+                continue
+            radius = cluster.get("radius", 0.8)
+            center = _as_vector(cluster.get("center"))
+            for layer, opacity_scale in enumerate((1.0, 0.55, 0.25)):
+                glow = Circle(radius=radius * (0.85 + layer * 0.34), stroke_width=0)
+                glow.set_fill(TAXONOMY_COLORS["cluster"], opacity=cluster_opacity * opacity_scale)
+                glow.move_to(center)
+                glows.add(glow)
+
+    if stage == "supervised_boundary":
+        for center, width, height, opacity in (
+            ([0.0, 0.12, 0], 3.1, 1.25, 0.10),
+            ([0.48, -0.28, 0], 2.5, 0.9, 0.075),
+        ):
+            pulse = Ellipse(width=width, height=height, stroke_width=0)
+            pulse.set_fill(TAXONOMY_COLORS["cluster"], opacity=opacity)
+            pulse.rotate(-PI / 8)
+            pulse.move_to(_as_vector(center))
+            glows.add(pulse)
+
+    return glows
+
+
+def _taxonomy_influence(params, stage):
+    if stage not in {"semi_influence", "semi_hold"}:
+        return VGroup()
+
+    anchors = params.get("anchors", [])
+    anchor_map = {item["index"]: item.get("class", "a") for item in anchors}
+    points = params.get("points", [])
+    influence = VGroup()
+    for index, label in anchor_map.items():
+        if not 0 <= index < len(points):
+            continue
+        color = TAXONOMY_COLORS["amber"] if label == "a" else TAXONOMY_COLORS["blue"]
+        center = _as_vector(points[index])
+        for layer, opacity in enumerate((0.10, 0.055, 0.025)):
+            circle = Circle(radius=0.62 + layer * 0.42, stroke_width=0)
+            circle.set_fill(color, opacity=opacity)
+            circle.move_to(center)
+            influence.add(circle)
+    return influence
+
+
+def _taxonomy_points(params, stage):
+    points = params.get("points", [])
+    classes = params.get("classes", [])
+    anchors = params.get("anchors", [])
+    anchor_map = {item["index"]: item.get("class", "a") for item in anchors}
+    anchor_indices = set(anchor_map)
+    influence_stages = {"semi_influence", "semi_hold"}
+    drift = 0.075 if stage in {"unsupervised_clusters", "unsupervised_hold"} else 0.0
+
+    dots = VGroup()
+    dot_items = []
+    for index, point in enumerate(points):
+        position = _taxonomy_point_position(point, params, drift)
+        color = TAXONOMY_COLORS["neutral"]
+        opacity = 0.46
+        radius = params.get("point_radius", 0.04)
+
+        if stage in {"supervised_full", "supervised_boundary"}:
+            color = TAXONOMY_COLORS["amber"] if classes[index] == "a" else TAXONOMY_COLORS["blue"]
+            opacity = 0.92
+        elif stage in {"semi_anchors", *influence_stages} and index in anchor_indices:
+            color = TAXONOMY_COLORS["amber"] if anchor_map[index] == "a" else TAXONOMY_COLORS["blue"]
+            opacity = 0.98
+            radius = params.get("anchor_radius", 0.058)
+        elif stage in influence_stages:
+            nearest_amount = 0.0
+            nearest_color = color
+            for anchor_index, anchor_class in anchor_map.items():
+                if not 0 <= anchor_index < len(points):
+                    continue
+                dist = np.linalg.norm(_as_vector(point) - _as_vector(points[anchor_index]))
+                amount = max(0.0, 1.0 - dist / 1.18) * 0.42
+                if amount > nearest_amount:
+                    nearest_amount = amount
+                    nearest_color = TAXONOMY_COLORS["amber"] if anchor_class == "a" else TAXONOMY_COLORS["blue"]
+            if nearest_amount > 0:
+                color = _mix_hex(TAXONOMY_COLORS["neutral"], nearest_color, nearest_amount)
+                opacity = 0.54 + nearest_amount * 0.28
+
+        dot = Dot(position, radius=radius, color=color)
+        dot.set_opacity(opacity)
+        dots.add(dot)
+        dot_items.append(dot)
+
+    dots.dot_items = dot_items
+    return dots
+
+
+def _taxonomy_trail(params, stage):
+    if stage not in {"rl_navigation", "rl_resolution"}:
+        return VGroup()
+    path_points = [_as_vector(point) for point in params.get("agent_path", [])]
+    if len(path_points) < 2:
+        return VGroup()
+    path = VMobject()
+    path.set_points_smoothly(path_points)
+    trail = DashedVMobject(path, num_dashes=params.get("trail_dashes", 42))
+    trail.set_stroke(TAXONOMY_COLORS["trail"], width=2.0, opacity=0.30)
+    return trail
+
+
+def _taxonomy_agent(params, stage):
+    if stage not in {"rl_agent", "rl_navigation", "rl_resolution"}:
+        return VGroup()
+    path_points = params.get("agent_path", [])
+    if stage == "rl_agent" or not path_points:
+        position = params.get("agent_start", [-5.25, -0.7, 0])
+    else:
+        position = path_points[-1]
+    agent = Dot(_as_vector(position), radius=params.get("agent_radius", 0.075), color=TAXONOMY_COLORS["agent"])
+    agent.set_opacity(0.98)
+    return agent
+
+
+def make_taxonomy_field(params, zone):
+    stage = params.get("stage", "field_intro")
+    glows = _taxonomy_glows(params, stage)
+    influence = _taxonomy_influence(params, stage)
+    points = _taxonomy_points(params, stage)
+    trail = _taxonomy_trail(params, stage)
+    agent = _taxonomy_agent(params, stage)
+    labels = _taxonomy_labels(stage)
+
+    group = VGroup(glows, influence, points, trail, agent, labels)
+    group.taxonomy_glows = glows
+    group.taxonomy_influence = influence
+    group.taxonomy_points = points
+    group.taxonomy_trail = trail
+    group.taxonomy_agent = agent
+    group.taxonomy_labels = labels
+    group.taxonomy_params = dict(params)
+    group.taxonomy_stage = stage
+    group.set_opacity(params.get("opacity", 1.0))
+    return group
+
+
 def make_training_loop(params, zone):
     phase = params.get("phase", "intro")
     training_phases = {"training_examples", "training_error", "adjust", "repeat"}
@@ -2139,6 +2384,9 @@ def build_object(step_dict):
 
     if action == "show_generalization_pattern":
         return make_show_generalization_pattern(params, zone)
+
+    if action == "show_taxonomy_field":
+        return make_taxonomy_field(params, zone)
 
     if action == "fade_out":
         return None

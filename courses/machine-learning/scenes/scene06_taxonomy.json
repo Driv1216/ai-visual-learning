@@ -1,0 +1,368 @@
+{
+  "scene_id": "scene06_taxonomy",
+  "video_title": "What Is Machine Learning?",
+  "scene_title": "The Taxonomy of the Field",
+  "order": 6,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s6_01",
+      "text": "Machine learning is not one single technique."
+    },
+    {
+      "id": "s6_02",
+      "text": "The four main categories are: supervised learning, unsupervised learning, semi-supervised learning, reinforcement learning."
+    },
+    {
+      "id": "s6_03",
+      "text": "The first is supervised learning. This is the most common form."
+    },
+    {
+      "id": "s6_04",
+      "text": "For example, if we want to classify emails as spam or not spam, we train the model on labeled examples."
+    },
+    {
+      "id": "s6_05",
+      "text": "The second is unsupervised learning. Here, there are no labels."
+    },
+    {
+      "id": "s6_06",
+      "text": "The model only sees the data and tries to find structure on its own. It might discover clusters, groups, or hidden patterns."
+    },
+    {
+      "id": "s6_07",
+      "text": "This is useful when we do not already know what categories exist."
+    },
+    {
+      "id": "s6_08",
+      "text": "The third is semi-supervised learning. This is a mix of the two."
+    },
+    {
+      "id": "s6_09",
+      "text": "We have a small amount of labeled data and a large amount of unlabeled data. The labeled examples help guide the learning process."
+    },
+    {
+      "id": "s6_10",
+      "text": "This is useful because labels can be expensive to create."
+    },
+    {
+      "id": "s6_11",
+      "text": "The fourth is reinforcement learning. Here, the model learns by interacting with an environment."
+    },
+    {
+      "id": "s6_12",
+      "text": "It takes actions, receives rewards or penalties, and learns which actions lead to better outcomes."
+    },
+    {
+      "id": "s6_13",
+      "text": "This is how systems can learn strategies over time."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "s6_v01_field_emergence",
+      "anchor": "s6_01",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.65,
+      "camera_scale": 1.0,
+      "params": {
+        "stage": "field_intro",
+        "point_radius": 0.04,
+        "anchor_radius": 0.058,
+        "agent_radius": 0.075,
+        "agent_start": [-5.25, -0.7, 0],
+        "destination_cluster_index": 3,
+        "clusters": [
+          { "center": [-3.2, 1.35, 0], "radius": 0.86 },
+          { "center": [-0.9, -0.9, 0], "radius": 0.82 },
+          { "center": [1.35, 1.15, 0], "radius": 0.76 },
+          { "center": [3.15, -0.55, 0], "radius": 0.92 }
+        ],
+        "anchors": [
+          { "index": 2, "class": "a" },
+          { "index": 17, "class": "b" },
+          { "index": 30, "class": "b" },
+          { "index": 37, "class": "a" },
+          { "index": 46, "class": "a" },
+          { "index": 61, "class": "b" },
+          { "index": 70, "class": "b" },
+          { "index": 85, "class": "a" }
+        ],
+        "agent_path": [
+          [-5.25, -0.7, 0],
+          [-4.35, 0.1, 0],
+          [-3.2, -0.95, 0],
+          [-2.2, 0.55, 0],
+          [-0.9, -1.25, 0],
+          [0.18, 0.55, 0],
+          [1.15, -0.28, 0],
+          [1.92, 0.82, 0],
+          [2.45, -0.2, 0],
+          [2.82, -0.86, 0],
+          [3.18, -0.46, 0],
+          [3.42, -0.62, 0]
+        ],
+        "feedback_flashes": [
+          { "kind": "penalty", "point": [-3.2, -0.95, 0], "at": 0.18 },
+          { "kind": "penalty", "point": [-0.9, -1.25, 0], "at": 0.36 },
+          { "kind": "reward", "point": [1.92, 0.82, 0], "at": 0.58 },
+          { "kind": "reward", "point": [2.82, -0.86, 0], "at": 0.76 },
+          { "kind": "reward", "point": [3.18, -0.46, 0], "at": 0.88 }
+        ],
+        "points": [
+          [-2.81, 1.16, 0], [-2.43, 1.56, 0], [-3.93, 1.2, 0], [-3.71, 1.64, 0], [-4.25, 1.48, 0],
+          [-3.68, 1.07, 0], [-2.81, 1.98, 0], [-3.39, 2.03, 0], [-4.13, 1.03, 0], [-2.33, 1.4, 0],
+          [-2.71, 1.09, 0], [-2.56, 2.06, 0], [-2.19, 1.49, 0], [-2.67, 0.79, 0], [-4.25, 1.69, 0],
+          [-2.41, 1.03, 0], [-4.15, 1.72, 0], [-3.52, 0.96, 0], [-3.62, 2.06, 0], [-3.06, 0.68, 0],
+          [-4.13, 0.98, 0], [-3.8, 0.8, 0], [-1.05, -1.5, 0], [-1.22, -0.31, 0], [-1.39, -0.5, 0],
+          [-0.39, -0.12, 0], [-1.69, -1.28, 0], [0.17, -0.89, 0], [-0.04, -1.15, 0], [-1.85, -0.6, 0],
+          [-0.59, -1.57, 0], [-1.82, -1.46, 0], [-0.29, -1.06, 0], [-1.4, -0.66, 0], [-0.55, -0.3, 0],
+          [-1.35, -1.59, 0], [-0.7, -1.51, 0], [-1.25, -0.44, 0], [-1.62, -1.01, 0], [-0.68, -0.76, 0],
+          [-0.56, -0.45, 0], [-0.91, -0.54, 0], [-0.1, -0.44, 0], [-0.61, -1.35, 0], [2.02, 1.36, 0],
+          [1.27, 0.79, 0], [1.61, 1.22, 0], [1.78, 1.22, 0], [2.03, 1.42, 0], [0.77, 0.82, 0],
+          [1.31, 1.65, 0], [0.73, 1.49, 0], [1, 1.51, 0], [0.62, 1.43, 0], [0.55, 1.01, 0],
+          [1.36, 1.4, 0], [1.98, 1.1, 0], [1.52, 1.83, 0], [0.98, 0.81, 0], [1.75, 1.55, 0],
+          [0.92, 0.84, 0], [1.61, 1.37, 0], [2.27, 1.19, 0], [1.07, 0.49, 0], [0.82, 1.14, 0],
+          [1.73, 1.36, 0], [3.81, 0.04, 0], [2.31, -0.59, 0], [3.19, -1.12, 0], [3.55, -1.39, 0],
+          [2.99, -1.51, 0], [3.43, -0.72, 0], [3.39, -0.41, 0], [3.83, -0.18, 0], [2.69, -0.68, 0],
+          [2.85, 0.11, 0], [3.4, -0.68, 0], [3.65, -0.21, 0], [3.77, -0.08, 0], [2, -0.51, 0],
+          [3.76, -0.8, 0], [2.75, 0.16, 0], [2.48, -0.97, 0], [2.78, -1.27, 0], [3.8, -0.87, 0],
+          [3.18, -0.07, 0], [2.68, -0.77, 0], [3.48, -0.49, 0], [-4.85, -0.15, 0], [4.78, 1.72, 0]
+        ],
+        "classes": [
+          "a", "b", "a", "b", "a", "a", "a", "b", "a", "b", "a", "b", "a", "b", "a",
+          "a", "a", "b", "a", "b", "a", "b", "a", "a", "b", "a", "b", "a", "b", "a",
+          "b", "a", "a", "a", "b", "a", "b", "a", "b", "a", "b", "a", "a", "a", "a",
+          "b", "a", "b", "a", "a", "a", "b", "a", "b", "a", "b", "a", "b", "a", "a",
+          "a", "b", "a", "b", "a", "b", "a", "a", "b", "a", "b", "a", "b", "a", "b",
+          "a", "a", "a", "b", "a", "b", "a", "b", "a", "b", "a", "a", "a", "b", "a"
+        ]
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s6_v02_four_names",
+      "anchor": "s6_02",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 2.4,
+      "params": {
+        "source_id": "s6_v01_field_emergence",
+        "stage": "label_intro"
+      },
+      "offset": 0.1
+    },
+    {
+      "id": "s6_v03_supervised_full",
+      "anchor": "s6_03",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.05,
+      "params": {
+        "source_id": "s6_v02_four_names",
+        "stage": "supervised_full"
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s6_v04_boundary_suggestion",
+      "anchor": "s6_04",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.45,
+      "params": {
+        "source_id": "s6_v03_supervised_full",
+        "stage": "supervised_boundary"
+      },
+      "offset": 0.2
+    },
+    {
+      "id": "s6_v05_unsupervised_drain",
+      "anchor": "s6_05",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.55,
+      "params": {
+        "source_id": "s6_v04_boundary_suggestion",
+        "stage": "unsupervised_neutral"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s6_v06_structure_emerges",
+      "anchor": "s6_06",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.9,
+      "params": {
+        "source_id": "s6_v05_unsupervised_drain",
+        "stage": "unsupervised_clusters"
+      },
+      "offset": -0.25
+    },
+    {
+      "id": "s6_v07_unnamed_structure",
+      "anchor": "s6_07",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.25,
+      "params": {
+        "source_id": "s6_v06_structure_emerges",
+        "stage": "unsupervised_hold"
+      },
+      "offset": 0.1
+    },
+    {
+      "id": "s6_v08_semi_neutral",
+      "anchor": "s6_08",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.75,
+      "params": {
+        "source_id": "s6_v07_unnamed_structure",
+        "stage": "semi_neutral"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s6_v09_sparse_anchors",
+      "anchor": "s6_08",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.45,
+      "params": {
+        "source_id": "s6_v08_semi_neutral",
+        "stage": "semi_anchors"
+      },
+      "offset": 0.8
+    },
+    {
+      "id": "s6_v10_influence_propagates",
+      "anchor": "s6_09",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 2.0,
+      "params": {
+        "source_id": "s6_v09_sparse_anchors",
+        "stage": "semi_influence"
+      },
+      "offset": 0.05
+    },
+    {
+      "id": "s6_v11_influence_holds",
+      "anchor": "s6_10",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.15,
+      "params": {
+        "source_id": "s6_v10_influence_propagates",
+        "stage": "semi_hold"
+      },
+      "offset": 0.15
+    },
+    {
+      "id": "s6_v12_rl_neutral_reset",
+      "anchor": "s6_11",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.9,
+      "params": {
+        "source_id": "s6_v11_influence_holds",
+        "stage": "rl_neutral"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s6_v13_agent_appears",
+      "anchor": "s6_11",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.75,
+      "params": {
+        "source_id": "s6_v12_rl_neutral_reset",
+        "stage": "rl_agent"
+      },
+      "offset": 0.95
+    },
+    {
+      "id": "s6_v14_navigation_learning",
+      "anchor": "s6_12",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 4.1,
+      "params": {
+        "source_id": "s6_v13_agent_appears",
+        "stage": "rl_navigation"
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "s6_v15_arrival_resolution",
+      "anchor": "s6_13",
+      "action": "show_taxonomy_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.7,
+      "params": {
+        "source_id": "s6_v14_navigation_learning",
+        "stage": "rl_resolution"
+      },
+      "offset": 0.0
+    }
+  ],
+  "notes": {
+    "tone": "Restrained, precise, and visual-first.",
+    "pacing": "Audio-driven, with neutral resets between paradigm transitions and no explanatory visual clutter.",
+    "animation_guidelines": "Use one persistent point field. Points are never added or removed. No axes, grids, boxes, arrows, legends, cluster labels, or colors outside the Scene 6 visual brief."
+  }
+}

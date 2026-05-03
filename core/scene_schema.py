@@ -47,6 +47,7 @@ AllowedAction = Literal[
     "show_inference_pass",
     "show_build_use_summary",
     "show_generalization_pattern",
+    "show_taxonomy_field",
 ]
 
 AllowedZone = Literal[
