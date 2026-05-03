@@ -444,12 +444,13 @@ class JsonDrivenScene(MovingCameraScene):
                         # The force indicator must read as the cause of deformation,
                         # not as an annotation after the fact. Draw it during the
                         # card transform, then let it vanish as the deformation lands.
-                        indicator_in = FadeIn(force_indicator, run_time=run_time * 0.18)
+                        indicator_in = FadeIn(force_indicator, run_time=run_time * 0.16)
                         card_transform = ReplacementTransform(source_obj, new_obj)
-                        indicator_out = FadeOut(force_indicator, run_time=run_time * 0.38)
+                        indicator_out = FadeOut(force_indicator, run_time=run_time * 0.24)
+                        indicator_hold = Wait(max(run_time * 0.40, 0.01))
                         self.play(
                             AnimationGroup(
-                                Succession(indicator_in, indicator_out),
+                                Succession(indicator_in, indicator_hold, indicator_out),
                                 card_transform,
                                 lag_ratio=0.0,
                             ),
@@ -622,14 +623,19 @@ class JsonDrivenScene(MovingCameraScene):
                         current_time += 0.3
                     pattern_points = getattr(new_obj, "pattern_points", None)
                     pattern_curve = getattr(new_obj, "pattern_curve", new_obj)
+                    pattern_glow = getattr(new_obj, "pattern_glow", None)
                     if pattern_points is not None and len(pattern_points) > 0 and pattern_curve is not new_obj:
+                        curve_anims = []
+                        if pattern_glow is not None:
+                            curve_anims.append(FadeIn(pattern_glow))
+                        curve_anims.append(Create(pattern_curve))
+                        self.play(FadeIn(pattern_points), run_time=min(0.28, run_time * 0.25))
                         self.play(
                             AnimationGroup(
-                                FadeIn(pattern_points),
-                                Create(pattern_curve),
-                                lag_ratio=0.18,
+                                *curve_anims,
+                                lag_ratio=0.0,
                             ),
-                            run_time=run_time,
+                            run_time=max(run_time - min(0.28, run_time * 0.25), 0.1),
                         )
                     else:
                         self.play(Create(new_obj), run_time=run_time)

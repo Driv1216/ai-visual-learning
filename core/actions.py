@@ -509,12 +509,22 @@ def make_axis_free_curve(params, zone):
         data_points.scale(params.get("scale", 1.0))
         group.add(data_points)
 
+    curve_glow = None
+    if params.get("glow", False):
+        curve_glow = curve.copy()
+        curve_glow.set_stroke(
+            params.get("glow_color", params.get("color", ACCENT)),
+            width=params.get("glow_width", params.get("stroke_width", 4.0) * 2.6),
+            opacity=params.get("glow_opacity", 0.16),
+        )
+        group.add(curve_glow)
     group.add(curve)
     if not params.get("absolute_points", False):
         position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
         group.move_to(position)
     group.pattern_points = data_points
     group.pattern_curve = curve
+    group.pattern_glow = curve_glow if params.get("glow", False) else None
     return group
 
 

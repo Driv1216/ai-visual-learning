@@ -120,7 +120,7 @@
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.46,
+      "duration": 0.65,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v01_rule_card",
@@ -141,7 +141,7 @@
         "challenge_width": 1.28,
         "challenge_font_size": 17
       },
-      "offset": 0.1
+      "offset": 0.15
     },
     {
       "id": "s5_v05_distortion_2",
@@ -151,7 +151,7 @@
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.46,
+      "duration": 0.65,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v01_rule_card",
@@ -172,7 +172,7 @@
         "challenge_width": 1.12,
         "challenge_font_size": 16
       },
-      "offset": 0.48
+      "offset": 0.75
     },
     {
       "id": "s5_v06_distortion_3",
@@ -182,7 +182,7 @@
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.46,
+      "duration": 0.65,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v01_rule_card",
@@ -203,7 +203,7 @@
         "challenge_width": 1.28,
         "challenge_font_size": 17
       },
-      "offset": 0.86
+      "offset": 1.35
     },
     {
       "id": "s5_v07_distortion_4",
@@ -213,7 +213,7 @@
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.5,
+      "duration": 0.7,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v01_rule_card",
@@ -234,7 +234,7 @@
         "challenge_width": 1.18,
         "challenge_font_size": 15
       },
-      "offset": 1.26
+      "offset": 1.95
     },
     {
       "id": "s5_v08_card_exhausted",
@@ -275,29 +275,29 @@
         ],
         "positions": [
           [
-            -3.9,
-            -1.55,
+            -3.6,
+            -1.15,
             0
           ],
           [
             0.0,
-            -2.2,
+            -1.45,
             0
           ],
           [
-            3.9,
-            -1.55,
+            3.6,
+            -1.15,
             0
           ]
         ],
-        "scale": 1.0,
-        "opacity": 0.48,
+        "scale": 0.95,
+        "opacity": 0.52,
         "color": "#9AA6BA",
         "text_color": "#CBD5E1",
         "icon_color": "#9AA6BA",
         "highlight_color": "#FDE68A",
         "icon_fill_opacity": 0.12,
-        "font_size": 20
+        "font_size": 17
       },
       "offset": 0.0
     },
@@ -314,8 +314,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "pedestrian",
-        "base_opacity": 0.48,
-        "peak_opacity": 0.82
+        "base_opacity": 0.52,
+        "peak_opacity": 0.86
       },
       "offset": 1.45
     },
@@ -332,8 +332,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "tumor",
-        "base_opacity": 0.48,
-        "peak_opacity": 0.82
+        "base_opacity": 0.52,
+        "peak_opacity": 0.86
       },
       "offset": 4.95
     },
@@ -350,8 +350,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "recommendation",
-        "base_opacity": 0.48,
-        "peak_opacity": 0.82
+        "base_opacity": 0.52,
+        "peak_opacity": 0.86
       },
       "offset": 8.25
     },
@@ -396,93 +396,6 @@
       "offset": 0.0
     },
     {
-      "id": "s5_v15_curve_draw",
-      "anchor": "s5_09",
-      "action": "show_axis_free_curve",
-      "zone": "center_right",
-      "transition_in": "create",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center_right",
-      "duration": 1.35,
-      "camera_scale": 1.0,
-      "params": {
-        "points": [
-          [
-            -1.55,
-            -0.62,
-            0
-          ],
-          [
-            -0.75,
-            -0.08,
-            0
-          ],
-          [
-            0.20,
-            0.18,
-            0
-          ],
-          [
-            1.55,
-            0.78,
-            0
-          ]
-        ],
-        "color": "#4EA1FF",
-        "stroke_width": 5.8,
-        "opacity": 1.0,
-        "scale": 1.22,
-        "show_points": true,
-        "point_color": "#94A3B8",
-        "point_opacity": 0.48,
-        "point_radius": 0.055,
-        "data_points": [
-          [
-            -1.48,
-            -0.54,
-            0
-          ],
-          [
-            -1.12,
-            -0.30,
-            0
-          ],
-          [
-            -0.68,
-            -0.16,
-            0
-          ],
-          [
-            -0.18,
-            0.02,
-            0
-          ],
-          [
-            0.32,
-            0.20,
-            0
-          ],
-          [
-            0.82,
-            0.42,
-            0
-          ],
-          [
-            1.36,
-            0.68,
-            0
-          ]
-        ],
-        "position": [
-          2.75,
-          0.12,
-          0.0
-        ]
-      },
-      "offset": 0.0
-    },
-    {
       "id": "s5_v16_card_recedes",
       "anchor": "s5_09",
       "action": "mutate_manual_rule_card",
@@ -490,15 +403,116 @@
       "transition_in": "none",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.8,
+      "duration": 0.7,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v01_rule_card",
         "mode": "fade",
-        "target_opacity": 0.04,
+        "target_opacity": 0.0,
         "target_text_opacity": 0.0
       },
-      "offset": 1.35
+      "offset": 0.0
+    },
+    {
+      "id": "s5_v15_curve_draw",
+      "anchor": "s5_09",
+      "action": "show_axis_free_curve",
+      "zone": "center",
+      "transition_in": "create",
+      "transition_out": "fade",
+      "persist": true,
+      "replace": "center",
+      "duration": 1.55,
+      "camera_scale": 1.0,
+      "params": {
+        "points": [
+          [
+            -1.65,
+            -0.56,
+            0
+          ],
+          [
+            -0.95,
+            -0.20,
+            0
+          ],
+          [
+            -0.18,
+            0.06,
+            0
+          ],
+          [
+            0.68,
+            0.32,
+            0
+          ],
+          [
+            1.62,
+            0.82,
+            0
+          ]
+        ],
+        "color": "#58A6FF",
+        "stroke_width": 6.2,
+        "opacity": 1.0,
+        "scale": 1.35,
+        "glow": true,
+        "glow_color": "#58A6FF",
+        "glow_width": 18.0,
+        "glow_opacity": 0.14,
+        "show_points": true,
+        "point_color": "#A7B3C7",
+        "point_opacity": 0.28,
+        "point_radius": 0.04,
+        "data_points": [
+          [
+            -1.55,
+            -0.49,
+            0
+          ],
+          [
+            -1.14,
+            -0.32,
+            0
+          ],
+          [
+            -0.76,
+            -0.11,
+            0
+          ],
+          [
+            -0.28,
+            0.01,
+            0
+          ],
+          [
+            0.18,
+            0.14,
+            0
+          ],
+          [
+            0.64,
+            0.33,
+            0
+          ],
+          [
+            1.08,
+            0.52,
+            0
+          ],
+          [
+            1.48,
+            0.76,
+            0
+          ]
+        ],
+        "position": [
+          0.0,
+          0.1,
+          0.0
+        ]
+      },
+      "offset": 0.85
     }
   ],
   "notes": {
