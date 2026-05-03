@@ -427,88 +427,105 @@
       "params": {
         "points": [
           [
-            -1.65,
-            -0.56,
+            -1.55,
+            -0.42,
             0
           ],
           [
-            -0.95,
-            -0.20,
+            -0.88,
+            -0.12,
             0
           ],
           [
             -0.18,
-            0.06,
+            0.08,
             0
           ],
           [
-            0.68,
-            0.32,
+            0.62,
+            0.30,
             0
           ],
           [
-            1.62,
-            0.82,
+            1.52,
+            0.76,
             0
           ]
         ],
+        "title": "Learning patterns from data",
+        "title_color": "#E5EEF9",
+        "title_font_size": 30,
+        "title_max_width": 5.4,
+        "title_buff": 0.46,
         "color": "#58A6FF",
-        "stroke_width": 6.2,
+        "stroke_width": 5.8,
         "opacity": 1.0,
-        "scale": 1.35,
+        "scale": 1.28,
         "glow": true,
         "glow_color": "#58A6FF",
-        "glow_width": 18.0,
-        "glow_opacity": 0.14,
+        "glow_width": 17.0,
+        "glow_opacity": 0.20,
+        "show_guides": true,
+        "guide_color": "#475569",
+        "guide_opacity": 0.18,
+        "guide_stroke_width": 1.1,
         "show_points": true,
-        "point_color": "#A7B3C7",
-        "point_opacity": 0.28,
-        "point_radius": 0.04,
+        "point_color": "#D7E7FF",
+        "point_opacity": 0.72,
+        "point_radius": 0.035,
+        "point_glow": true,
+        "point_glow_opacity": 0.13,
+        "point_glow_scale": 2.6,
         "data_points": [
           [
-            -1.55,
-            -0.49,
+            -1.48,
+            -0.48,
             0
           ],
           [
-            -1.14,
-            -0.32,
+            -1.12,
+            -0.26,
             0
           ],
           [
             -0.76,
-            -0.11,
+            -0.18,
             0
           ],
           [
-            -0.28,
-            0.01,
+            -0.38,
+            0.02,
             0
           ],
           [
-            0.18,
-            0.14,
+            0.04,
+            0.08,
             0
           ],
           [
-            0.64,
-            0.33,
+            0.45,
+            0.26,
             0
           ],
           [
-            1.08,
-            0.52,
+            0.86,
+            0.34,
             0
           ],
           [
-            1.48,
-            0.76,
+            1.24,
+            0.58,
+            0
+          ],
+          [
+            1.50,
+            0.78,
             0
           ]
         ],
         "position": [
           0.0,
-          0.1,
+          0.02,
           0.0
         ]
       },

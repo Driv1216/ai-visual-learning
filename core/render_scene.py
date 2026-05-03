@@ -624,21 +624,38 @@ class JsonDrivenScene(MovingCameraScene):
                     pattern_points = getattr(new_obj, "pattern_points", None)
                     pattern_curve = getattr(new_obj, "pattern_curve", new_obj)
                     pattern_glow = getattr(new_obj, "pattern_glow", None)
+                    pattern_title = getattr(new_obj, "pattern_title", None)
+                    pattern_guides = getattr(new_obj, "pattern_guides", None)
                     if pattern_points is not None and len(pattern_points) > 0 and pattern_curve is not new_obj:
+                        intro_anims = []
+                        if pattern_guides is not None and len(pattern_guides) > 0:
+                            intro_anims.append(FadeIn(pattern_guides))
+                        if pattern_title is not None:
+                            intro_anims.append(FadeIn(pattern_title))
+                        intro_anims.append(FadeIn(pattern_points))
                         curve_anims = []
                         if pattern_glow is not None:
                             curve_anims.append(FadeIn(pattern_glow))
                         curve_anims.append(Create(pattern_curve))
-                        self.play(FadeIn(pattern_points), run_time=min(0.28, run_time * 0.25))
+                        intro_time = min(0.35, run_time * 0.28)
+                        self.play(AnimationGroup(*intro_anims, lag_ratio=0.08), run_time=intro_time)
                         self.play(
                             AnimationGroup(
                                 *curve_anims,
                                 lag_ratio=0.0,
                             ),
-                            run_time=max(run_time - min(0.28, run_time * 0.25), 0.1),
+                            run_time=max(run_time - intro_time, 0.1),
                         )
                     else:
-                        self.play(Create(new_obj), run_time=run_time)
+                        simple_anims = []
+                        if pattern_guides is not None and len(pattern_guides) > 0:
+                            simple_anims.append(FadeIn(pattern_guides))
+                        if pattern_title is not None:
+                            simple_anims.append(FadeIn(pattern_title))
+                        if pattern_glow is not None:
+                            simple_anims.append(FadeIn(pattern_glow))
+                        simple_anims.append(Create(pattern_curve))
+                        self.play(AnimationGroup(*simple_anims, lag_ratio=0.08), run_time=run_time)
                     current_time += run_time
                     register_object(step.id, step.zone, new_obj)
                     handled = True

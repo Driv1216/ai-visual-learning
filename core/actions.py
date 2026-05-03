@@ -490,6 +490,19 @@ def make_axis_free_curve(params, zone):
     curve.scale(params.get("scale", 1.0))
 
     group = VGroup()
+
+    guide_group = VGroup()
+    if params.get("show_guides", False):
+        guide_color = params.get("guide_color", "#334155")
+        guide_opacity = params.get("guide_opacity", 0.20)
+        guide_stroke_width = params.get("guide_stroke_width", 1.2)
+        x_axis = Line(LEFT * 1.85 + DOWN * 0.72, RIGHT * 1.85 + DOWN * 0.72, color=guide_color, stroke_width=guide_stroke_width)
+        y_axis = Line(LEFT * 1.85 + DOWN * 0.72, LEFT * 1.85 + UP * 0.92, color=guide_color, stroke_width=guide_stroke_width)
+        guide_group.add(x_axis, y_axis)
+        guide_group.set_opacity(guide_opacity)
+        guide_group.scale(params.get("scale", 1.0))
+        group.add(guide_group)
+
     data_points = VGroup()
     if params.get("show_points", False):
         point_color = params.get("point_color", "#94A3B8")
@@ -502,7 +515,14 @@ def make_axis_free_curve(params, zone):
         normalized_data_points = [_as_vector(point) for point in raw_data_points]
         if not params.get("absolute_points", False):
             normalized_data_points = [point - local_center for point in normalized_data_points]
+        point_glow = params.get("point_glow", False)
+        point_glow_opacity = params.get("point_glow_opacity", 0.16)
+        point_glow_scale = params.get("point_glow_scale", 2.4)
         for point in normalized_data_points:
+            if point_glow:
+                halo = Dot(point=point, radius=point_radius * point_glow_scale, color=point_color)
+                halo.set_opacity(point_glow_opacity)
+                data_points.add(halo)
             dot = Dot(point=point, radius=point_radius, color=point_color)
             dot.set_opacity(point_opacity)
             data_points.add(dot)
@@ -519,12 +539,27 @@ def make_axis_free_curve(params, zone):
         )
         group.add(curve_glow)
     group.add(curve)
+
+    title = None
+    if params.get("title"):
+        title = Text(
+            params.get("title"),
+            font_size=params.get("title_font_size", 28),
+            color=params.get("title_color", TEXT_MAIN),
+            weight=params.get("title_weight", MEDIUM),
+        )
+        fit_to_width(title, params.get("title_max_width", 5.2))
+        title.next_to(group, UP, buff=params.get("title_buff", 0.42))
+        group.add(title)
+
     if not params.get("absolute_points", False):
         position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
         group.move_to(position)
     group.pattern_points = data_points
     group.pattern_curve = curve
     group.pattern_glow = curve_glow if params.get("glow", False) else None
+    group.pattern_title = title
+    group.pattern_guides = guide_group
     return group
 
 
