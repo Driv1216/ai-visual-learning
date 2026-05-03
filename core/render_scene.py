@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 
+import numpy as np
 from manim import *
 from manim import ReplacementTransform
 from scene_schema import SceneSpec
@@ -919,7 +920,14 @@ class JsonDrivenScene(MovingCameraScene):
                     stage = merged_params.get("stage", "field_intro")
 
                     if source_obj is None:
-                        self.play(FadeIn(new_obj), run_time=run_time)
+                        field_points = getattr(new_obj, "taxonomy_points", None)
+                        labels = getattr(new_obj, "taxonomy_labels", VGroup())
+                        if field_points is not None and getattr(new_obj, "taxonomy_stage", None) == "field_intro":
+                            self.add(new_obj)
+                            self.play(FadeIn(field_points), run_time=run_time * 0.62)
+                            self.wait(run_time * 0.38)
+                        else:
+                            self.play(FadeIn(new_obj), run_time=run_time)
                         current_time += run_time
                         register_object(step.id, step.zone, new_obj)
                         handled = True
@@ -932,7 +940,7 @@ class JsonDrivenScene(MovingCameraScene):
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         label_anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.88, 0.055, 0.055, 0.055])
+                            for label, opacity in zip(labels, [0.88, 0.04, 0.04, 0.04])
                         ]
                         ordered = sorted(range(len(dot_items)), key=lambda index: points[index][0] if index < len(points) else 0)
                         waves = []
@@ -947,7 +955,7 @@ class JsonDrivenScene(MovingCameraScene):
                                 if point_index >= len(classes):
                                     continue
                                 color = TAXONOMY_COLORS["amber"] if classes[point_index] == "a" else TAXONOMY_COLORS["blue"]
-                                wave_anims.append(dot_items[point_index].animate.set_color(color).set_opacity(0.90))
+                                wave_anims.append(dot_items[point_index].animate.set_color(color).set_opacity(0.88))
                             if wave_anims:
                                 waves.append(AnimationGroup(*wave_anims, lag_ratio=0.0))
                         self.play(AnimationGroup(Succession(*waves), *label_anims, lag_ratio=0.0), run_time=run_time)
@@ -963,18 +971,58 @@ class JsonDrivenScene(MovingCameraScene):
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         source_glows = getattr(source_obj, "taxonomy_glows", VGroup())
                         target_glows = getattr(new_obj, "taxonomy_glows", VGroup())
+                        points = merged_params.get("points", [])
                         label_anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.88, 0.055, 0.055, 0.055])
+                            for label, opacity in zip(labels, [0.88, 0.04, 0.04, 0.04])
                         ]
-                        anims = [*label_anims]
                         if len(source_glows) != 0:
-                            anims.append(FadeOut(source_glows))
+                            self.play(FadeOut(source_glows), run_time=run_time * 0.16)
+                            current_time += run_time * 0.16
                         if len(target_glows) != 0:
+                            ordered_glows = sorted(
+                                list(target_glows),
+                                key=lambda glow: glow.get_center()[0],
+                            )
                             self.add(target_glows)
-                            anims.append(FadeIn(target_glows))
-                        if anims:
-                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
+                            for glow in ordered_glows:
+                                glow.set_opacity(0)
+                            pulse_groups = []
+                            pulse_count = 5
+                            for pulse_index in range(pulse_count):
+                                group_items = ordered_glows[
+                                    pulse_index * len(ordered_glows) // pulse_count:
+                                    (pulse_index + 1) * len(ordered_glows) // pulse_count
+                                ]
+                                if not group_items:
+                                    continue
+                                pulse_groups.append(
+                                    AnimationGroup(
+                                        *[
+                                            Succession(
+                                                halo.animate.set_opacity(halo.get_fill_opacity() or halo.get_stroke_opacity() or 0.024),
+                                                halo.animate.set_opacity((halo.get_fill_opacity() or halo.get_stroke_opacity() or 0.024) * 0.62),
+                                            )
+                                            for halo in group_items
+                                        ],
+                                        lag_ratio=0.0,
+                                    )
+                                )
+                            if pulse_groups:
+                                self.play(
+                                    AnimationGroup(
+                                        Succession(*pulse_groups),
+                                        *label_anims,
+                                        lag_ratio=0.0,
+                                    ),
+                                    run_time=run_time * 0.84,
+                                )
+                                current_time += run_time * 0.84
+                            else:
+                                self.play(AnimationGroup(*label_anims, lag_ratio=0.0), run_time=run_time * 0.84)
+                                current_time += run_time * 0.84
+                        else:
+                            self.play(AnimationGroup(*label_anims, lag_ratio=0.0), run_time=run_time)
                             current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -985,12 +1033,17 @@ class JsonDrivenScene(MovingCameraScene):
 
                     if stage == "label_intro":
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        label_targets = [0.16, 0.16, 0.16, 0.16]
                         label_anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.22, 0.22, 0.22, 0.22])
+                            for label, opacity in zip(labels, label_targets)
                         ]
                         if label_anims:
-                            self.play(Succession(*label_anims), run_time=run_time)
+                            intro_steps = []
+                            for anim in label_anims:
+                                intro_steps.append(anim)
+                                intro_steps.append(Wait(0.12))
+                            self.play(Succession(*intro_steps), run_time=run_time)
                             current_time += run_time
                         source_obj.taxonomy_params = merged_params
                         source_obj.taxonomy_stage = stage
@@ -1005,7 +1058,7 @@ class JsonDrivenScene(MovingCameraScene):
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         glows = getattr(source_obj, "taxonomy_glows", VGroup())
                         dot_anims = [
-                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.30)
+                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.24)
                             for dot in dot_items
                         ]
                         label_anims = [
@@ -1073,9 +1126,9 @@ class JsonDrivenScene(MovingCameraScene):
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         glows = getattr(source_obj, "taxonomy_glows", VGroup())
                         influence = getattr(source_obj, "taxonomy_influence", VGroup())
-                        label_targets = [0.055, 0.055, 0.88, 0.055] if stage == "semi_neutral" else [0.055, 0.055, 0.055, 0.88]
+                        label_targets = [0.04, 0.04, 0.88, 0.04] if stage == "semi_neutral" else [0.04, 0.04, 0.04, 0.88]
                         dot_anims = [
-                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.30)
+                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.24)
                             for dot in dot_items
                         ]
                         label_anims = [
@@ -1104,7 +1157,7 @@ class JsonDrivenScene(MovingCameraScene):
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         label_anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.055, 0.055, 0.88, 0.055])
+                            for label, opacity in zip(labels, [0.04, 0.04, 0.88, 0.04])
                         ]
                         anims = []
                         for anchor in merged_params.get("anchors", []):
@@ -1112,7 +1165,7 @@ class JsonDrivenScene(MovingCameraScene):
                             if anchor_index is None or not 0 <= anchor_index < len(dot_items):
                                 continue
                             color = TAXONOMY_COLORS["amber"] if anchor.get("class", "a") == "a" else TAXONOMY_COLORS["blue"]
-                            anims.append(dot_items[anchor_index].animate.set_color(color).set_opacity(0.96).scale(1.22))
+                            anims.append(dot_items[anchor_index].animate.set_color(color).set_opacity(0.96).scale(2.0))
                         if anims or label_anims:
                             self.play(AnimationGroup(Succession(*anims), *label_anims, lag_ratio=0.0), run_time=run_time)
                             current_time += run_time
@@ -1127,14 +1180,67 @@ class JsonDrivenScene(MovingCameraScene):
                         influence = getattr(new_obj, "taxonomy_influence", VGroup())
                         point_source = getattr(source_obj, "taxonomy_points", None)
                         point_target = getattr(new_obj, "taxonomy_points", None)
+                        anchors = merged_params.get("anchors", [])
+                        points = merged_params.get("points", [])
                         anims = []
                         if point_source is not None and point_target is not None:
-                            anims.append(Transform(point_source, point_target))
-                        anims.extend([GrowFromCenter(circle) for circle in influence])
+                            source_dots = list(getattr(point_source, "dot_items", []))
+                            target_dots = list(getattr(point_target, "dot_items", []))
+                            anchor_indices = {anchor.get("index") for anchor in anchors}
+                            anchor_anims = []
+                            propagation_groups = []
+                            for index, (source_dot, target_dot) in enumerate(zip(source_dots, target_dots)):
+                                if index in anchor_indices:
+                                    anchor_anims.append(Transform(source_dot, target_dot))
+                                    continue
+                                nearest_distance = None
+                                for anchor in anchors:
+                                    anchor_index = anchor.get("index")
+                                    if anchor_index is None or not 0 <= anchor_index < len(points):
+                                        continue
+                                    distance = np.linalg.norm(vector_from_param(points[index]) - vector_from_param(points[anchor_index]))
+                                    nearest_distance = distance if nearest_distance is None else min(nearest_distance, distance)
+                                if nearest_distance is None or nearest_distance > 1.35:
+                                    continue
+                                propagation_groups.append((nearest_distance, Transform(source_dot, target_dot)))
+                            propagation_groups.sort(key=lambda item: item[0])
+                            staged = []
+                            ring_count = 4
+                            for ring_index in range(ring_count):
+                                ring_anims = [
+                                    anim for distance, anim in propagation_groups
+                                    if ring_index / ring_count * 1.35 <= distance < (ring_index + 1) / ring_count * 1.35
+                                ]
+                                if ring_anims:
+                                    staged.append(AnimationGroup(*ring_anims, lag_ratio=0.0))
+                            if anchor_anims:
+                                anims.append(AnimationGroup(*anchor_anims, lag_ratio=0.0))
+                            if staged:
+                                anims.append(Succession(*staged))
                         if len(influence) != 0:
+                            ordered_influence = sorted(list(influence), key=lambda halo: min(
+                                [np.linalg.norm(halo.get_center() - vector_from_param(points[anchor.get("index")])) for anchor in anchors if anchor.get("index") is not None and 0 <= anchor.get("index") < len(points)] or [0]
+                            ))
+                            for halo in ordered_influence:
+                                halo.set_opacity(0)
                             self.add(influence)
-                        self.play(AnimationGroup(*anims, lag_ratio=0.02), run_time=run_time)
-                        current_time += run_time
+                            halo_stages = []
+                            halo_count = 4
+                            for stage_index in range(halo_count):
+                                group_items = ordered_influence[
+                                    stage_index * len(ordered_influence) // halo_count:
+                                    (stage_index + 1) * len(ordered_influence) // halo_count
+                                ]
+                                if group_items:
+                                    halo_stages.append(AnimationGroup(*[halo.animate.set_opacity(0.036) for halo in group_items], lag_ratio=0.0))
+                            if halo_stages:
+                                anims.append(Succession(*halo_stages))
+                        if anims:
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
                         forget_object(source_obj)
@@ -1149,9 +1255,14 @@ class JsonDrivenScene(MovingCameraScene):
                         for anchor in anchors:
                             anchor_index = anchor.get("index")
                             if anchor_index is not None and 0 <= anchor_index < len(dot_items):
-                                anchor_anims.append(Indicate(dot_items[anchor_index], scale_factor=1.25, color=None))
+                                anchor_anims.append(
+                                    Succession(
+                                        dot_items[anchor_index].animate.scale(1.10).set_opacity(1.0),
+                                        dot_items[anchor_index].animate.scale(1 / 1.10).set_opacity(0.96),
+                                    )
+                                )
                         if anchor_anims:
-                            self.play(AnimationGroup(*anchor_anims, lag_ratio=0.05), run_time=run_time)
+                            self.play(AnimationGroup(*anchor_anims, lag_ratio=0.08), run_time=run_time)
                             current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -1165,7 +1276,7 @@ class JsonDrivenScene(MovingCameraScene):
                         agent = getattr(new_obj, "taxonomy_agent", VGroup())
                         label_anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.055, 0.055, 0.055, 0.88])
+                            for label, opacity in zip(labels, [0.04, 0.04, 0.04, 0.88])
                         ]
                         anims = [*label_anims]
                         if len(agent) != 0:
@@ -1187,7 +1298,7 @@ class JsonDrivenScene(MovingCameraScene):
                         target_glows = getattr(new_obj, "taxonomy_glows", VGroup())
                         anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.025, 0.025, 0.025, 0.04])
+                            for label, opacity in zip(labels, [0.0, 0.0, 0.0, 0.0])
                         ]
                         if len(source_glows) != 0 and len(target_glows) != 0:
                             anims.append(Transform(source_glows, target_glows))
@@ -1215,15 +1326,14 @@ class JsonDrivenScene(MovingCameraScene):
                             flash_anims = []
                             for flash in merged_params.get("feedback_flashes", []):
                                 flash_color = TAXONOMY_COLORS["reward"] if flash.get("kind") == "reward" else TAXONOMY_COLORS["penalty"]
-                                flash_circle = Circle(radius=flash.get("radius", 0.34), stroke_width=0)
-                                flash_circle.set_fill(flash_color, opacity=flash.get("opacity", 0.11))
-                                flash_circle.move_to(vector_from_param(flash.get("point")))
+                                flash_dot = Dot(vector_from_param(flash.get("point")), radius=flash.get("radius", 0.18), color=flash_color)
+                                flash_dot.set_opacity(flash.get("opacity", 0.22))
                                 delay = max(0.0, min(0.95, flash.get("at", 0.0)))
                                 flash_anims.append(
                                     Succession(
                                         Wait(run_time * delay),
-                                        FadeIn(flash_circle, run_time=0.08),
-                                        FadeOut(flash_circle, run_time=0.22),
+                                        FadeIn(flash_dot, scale=1.35, run_time=0.06),
+                                        FadeOut(flash_dot, scale=1.75, run_time=0.24),
                                     )
                                 )
                             moving_agent = agent.copy() if agent is not None else None
@@ -1232,9 +1342,23 @@ class JsonDrivenScene(MovingCameraScene):
                                 self.add(moving_agent)
                                 parts.append(MoveAlongPath(moving_agent, path_curve))
                             if len(destination_glow) != 0:
-                                destination_glow.set_opacity(0)
+                                destination_glows = list(destination_glow)
+                                for glow in destination_glows:
+                                    glow.set_opacity(0)
                                 self.add(destination_glow)
-                                parts.append(Succession(Wait(run_time * 0.72), destination_glow.animate.set_opacity(1.0)))
+                                reward_times = [flash.get("at", 0.0) for flash in merged_params.get("feedback_flashes", []) if flash.get("kind") == "reward"]
+                                accumulation = []
+                                for reward_index, reward_at in enumerate(reward_times):
+                                    visible_fraction = (reward_index + 1) / max(1, len(reward_times))
+                                    target_opacity = min(1.0, 0.32 + visible_fraction * 0.68)
+                                    accumulation.append(
+                                        Succession(
+                                            Wait(run_time * max(0.0, min(0.95, reward_at + 0.02))),
+                                            AnimationGroup(*[glow.animate.set_opacity(target_opacity) for glow in destination_glows], lag_ratio=0.0),
+                                        )
+                                    )
+                                if accumulation:
+                                    parts.extend(accumulation)
                             parts.extend(flash_anims)
                             self.add(trail)
                             self.play(AnimationGroup(*parts, lag_ratio=0.0), run_time=run_time)

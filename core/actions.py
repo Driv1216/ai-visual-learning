@@ -1606,6 +1606,43 @@ TAXONOMY_COLORS = {
 }
 
 
+def _taxonomy_density_amount(point, params):
+    base = _as_vector(point)
+    clusters = params.get("clusters", [])
+    if not clusters:
+        return 0.0
+    amount = 0.0
+    for cluster in clusters:
+        center = _as_vector(cluster.get("center"))
+        radius = cluster.get("radius", 1.0)
+        distance = np.linalg.norm(base - center)
+        amount = max(amount, max(0.0, 1.0 - distance / radius))
+    return amount
+
+
+def _taxonomy_mixed_neighborhood_amount(index, params):
+    points = params.get("points", [])
+    classes = params.get("classes", [])
+    if index >= len(points) or index >= len(classes):
+        return 0.0
+    base = _as_vector(points[index])
+    own_class = classes[index]
+    nearby_opposite = 0
+    nearby_total = 0
+    for other_index, other_point in enumerate(points):
+        if other_index == index or other_index >= len(classes):
+            continue
+        distance = np.linalg.norm(base - _as_vector(other_point))
+        if distance <= 0.82:
+            nearby_total += 1
+            if classes[other_index] != own_class:
+                nearby_opposite += 1
+    if nearby_total == 0:
+        return 0.0
+    ratio = nearby_opposite / nearby_total
+    return max(0.0, min(1.0, ratio))
+
+
 def _taxonomy_point_position(point, params, drift_factor=0.0):
     base = _as_vector(point)
     if drift_factor <= 0:
@@ -1635,8 +1672,8 @@ def _mix_hex(color_a, color_b, amount):
 
 
 def _taxonomy_label_opacities(stage):
-    dim = 0.22
-    low = 0.055
+    dim = 0.16
+    low = 0.04
     bright = 0.88
     states = {
         "field_intro": [0.0, 0.0, 0.0, 0.0],
@@ -1653,7 +1690,7 @@ def _taxonomy_label_opacities(stage):
         "rl_neutral": [low, low, low, bright],
         "rl_agent": [low, low, low, bright],
         "rl_navigation": [low, low, low, bright],
-        "rl_resolution": [0.025, 0.025, 0.025, 0.04],
+        "rl_resolution": [0.0, 0.0, 0.0, 0.0],
     }
     return states.get(stage, [dim, dim, dim, dim])
 
@@ -1685,47 +1722,49 @@ def _taxonomy_labels(stage):
 
 def _taxonomy_glows(params, stage):
     glows = VGroup()
-    cluster_opacity = {
-        "unsupervised_clusters": 0.095,
-        "unsupervised_hold": 0.115,
-        "rl_navigation": 0.055,
-        "rl_resolution": 0.16,
-    }.get(stage, 0.0)
 
-    if cluster_opacity:
-        clusters = params.get("clusters", [])
-        destination_index = params.get("destination_cluster_index")
-        for index, cluster in enumerate(clusters):
-            if stage in {"rl_navigation", "rl_resolution"} and index != destination_index:
+    if stage in {"unsupervised_clusters", "unsupervised_hold"}:
+        points = params.get("points", [])
+        drift = 0.028
+        for point in points:
+            density = _taxonomy_density_amount(point, params)
+            if density < 0.38:
                 continue
-            radius = cluster.get("radius", 0.8)
-            center = _as_vector(cluster.get("center"))
-            for layer, opacity_scale in enumerate((1.0, 0.55, 0.25)):
-                glow = Circle(radius=radius * (0.85 + layer * 0.34), stroke_width=0)
-                glow.set_fill(TAXONOMY_COLORS["cluster"], opacity=cluster_opacity * opacity_scale)
-                glow.move_to(center)
-                glows.add(glow)
+            position = _taxonomy_point_position(point, params, drift)
+            halo_radius = 0.052 + density * 0.045
+            halo = Dot(position, radius=halo_radius, color=TAXONOMY_COLORS["cluster"])
+            halo.set_opacity((0.025 if stage == "unsupervised_clusters" else 0.035) * density)
+            glows.add(halo)
 
     if stage == "supervised_boundary":
-        centerline = [
-            LEFT * 2.05 + DOWN * 0.15,
-            LEFT * 1.05 + UP * 0.18,
-            ORIGIN + UP * 0.02,
-            RIGHT * 1.05 + DOWN * 0.22,
-            RIGHT * 2.0 + UP * 0.12,
-        ]
-        scatter_points = params.get("points", [])
-        for point in scatter_points:
+        points = params.get("points", [])
+        for index, point in enumerate(points):
+            mixed = _taxonomy_mixed_neighborhood_amount(index, params)
+            if mixed < 0.42:
+                continue
             p = _as_vector(point)
-            distance_to_band = min(np.linalg.norm(p - guide) for guide in centerline)
-            if distance_to_band < 0.62:
-                halo = Dot(p, radius=0.105, color=TAXONOMY_COLORS["cluster"])
-                halo.set_opacity(0.030 * (1.0 - distance_to_band / 0.62))
+            halo = Dot(p, radius=0.070 + 0.035 * mixed, color=TAXONOMY_COLORS["cluster"])
+            halo.set_opacity(0.026 * mixed)
+            glows.add(halo)
+
+    if stage in {"rl_navigation", "rl_resolution"}:
+        points = params.get("points", [])
+        clusters = params.get("clusters", [])
+        destination_index = params.get("destination_cluster_index")
+        if destination_index is not None and 0 <= destination_index < len(clusters):
+            destination = clusters[destination_index]
+            center = _as_vector(destination.get("center"))
+            radius = destination.get("radius", 1.0)
+            for point in points:
+                p = _as_vector(point)
+                distance = np.linalg.norm(p - center)
+                if distance > radius * 0.92:
+                    continue
+                amount = max(0.0, 1.0 - distance / (radius * 0.92))
+                halo = Dot(p, radius=0.060 + amount * 0.050, color=TAXONOMY_COLORS["reward"])
+                base_opacity = 0.030 if stage == "rl_navigation" else 0.070
+                halo.set_opacity(base_opacity * amount)
                 glows.add(halo)
-        pulse = VMobject()
-        pulse.set_points_smoothly(centerline)
-        pulse.set_stroke(TAXONOMY_COLORS["cluster"], width=18, opacity=0.040)
-        glows.add(pulse)
 
     return glows
 
@@ -1738,16 +1777,24 @@ def _taxonomy_influence(params, stage):
     anchor_map = {item["index"]: item.get("class", "a") for item in anchors}
     points = params.get("points", [])
     influence = VGroup()
-    for index, label in anchor_map.items():
-        if not 0 <= index < len(points):
+    for point_index, point in enumerate(points):
+        if point_index in anchor_map:
             continue
-        color = TAXONOMY_COLORS["amber"] if label == "a" else TAXONOMY_COLORS["blue"]
-        center = _as_vector(points[index])
-        for layer, opacity in enumerate((0.055, 0.030, 0.014)):
-            circle = Circle(radius=0.48 + layer * 0.48, stroke_width=0)
-            circle.set_fill(color, opacity=opacity)
-            circle.move_to(center)
-            influence.add(circle)
+        strongest_amount = 0.0
+        strongest_color = None
+        for anchor_index, anchor_class in anchor_map.items():
+            if not 0 <= anchor_index < len(points):
+                continue
+            distance = np.linalg.norm(_as_vector(point) - _as_vector(points[anchor_index]))
+            amount = max(0.0, 1.0 - distance / 1.35)
+            if amount > strongest_amount:
+                strongest_amount = amount
+                strongest_color = TAXONOMY_COLORS["amber"] if anchor_class == "a" else TAXONOMY_COLORS["blue"]
+        if strongest_amount <= 0.18 or strongest_color is None:
+            continue
+        halo = Dot(_as_vector(point), radius=0.055 + strongest_amount * 0.035, color=strongest_color)
+        halo.set_opacity((0.040 if stage == "semi_influence" else 0.052) * strongest_amount)
+        influence.add(halo)
     return influence
 
 
@@ -1765,12 +1812,18 @@ def _taxonomy_points(params, stage):
     for index, point in enumerate(points):
         position = _taxonomy_point_position(point, params, drift)
         color = TAXONOMY_COLORS["neutral"]
-        opacity = 0.30
+        opacity = params.get("neutral_opacity", 0.24)
         radius = params.get("point_radius", 0.032)
 
         if stage in {"supervised_full", "supervised_boundary"}:
             color = TAXONOMY_COLORS["amber"] if classes[index] == "a" else TAXONOMY_COLORS["blue"]
-            opacity = 0.90
+            opacity = 0.88
+            if stage == "supervised_boundary":
+                opacity = min(0.96, opacity + _taxonomy_mixed_neighborhood_amount(index, params) * 0.08)
+        elif stage in {"unsupervised_clusters", "unsupervised_hold"}:
+            density = _taxonomy_density_amount(point, params)
+            opacity = params.get("neutral_opacity", 0.24) + max(0.0, density - 0.22) * (0.18 if stage == "unsupervised_clusters" else 0.22)
+            color = _mix_hex(TAXONOMY_COLORS["neutral"], TAXONOMY_COLORS["cluster"], max(0.0, density - 0.30) * 0.16)
         elif stage in {"semi_anchors", *influence_stages} and index in anchor_indices:
             color = TAXONOMY_COLORS["amber"] if anchor_map[index] == "a" else TAXONOMY_COLORS["blue"]
             opacity = 0.96
@@ -1788,7 +1841,7 @@ def _taxonomy_points(params, stage):
                     nearest_color = TAXONOMY_COLORS["amber"] if anchor_class == "a" else TAXONOMY_COLORS["blue"]
             if nearest_amount > 0:
                 color = _mix_hex(TAXONOMY_COLORS["neutral"], nearest_color, nearest_amount)
-                opacity = 0.32 + nearest_amount * 0.38
+                opacity = params.get("neutral_opacity", 0.24) + nearest_amount * 0.38
 
         dot = Dot(position, radius=radius, color=color)
         dot.set_opacity(opacity)
@@ -1845,7 +1898,8 @@ def make_taxonomy_field(params, zone):
     group.taxonomy_labels = labels
     group.taxonomy_params = dict(params)
     group.taxonomy_stage = stage
-    group.set_opacity(params.get("opacity", 1.0))
+    if "opacity" in params:
+        group.set_opacity(params["opacity"])
     return group
 
 
