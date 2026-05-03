@@ -132,9 +132,14 @@
         "fill_opacity": 0.08,
         "stroke_width": 3.0,
         "force_indicator": "left",
-        "force_color": "#4EA1FF",
-        "force_length": 0.55,
-        "force_opacity": 0.9
+        "force_color": "#F59E0B",
+        "force_opacity": 0.95,
+        "challenge_label": "W1NNER",
+        "challenge_color": "#F59E0B",
+        "challenge_fill_color": "#261A0A",
+        "challenge_text_color": "#FFE7B0",
+        "challenge_width": 1.28,
+        "challenge_font_size": 17
       },
       "offset": 0.1
     },
@@ -158,9 +163,14 @@
         "fill_opacity": 0.08,
         "stroke_width": 3.0,
         "force_indicator": "top_right",
-        "force_color": "#4EA1FF",
-        "force_length": 0.55,
-        "force_opacity": 0.9
+        "force_color": "#60A5FA",
+        "force_opacity": 0.95,
+        "challenge_label": "[IMG]",
+        "challenge_color": "#60A5FA",
+        "challenge_fill_color": "#0B1A2A",
+        "challenge_text_color": "#DCEBFF",
+        "challenge_width": 1.12,
+        "challenge_font_size": 16
       },
       "offset": 0.48
     },
@@ -184,9 +194,14 @@
         "fill_opacity": 0.08,
         "stroke_width": 3.0,
         "force_indicator": "bottom",
-        "force_color": "#4EA1FF",
-        "force_length": 0.55,
-        "force_opacity": 0.9
+        "force_color": "#C084FC",
+        "force_opacity": 0.95,
+        "challenge_label": "W!NNER",
+        "challenge_color": "#C084FC",
+        "challenge_fill_color": "#1F1233",
+        "challenge_text_color": "#F3E8FF",
+        "challenge_width": 1.28,
+        "challenge_font_size": 17
       },
       "offset": 0.86
     },
@@ -208,7 +223,16 @@
         "text_color": "#F8FAFC",
         "fill_color": "#111827",
         "fill_opacity": 0.08,
-        "stroke_width": 3.0
+        "stroke_width": 3.0,
+        "force_indicator": "top_right",
+        "force_color": "#94A3B8",
+        "force_opacity": 0.75,
+        "challenge_label": "··· # ?",
+        "challenge_color": "#94A3B8",
+        "challenge_fill_color": "#111827",
+        "challenge_text_color": "#CBD5E1",
+        "challenge_width": 1.18,
+        "challenge_font_size": 15
       },
       "offset": 1.26
     },
@@ -251,28 +275,28 @@
         ],
         "positions": [
           [
-            -4.0,
-            -1.75,
+            -3.9,
+            -1.55,
             0
           ],
           [
             0.0,
-            -2.45,
+            -2.2,
             0
           ],
           [
-            4.0,
-            -1.75,
+            3.9,
+            -1.55,
             0
           ]
         ],
-        "state": 4,
-        "scale": 0.44,
-        "opacity": 0.35,
-        "color": "#7B8494",
-        "fill_color": "#111827",
-        "fill_opacity": 0.06,
-        "stroke_width": 1.8,
+        "scale": 1.0,
+        "opacity": 0.48,
+        "color": "#9AA6BA",
+        "text_color": "#CBD5E1",
+        "icon_color": "#9AA6BA",
+        "highlight_color": "#FDE68A",
+        "icon_fill_opacity": 0.12,
         "font_size": 20
       },
       "offset": 0.0
@@ -290,8 +314,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "pedestrian",
-        "base_opacity": 0.35,
-        "peak_opacity": 0.65
+        "base_opacity": 0.48,
+        "peak_opacity": 0.82
       },
       "offset": 1.45
     },
@@ -308,8 +332,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "tumor",
-        "base_opacity": 0.35,
-        "peak_opacity": 0.65
+        "base_opacity": 0.48,
+        "peak_opacity": 0.82
       },
       "offset": 4.95
     },
@@ -326,8 +350,8 @@
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "recommendation",
-        "base_opacity": 0.35,
-        "peak_opacity": 0.65
+        "base_opacity": 0.48,
+        "peak_opacity": 0.82
       },
       "offset": 8.25
     },
@@ -409,6 +433,47 @@
         "stroke_width": 5.8,
         "opacity": 1.0,
         "scale": 1.22,
+        "show_points": true,
+        "point_color": "#94A3B8",
+        "point_opacity": 0.48,
+        "point_radius": 0.055,
+        "data_points": [
+          [
+            -1.48,
+            -0.54,
+            0
+          ],
+          [
+            -1.12,
+            -0.30,
+            0
+          ],
+          [
+            -0.68,
+            -0.16,
+            0
+          ],
+          [
+            -0.18,
+            0.02,
+            0
+          ],
+          [
+            0.32,
+            0.20,
+            0
+          ],
+          [
+            0.82,
+            0.42,
+            0
+          ],
+          [
+            1.36,
+            0.68,
+            0
+          ]
+        ],
         "position": [
           2.75,
           0.12,

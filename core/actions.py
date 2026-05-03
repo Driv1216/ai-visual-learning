@@ -347,10 +347,49 @@ def make_manual_rule_card(params, zone):
 
 def make_manual_rule_force_indicator(params, card_obj):
     direction = params.get("force_indicator")
-    if not direction:
+    challenge_label = params.get("challenge_label")
+    if not direction and not challenge_label:
         return None
 
     color = params.get("force_color", ACCENT)
+    opacity = params.get("force_opacity", 0.72)
+
+    if challenge_label:
+        chip_color = params.get("challenge_color", color)
+        chip_fill = params.get("challenge_fill_color", "#172033")
+        chip_text = params.get("challenge_text_color", TEXT_MAIN)
+        chip_width = params.get("challenge_width", 1.18)
+        chip_height = params.get("challenge_height", 0.42)
+        chip = RoundedRectangle(
+            width=chip_width,
+            height=chip_height,
+            corner_radius=0.10,
+            color=chip_color,
+            stroke_width=params.get("challenge_stroke_width", 1.8),
+        )
+        chip.set_fill(chip_fill, opacity=params.get("challenge_fill_opacity", 0.82))
+        label = Text(
+            challenge_label,
+            font_size=params.get("challenge_font_size", 16),
+            color=chip_text,
+            weight=params.get("challenge_weight", MEDIUM),
+        )
+        fit_to_width(label, chip_width * 0.78)
+        label.move_to(chip.get_center())
+        indicator = VGroup(chip, label)
+
+        buff = params.get("challenge_buff", 0.22)
+        if direction == "left":
+            indicator.next_to(card_obj, LEFT, buff=buff)
+        elif direction == "top_right":
+            indicator.next_to(card_obj.get_corner(UR), normalize(UP + RIGHT), buff=buff)
+        elif direction == "bottom":
+            indicator.next_to(card_obj, DOWN, buff=buff)
+        else:
+            indicator.move_to(card_obj.get_center())
+        indicator.set_opacity(opacity)
+        return indicator
+
     stroke_width = params.get("force_stroke_width", 2.2)
     length = params.get("force_length", 0.62)
     buff = params.get("force_buff", 0.08)
@@ -368,7 +407,7 @@ def make_manual_rule_force_indicator(params, card_obj):
         return None
 
     line = Line(start, end, color=color, stroke_width=stroke_width)
-    line.set_opacity(params.get("force_opacity", 0.72))
+    line.set_opacity(opacity)
     return line
 
 
@@ -385,25 +424,42 @@ def make_manual_rule_ghosts(params, zone):
     ghosts = VGroup()
     ghost_items = {}
     for label_text, position in zip(labels, positions):
-        ghost = make_manual_rule_card(
-            {
-                "state": params.get("state", 4),
-                "width": params.get("width", 3.25),
-                "height": params.get("height", 1.22),
-                "label": label_text,
-                "font_size": params.get("font_size", 18),
-                "color": color,
-                "text_color": color,
-                "fill_color": params.get("fill_color", "#111827"),
-                "fill_opacity": params.get("fill_opacity", 0.08),
-                "stroke_width": params.get("stroke_width", 2.0),
-                "scale": scale,
-                "opacity": opacity,
-                "position": position,
-            },
-            "center",
-        )
         key = label_text.lower()
+        icon_color = params.get("icon_color", color)
+        label_color = params.get("text_color", color)
+
+        if key == "pedestrian":
+            head = Circle(radius=0.10, color=icon_color, stroke_width=2.0)
+            body = Line(UP * 0.02, DOWN * 0.32, color=icon_color, stroke_width=2.0)
+            arm = Line(LEFT * 0.18 + DOWN * 0.10, RIGHT * 0.18 + DOWN * 0.10, color=icon_color, stroke_width=2.0)
+            leg_l = Line(DOWN * 0.32, LEFT * 0.18 + DOWN * 0.60, color=icon_color, stroke_width=2.0)
+            leg_r = Line(DOWN * 0.32, RIGHT * 0.18 + DOWN * 0.60, color=icon_color, stroke_width=2.0)
+            road = Line(LEFT * 0.58 + DOWN * 0.72, RIGHT * 0.58 + DOWN * 0.72, color=icon_color, stroke_width=1.4)
+            icon = VGroup(head, body, arm, leg_l, leg_r, road)
+            head.shift(UP * 0.22)
+        elif key == "tumor":
+            scan = Circle(radius=0.42, color=icon_color, stroke_width=2.0)
+            scan.set_fill("#111827", opacity=params.get("icon_fill_opacity", 0.10))
+            tumor = Dot(point=RIGHT * 0.12 + UP * 0.06, radius=0.055, color=params.get("highlight_color", "#FCA5A5"))
+            sweep = Arc(radius=0.30, start_angle=PI * 0.15, angle=PI * 0.70, color=icon_color, stroke_width=1.4)
+            icon = VGroup(scan, sweep, tumor)
+        elif key == "recommendation":
+            tile = RoundedRectangle(width=0.82, height=0.56, corner_radius=0.08, color=icon_color, stroke_width=2.0)
+            tile.set_fill("#111827", opacity=params.get("icon_fill_opacity", 0.10))
+            play = Triangle(color=params.get("highlight_color", "#FDE68A"), stroke_width=1.5).scale(0.13)
+            play.rotate(-PI / 2)
+            star = Text("★", font_size=13, color=params.get("highlight_color", "#FDE68A"))
+            star.next_to(tile, UR, buff=-0.05)
+            icon = VGroup(tile, play, star)
+        else:
+            icon = Dot(radius=0.18, color=icon_color)
+
+        label = Text(label_text, font_size=params.get("font_size", 20), color=label_color, weight=MEDIUM)
+        label.next_to(icon, DOWN, buff=0.16)
+        ghost = VGroup(icon, label)
+        ghost.scale(scale)
+        ghost.move_to(_as_vector(position))
+        ghost.set_opacity(opacity)
         ghost.ghost_key = key
         ghost_items[key] = ghost
         ghosts.add(ghost)
@@ -432,10 +488,34 @@ def make_axis_free_curve(params, zone):
         opacity=params.get("opacity", 1.0),
     )
     curve.scale(params.get("scale", 1.0))
+
+    group = VGroup()
+    data_points = VGroup()
+    if params.get("show_points", False):
+        point_color = params.get("point_color", "#94A3B8")
+        point_opacity = params.get("point_opacity", 0.42)
+        point_radius = params.get("point_radius", 0.045)
+        raw_data_points = params.get(
+            "data_points",
+            [[-1.45, -0.48, 0], [-1.05, -0.30, 0], [-0.62, -0.08, 0], [-0.16, 0.04, 0], [0.35, 0.22, 0], [0.82, 0.40, 0], [1.32, 0.64, 0]],
+        )
+        normalized_data_points = [_as_vector(point) for point in raw_data_points]
+        if not params.get("absolute_points", False):
+            normalized_data_points = [point - local_center for point in normalized_data_points]
+        for point in normalized_data_points:
+            dot = Dot(point=point, radius=point_radius, color=point_color)
+            dot.set_opacity(point_opacity)
+            data_points.add(dot)
+        data_points.scale(params.get("scale", 1.0))
+        group.add(data_points)
+
+    group.add(curve)
     if not params.get("absolute_points", False):
         position = _as_vector(params.get("position"), ZONE_POSITIONS.get(zone, ORIGIN))
-        curve.move_to(position)
-    return curve
+        group.move_to(position)
+    group.pattern_points = data_points
+    group.pattern_curve = curve
+    return group
 
 
 def make_square_stage_sequence(params, zone):

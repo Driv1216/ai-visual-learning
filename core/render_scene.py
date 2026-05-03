@@ -620,7 +620,19 @@ class JsonDrivenScene(MovingCameraScene):
                     if outgoing_anims:
                         self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=0.3)
                         current_time += 0.3
-                    self.play(Create(new_obj), run_time=run_time)
+                    pattern_points = getattr(new_obj, "pattern_points", None)
+                    pattern_curve = getattr(new_obj, "pattern_curve", new_obj)
+                    if pattern_points is not None and len(pattern_points) > 0 and pattern_curve is not new_obj:
+                        self.play(
+                            AnimationGroup(
+                                FadeIn(pattern_points),
+                                Create(pattern_curve),
+                                lag_ratio=0.18,
+                            ),
+                            run_time=run_time,
+                        )
+                    else:
+                        self.play(Create(new_obj), run_time=run_time)
                     current_time += run_time
                     register_object(step.id, step.zone, new_obj)
                     handled = True

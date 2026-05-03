@@ -61,6 +61,7 @@ AllowedZone = Literal[
     "center_mid_left",
     "center_mid_right",
     "center_right",
+    "left-center",
     "center_band",
     "center_left_center",
     "center_span",
