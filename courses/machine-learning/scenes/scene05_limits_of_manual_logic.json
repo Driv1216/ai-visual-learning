@@ -73,25 +73,6 @@
       "offset": 0.0
     },
     {
-      "id": "s5_v01b_ambient_breath",
-      "anchor": "s5_01",
-      "action": "mutate_manual_rule_card",
-      "zone": "center",
-      "transition_in": "none",
-      "transition_out": "fade",
-      "persist": true,
-      "duration": 2.5,
-      "camera_scale": 1.0,
-      "params": {
-        "source_id": "s5_v01_rule_card",
-        "mode": "pulse",
-        "peak_scale": 1.02,
-        "peak_opacity": 1.0,
-        "settle_opacity": 1.0
-      },
-      "offset": 1.5
-    },
-    {
       "id": "s5_v02_messy_tremor",
       "anchor": "s5_02",
       "action": "mutate_manual_rule_card",
@@ -132,27 +113,6 @@
       "offset": 0.0
     },
     {
-      "id": "s5_v03b_second_confidence_pulse",
-      "anchor": "s5_03",
-      "action": "mutate_manual_rule_card",
-      "zone": "center",
-      "transition_in": "none",
-      "transition_out": "fade",
-      "persist": true,
-      "duration": 1.2,
-      "camera_scale": 1.0,
-      "params": {
-        "source_id": "s5_v01_rule_card",
-        "mode": "pulse",
-        "peak_scale": 1.0,
-        "peak_opacity": 1.0,
-        "peak_color": "#FFFFFF",
-        "settle_opacity": 1.0,
-        "settle_color": "#F8FAFC"
-      },
-      "offset": 2.2
-    },
-    {
       "id": "s5_v04_distortion_1",
       "anchor": "s5_04",
       "action": "transform_manual_rule_card",
@@ -176,7 +136,7 @@
         "force_length": 0.55,
         "force_opacity": 0.9
       },
-      "offset": 0.3
+      "offset": 0.1
     },
     {
       "id": "s5_v05_distortion_2",
@@ -202,7 +162,7 @@
         "force_length": 0.55,
         "force_opacity": 0.9
       },
-      "offset": 1.41
+      "offset": 0.48
     },
     {
       "id": "s5_v06_distortion_3",
@@ -228,7 +188,7 @@
         "force_length": 0.55,
         "force_opacity": 0.9
       },
-      "offset": 2.52
+      "offset": 0.86
     },
     {
       "id": "s5_v07_distortion_4",
@@ -250,7 +210,7 @@
         "fill_opacity": 0.08,
         "stroke_width": 3.0
       },
-      "offset": 3.63
+      "offset": 1.26
     },
     {
       "id": "s5_v08_card_exhausted",
@@ -265,8 +225,9 @@
       "params": {
         "source_id": "s5_v01_rule_card",
         "mode": "dim",
-        "target_opacity": 0.75,
-        "target_color": "#AAB2BF",
+        "target_opacity": 0.62,
+        "target_text_opacity": 0.42,
+        "target_color": "#8B95A5",
         "scale_factor": 0.95
       },
       "offset": 0.0
@@ -290,29 +251,29 @@
         ],
         "positions": [
           [
-            -4.5,
-            -2.2,
+            -4.0,
+            -1.75,
             0
           ],
           [
             0.0,
-            -3.0,
+            -2.45,
             0
           ],
           [
-            4.5,
-            -2.2,
+            4.0,
+            -1.75,
             0
           ]
         ],
         "state": 4,
-        "scale": 0.38,
-        "opacity": 0.25,
-        "color": "#4B5563",
+        "scale": 0.44,
+        "opacity": 0.35,
+        "color": "#7B8494",
         "fill_color": "#111827",
-        "fill_opacity": 0.04,
-        "stroke_width": 1.5,
-        "font_size": 16
+        "fill_opacity": 0.06,
+        "stroke_width": 1.8,
+        "font_size": 20
       },
       "offset": 0.0
     },
@@ -324,13 +285,13 @@
       "transition_in": "none",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.5,
+      "duration": 0.3,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "pedestrian",
-        "base_opacity": 0.25,
-        "peak_opacity": 0.55
+        "base_opacity": 0.35,
+        "peak_opacity": 0.65
       },
       "offset": 1.45
     },
@@ -342,13 +303,13 @@
       "transition_in": "none",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.5,
+      "duration": 0.3,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "tumor",
-        "base_opacity": 0.25,
-        "peak_opacity": 0.55
+        "base_opacity": 0.35,
+        "peak_opacity": 0.65
       },
       "offset": 4.95
     },
@@ -360,13 +321,13 @@
       "transition_in": "none",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.5,
+      "duration": 0.3,
       "camera_scale": 1.0,
       "params": {
         "source_id": "s5_v09_domain_ghosts",
         "ghost": "recommendation",
-        "base_opacity": 0.25,
-        "peak_opacity": 0.55
+        "base_opacity": 0.35,
+        "peak_opacity": 0.65
       },
       "offset": 8.25
     },
@@ -424,33 +385,33 @@
       "params": {
         "points": [
           [
-            -1.2,
-            -0.4,
+            -1.55,
+            -0.62,
             0
           ],
           [
-            -0.4,
-            0.0,
+            -0.75,
+            -0.08,
             0
           ],
           [
-            0.4,
-            0.2,
+            0.20,
+            0.18,
             0
           ],
           [
-            1.2,
-            0.55,
+            1.55,
+            0.78,
             0
           ]
         ],
         "color": "#4EA1FF",
-        "stroke_width": 4.5,
+        "stroke_width": 5.8,
         "opacity": 1.0,
-        "scale": 1.0,
+        "scale": 1.22,
         "position": [
-          2.2,
-          0.1,
+          2.75,
+          0.12,
           0.0
         ]
       },
@@ -473,24 +434,6 @@
         "target_text_opacity": 0.0
       },
       "offset": 1.35
-    },
-    {
-      "id": "s5_v17_scene_fade",
-      "anchor": "s5_09",
-      "action": "fade_out",
-      "zone": "center_span",
-      "transition_in": "fade",
-      "transition_out": "fade",
-      "persist": true,
-      "duration": 0.8,
-      "camera_scale": 1.0,
-      "params": {
-        "zones": [
-          "left-center",
-          "center_right"
-        ]
-      },
-      "offset": 3.65
     }
   ],
   "notes": {

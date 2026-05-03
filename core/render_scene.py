@@ -441,20 +441,21 @@ class JsonDrivenScene(MovingCameraScene):
 
                     force_indicator = make_manual_rule_force_indicator(step.params, new_obj)
                     if force_indicator is not None:
-                        # Phase 1: morph the card shape cleanly
-                        self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
-                        current_time += run_time
-                        # Phase 2: force indicator appears AFTER transform settles
-                        # Minimum 0.35s so it is actually readable
-                        indicator_time = max(0.35, run_time * 0.5)
+                        # The force indicator must read as the cause of deformation,
+                        # not as an annotation after the fact. Draw it during the
+                        # card transform, then let it vanish as the deformation lands.
+                        indicator_in = FadeIn(force_indicator, run_time=run_time * 0.18)
+                        card_transform = ReplacementTransform(source_obj, new_obj)
+                        indicator_out = FadeOut(force_indicator, run_time=run_time * 0.38)
                         self.play(
-                            Succession(
-                                FadeIn(force_indicator, run_time=indicator_time * 0.4),
-                                FadeOut(force_indicator, run_time=indicator_time * 0.6),
+                            AnimationGroup(
+                                Succession(indicator_in, indicator_out),
+                                card_transform,
+                                lag_ratio=0.0,
                             ),
-                            run_time=indicator_time,
+                            run_time=run_time,
                         )
-                        current_time += indicator_time
+                        current_time += run_time
                     else:
                         self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
                         current_time += run_time
@@ -514,7 +515,13 @@ class JsonDrivenScene(MovingCameraScene):
                     extra_anims = []
                     persistent_scale_factor = None
                     if mode == "dim":
-                        if "target_opacity" in step.params:
+                        if "target_text_opacity" in step.params and hasattr(obj, "submobjects") and len(obj.submobjects) >= 2:
+                            card_shape = obj.submobjects[0]
+                            label = obj.submobjects[1]
+                            if "target_opacity" in step.params:
+                                anim = card_shape.animate.set_opacity(step.params["target_opacity"])
+                            extra_anims.append(label.animate.set_opacity(step.params["target_text_opacity"]))
+                        elif "target_opacity" in step.params:
                             anim = anim.set_opacity(step.params["target_opacity"])
                         if "target_color" in step.params:
                             color_anims = animate_manual_rule_display_color(obj, step.params["target_color"])
