@@ -1684,15 +1684,12 @@ def _taxonomy_labels(stage):
 
 
 def _taxonomy_glows(params, stage):
-    # Glow circles are tight inner halos — luminance from within clusters,
-    # never large blobs. Three layers, each smaller than the cluster radius.
-    # supervised_boundary: no glow, the intermingled colored points are enough.
     glows = VGroup()
     cluster_opacity = {
-        "unsupervised_clusters": 0.06,
-        "unsupervised_hold":     0.08,
-        "rl_navigation":         0.04,
-        "rl_resolution":         0.10,
+        "unsupervised_clusters": 0.15,
+        "unsupervised_hold": 0.18,
+        "rl_navigation": 0.08,
+        "rl_resolution": 0.18,
     }.get(stage, 0.0)
 
     if cluster_opacity:
@@ -1703,17 +1700,22 @@ def _taxonomy_glows(params, stage):
                 continue
             radius = cluster.get("radius", 0.8)
             center = _as_vector(cluster.get("center"))
-            # Layer radii are 0.45, 0.65, 0.85 of cluster radius — stays well
-            # inside the cluster, never bleeds over neighboring regions.
-            for layer_radius_scale, opacity_scale in (
-                (0.45, 1.00),
-                (0.65, 0.45),
-                (0.85, 0.18),
-            ):
-                glow = Circle(radius=radius * layer_radius_scale, stroke_width=0)
+            for layer, opacity_scale in enumerate((1.0, 0.55, 0.25)):
+                glow = Circle(radius=radius * (0.85 + layer * 0.34), stroke_width=0)
                 glow.set_fill(TAXONOMY_COLORS["cluster"], opacity=cluster_opacity * opacity_scale)
                 glow.move_to(center)
                 glows.add(glow)
+
+    if stage == "supervised_boundary":
+        for center, width, height, opacity in (
+            ([0.0, 0.12, 0], 3.1, 1.25, 0.10),
+            ([0.48, -0.28, 0], 2.5, 0.9, 0.075),
+        ):
+            pulse = Ellipse(width=width, height=height, stroke_width=0)
+            pulse.set_fill(TAXONOMY_COLORS["cluster"], opacity=opacity)
+            pulse.rotate(-PI / 8)
+            pulse.move_to(_as_vector(center))
+            glows.add(pulse)
 
     return glows
 
@@ -1731,15 +1733,8 @@ def _taxonomy_influence(params, stage):
             continue
         color = TAXONOMY_COLORS["amber"] if label == "a" else TAXONOMY_COLORS["blue"]
         center = _as_vector(points[index])
-        # Three layers: tight inner glow + soft mid halo + very faint outer reach.
-        # Max outer radius 0.88 — small enough to not overlap other anchors
-        # while making the radial influence legible.
-        for layer_radius, opacity in (
-            (0.30, 0.14),
-            (0.56, 0.07),
-            (0.88, 0.03),
-        ):
-            circle = Circle(radius=layer_radius, stroke_width=0)
+        for layer, opacity in enumerate((0.10, 0.055, 0.025)):
+            circle = Circle(radius=0.62 + layer * 0.42, stroke_width=0)
             circle.set_fill(color, opacity=opacity)
             circle.move_to(center)
             influence.add(circle)
@@ -1753,89 +1748,37 @@ def _taxonomy_points(params, stage):
     anchor_map = {item["index"]: item.get("class", "a") for item in anchors}
     anchor_indices = set(anchor_map)
     influence_stages = {"semi_influence", "semi_hold"}
-
-    # Drift only for unsupervised stages — subtle pull toward cluster centers.
-    # Kept at 0.075 so the movement is barely perceptible, not a jump.
     drift = 0.075 if stage in {"unsupervised_clusters", "unsupervised_hold"} else 0.0
 
     dots = VGroup()
     dot_items = []
     for index, point in enumerate(points):
         position = _taxonomy_point_position(point, params, drift)
+        color = TAXONOMY_COLORS["neutral"]
+        opacity = 0.46
         radius = params.get("point_radius", 0.04)
 
-        # ── SUPERVISED ──────────────────────────────────────────────────────
-        # Full illumination. Every point carries amber or blue. Opacity high.
         if stage in {"supervised_full", "supervised_boundary"}:
-            color = TAXONOMY_COLORS["amber"] if index < len(classes) and classes[index] == "a" else TAXONOMY_COLORS["blue"]
-            opacity = 0.88
-
-        # ── UNSUPERVISED ─────────────────────────────────────────────────────
-        # No color. All points dim neutral. Structure comes from glow, not dots.
-        elif stage in {"unsupervised_neutral", "unsupervised_clusters", "unsupervised_hold"}:
-            color = TAXONOMY_COLORS["neutral"]
-            opacity = 0.38
-
-        # ── SEMI-SUPERVISED: neutral reset ────────────────────────────────────
-        # Everything dimmer than field_intro — darkness makes the bright
-        # anchors that appear next feel like arrivals, not additions.
-        elif stage == "semi_neutral":
-            color = TAXONOMY_COLORS["neutral"]
-            opacity = 0.22
-
-        # ── SEMI-SUPERVISED: anchors ignite ───────────────────────────────────
-        # Anchor points: full color and slightly larger.
-        # Non-anchor points: very dim — they are the dark majority.
-        elif stage == "semi_anchors":
-            if index in anchor_indices:
-                color = TAXONOMY_COLORS["amber"] if anchor_map[index] == "a" else TAXONOMY_COLORS["blue"]
-                opacity = 0.98
-                radius = params.get("anchor_radius", 0.058)
-            else:
-                color = TAXONOMY_COLORS["neutral"]
-                opacity = 0.22
-
-        # ── SEMI-SUPERVISED: influence propagates ─────────────────────────────
-        # Anchors: full color. Points near anchors: slightly shifted color.
-        # Far points: very dim. Influence radius extended for legibility.
+            color = TAXONOMY_COLORS["amber"] if classes[index] == "a" else TAXONOMY_COLORS["blue"]
+            opacity = 0.92
+        elif stage in {"semi_anchors", *influence_stages} and index in anchor_indices:
+            color = TAXONOMY_COLORS["amber"] if anchor_map[index] == "a" else TAXONOMY_COLORS["blue"]
+            opacity = 0.98
+            radius = params.get("anchor_radius", 0.058)
         elif stage in influence_stages:
-            if index in anchor_indices:
-                color = TAXONOMY_COLORS["amber"] if anchor_map[index] == "a" else TAXONOMY_COLORS["blue"]
-                opacity = 0.98
-                radius = params.get("anchor_radius", 0.058)
-            else:
-                nearest_amount = 0.0
-                nearest_color = TAXONOMY_COLORS["neutral"]
-                for anchor_index, anchor_class in anchor_map.items():
-                    if not 0 <= anchor_index < len(points):
-                        continue
-                    dist = np.linalg.norm(_as_vector(point) - _as_vector(points[anchor_index]))
-                    # radius 1.55 and multiplier 0.55 — influence reaches
-                    # neighboring points clearly without flooding the field.
-                    amount = max(0.0, 1.0 - dist / 1.55) * 0.55
-                    if amount > nearest_amount:
-                        nearest_amount = amount
-                        nearest_color = TAXONOMY_COLORS["amber"] if anchor_class == "a" else TAXONOMY_COLORS["blue"]
-                if nearest_amount > 0:
-                    color = _mix_hex(TAXONOMY_COLORS["neutral"], nearest_color, nearest_amount)
-                    opacity = 0.32 + nearest_amount * 0.32
-                else:
-                    color = TAXONOMY_COLORS["neutral"]
-                    opacity = 0.18
-
-        # ── REINFORCEMENT LEARNING ────────────────────────────────────────────
-        # The field is now an environment, not a dataset.
-        # Points are very dim — background texture only.
-        # The agent and trail carry all visual focus.
-        elif stage in {"rl_neutral", "rl_agent", "rl_navigation", "rl_resolution"}:
-            color = TAXONOMY_COLORS["neutral"]
-            opacity = 0.20
-
-        # ── DEFAULT (field_intro, label_intro) ────────────────────────────────
-        # Raw unstructured field. Dim neutral. Awaiting meaning.
-        else:
-            color = TAXONOMY_COLORS["neutral"]
-            opacity = 0.38
+            nearest_amount = 0.0
+            nearest_color = color
+            for anchor_index, anchor_class in anchor_map.items():
+                if not 0 <= anchor_index < len(points):
+                    continue
+                dist = np.linalg.norm(_as_vector(point) - _as_vector(points[anchor_index]))
+                amount = max(0.0, 1.0 - dist / 1.18) * 0.42
+                if amount > nearest_amount:
+                    nearest_amount = amount
+                    nearest_color = TAXONOMY_COLORS["amber"] if anchor_class == "a" else TAXONOMY_COLORS["blue"]
+            if nearest_amount > 0:
+                color = _mix_hex(TAXONOMY_COLORS["neutral"], nearest_color, nearest_amount)
+                opacity = 0.54 + nearest_amount * 0.28
 
         dot = Dot(position, radius=radius, color=color)
         dot.set_opacity(opacity)

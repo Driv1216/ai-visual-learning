@@ -976,73 +976,12 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
                         continue
 
-                    if stage == "semi_neutral":
-                        # Paradigm reset: drain glow, drain anchor colors, dim all dots.
-                        # Must feel like deliberate erasure of the unsupervised state,
-                        # not a cut. The darkness that follows makes incoming anchors
-                        # feel like arrivals.
-                        dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
-                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
-                        glows = getattr(source_obj, "taxonomy_glows", VGroup())
-                        dot_anims = [
-                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.22)
-                            for dot in dot_items
-                        ]
-                        label_anims = [
-                            label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.13, 0.13, 0.92, 0.13])
-                        ]
-                        glow_anims = [FadeOut(glows)] if len(glows) != 0 else []
-                        self.play(
-                            AnimationGroup(*dot_anims, *label_anims, *glow_anims, lag_ratio=0.0),
-                            run_time=run_time,
-                        )
-                        current_time += run_time
-                        self.remove(source_obj)
-                        self.add(new_obj)
-                        forget_object(source_obj)
-                        register_object(step.id, step.zone, new_obj)
-                        handled = True
-                        continue
-
-                    if stage == "rl_neutral":
-                        # Paradigm reset: drain influence halos, drain anchor colors,
-                        # dim all dots. The field becomes an environment, not a dataset.
-                        dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
-                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
-                        influence = getattr(source_obj, "taxonomy_influence", VGroup())
-                        glows = getattr(source_obj, "taxonomy_glows", VGroup())
-                        dot_anims = [
-                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.20)
-                            for dot in dot_items
-                        ]
-                        label_anims = [
-                            label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.13, 0.13, 0.13, 0.92])
-                        ]
-                        fade_anims = []
-                        if len(influence) != 0:
-                            fade_anims.append(FadeOut(influence))
-                        if len(glows) != 0:
-                            fade_anims.append(FadeOut(glows))
-                        self.play(
-                            AnimationGroup(*dot_anims, *label_anims, *fade_anims, lag_ratio=0.0),
-                            run_time=run_time,
-                        )
-                        current_time += run_time
-                        self.remove(source_obj)
-                        self.add(new_obj)
-                        forget_object(source_obj)
-                        register_object(step.id, step.zone, new_obj)
-                        handled = True
-                        continue
-
                     if stage == "unsupervised_neutral":
                         dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         glows = getattr(source_obj, "taxonomy_glows", VGroup())
                         dot_anims = [
-                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.38)
+                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.46)
                             for dot in dot_items
                         ]
                         label_anims = [
