@@ -932,7 +932,7 @@ class JsonDrivenScene(MovingCameraScene):
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         label_anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.92, 0.13, 0.13, 0.13])
+                            for label, opacity in zip(labels, [0.88, 0.055, 0.055, 0.055])
                         ]
                         ordered = sorted(range(len(dot_items)), key=lambda index: points[index][0] if index < len(points) else 0)
                         waves = []
@@ -947,7 +947,7 @@ class JsonDrivenScene(MovingCameraScene):
                                 if point_index >= len(classes):
                                     continue
                                 color = TAXONOMY_COLORS["amber"] if classes[point_index] == "a" else TAXONOMY_COLORS["blue"]
-                                wave_anims.append(dot_items[point_index].animate.set_color(color).set_opacity(0.92))
+                                wave_anims.append(dot_items[point_index].animate.set_color(color).set_opacity(0.90))
                             if wave_anims:
                                 waves.append(AnimationGroup(*wave_anims, lag_ratio=0.0))
                         self.play(AnimationGroup(Succession(*waves), *label_anims, lag_ratio=0.0), run_time=run_time)
@@ -959,11 +959,35 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
                         continue
 
+                    if stage == "supervised_boundary":
+                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        source_glows = getattr(source_obj, "taxonomy_glows", VGroup())
+                        target_glows = getattr(new_obj, "taxonomy_glows", VGroup())
+                        label_anims = [
+                            label.animate.set_opacity(opacity)
+                            for label, opacity in zip(labels, [0.88, 0.055, 0.055, 0.055])
+                        ]
+                        anims = [*label_anims]
+                        if len(source_glows) != 0:
+                            anims.append(FadeOut(source_glows))
+                        if len(target_glows) != 0:
+                            self.add(target_glows)
+                            anims.append(FadeIn(target_glows))
+                        if anims:
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
+                            current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
                     if stage == "label_intro":
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         label_anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.28, 0.28, 0.28, 0.28])
+                            for label, opacity in zip(labels, [0.22, 0.22, 0.22, 0.22])
                         ]
                         if label_anims:
                             self.play(Succession(*label_anims), run_time=run_time)
@@ -981,12 +1005,12 @@ class JsonDrivenScene(MovingCameraScene):
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         glows = getattr(source_obj, "taxonomy_glows", VGroup())
                         dot_anims = [
-                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.46)
+                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.30)
                             for dot in dot_items
                         ]
                         label_anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.13, 0.92, 0.13, 0.13])
+                            for label, opacity in zip(labels, [0.055, 0.88, 0.055, 0.055])
                         ]
                         glow_anims = [FadeOut(glows)] if len(glows) != 0 else []
                         self.play(
@@ -1044,17 +1068,53 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
                         continue
 
+                    if stage in {"semi_neutral", "rl_neutral"}:
+                        dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
+                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        glows = getattr(source_obj, "taxonomy_glows", VGroup())
+                        influence = getattr(source_obj, "taxonomy_influence", VGroup())
+                        label_targets = [0.055, 0.055, 0.88, 0.055] if stage == "semi_neutral" else [0.055, 0.055, 0.055, 0.88]
+                        dot_anims = [
+                            dot.animate.set_color(TAXONOMY_COLORS["neutral"]).set_opacity(0.30)
+                            for dot in dot_items
+                        ]
+                        label_anims = [
+                            label.animate.set_opacity(opacity)
+                            for label, opacity in zip(labels, label_targets)
+                        ]
+                        cleanup_anims = []
+                        if len(glows) != 0:
+                            cleanup_anims.append(FadeOut(glows))
+                        if len(influence) != 0:
+                            cleanup_anims.append(FadeOut(influence))
+                        self.play(
+                            AnimationGroup(*dot_anims, *label_anims, *cleanup_anims, lag_ratio=0.0),
+                            run_time=run_time,
+                        )
+                        current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
                     if stage == "semi_anchors":
                         dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
+                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        label_anims = [
+                            label.animate.set_opacity(opacity)
+                            for label, opacity in zip(labels, [0.055, 0.055, 0.88, 0.055])
+                        ]
                         anims = []
                         for anchor in merged_params.get("anchors", []):
                             anchor_index = anchor.get("index")
                             if anchor_index is None or not 0 <= anchor_index < len(dot_items):
                                 continue
                             color = TAXONOMY_COLORS["amber"] if anchor.get("class", "a") == "a" else TAXONOMY_COLORS["blue"]
-                            anims.append(dot_items[anchor_index].animate.set_color(color).set_opacity(0.98).scale(1.35))
-                        if anims:
-                            self.play(Succession(*anims), run_time=run_time)
+                            anims.append(dot_items[anchor_index].animate.set_color(color).set_opacity(0.96).scale(1.22))
+                        if anims or label_anims:
+                            self.play(AnimationGroup(Succession(*anims), *label_anims, lag_ratio=0.0), run_time=run_time)
                             current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -1100,13 +1160,34 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
                         continue
 
+                    if stage == "rl_agent":
+                        labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
+                        agent = getattr(new_obj, "taxonomy_agent", VGroup())
+                        label_anims = [
+                            label.animate.set_opacity(opacity)
+                            for label, opacity in zip(labels, [0.055, 0.055, 0.055, 0.88])
+                        ]
+                        anims = [*label_anims]
+                        if len(agent) != 0:
+                            self.add(agent)
+                            anims.append(FadeIn(agent, shift=RIGHT * 0.08))
+                        if anims:
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
+                            current_time += run_time
+                        self.remove(source_obj)
+                        self.add(new_obj)
+                        forget_object(source_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+                        continue
+
                     if stage == "rl_resolution":
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         source_glows = getattr(source_obj, "taxonomy_glows", VGroup())
                         target_glows = getattr(new_obj, "taxonomy_glows", VGroup())
                         anims = [
                             label.animate.set_opacity(opacity)
-                            for label, opacity in zip(labels, [0.05, 0.05, 0.05, 0.08])
+                            for label, opacity in zip(labels, [0.025, 0.025, 0.025, 0.04])
                         ]
                         if len(source_glows) != 0 and len(target_glows) != 0:
                             anims.append(Transform(source_glows, target_glows))
@@ -1135,7 +1216,7 @@ class JsonDrivenScene(MovingCameraScene):
                             for flash in merged_params.get("feedback_flashes", []):
                                 flash_color = TAXONOMY_COLORS["reward"] if flash.get("kind") == "reward" else TAXONOMY_COLORS["penalty"]
                                 flash_circle = Circle(radius=flash.get("radius", 0.34), stroke_width=0)
-                                flash_circle.set_fill(flash_color, opacity=flash.get("opacity", 0.16))
+                                flash_circle.set_fill(flash_color, opacity=flash.get("opacity", 0.11))
                                 flash_circle.move_to(vector_from_param(flash.get("point")))
                                 delay = max(0.0, min(0.95, flash.get("at", 0.0)))
                                 flash_anims.append(
@@ -1145,9 +1226,11 @@ class JsonDrivenScene(MovingCameraScene):
                                         FadeOut(flash_circle, run_time=0.22),
                                     )
                                 )
+                            moving_agent = agent.copy() if agent is not None else None
                             parts = [Create(trail)]
-                            if agent is not None:
-                                parts.append(MoveAlongPath(agent, path_curve))
+                            if moving_agent is not None:
+                                self.add(moving_agent)
+                                parts.append(MoveAlongPath(moving_agent, path_curve))
                             if len(destination_glow) != 0:
                                 destination_glow.set_opacity(0)
                                 self.add(destination_glow)
@@ -1155,6 +1238,8 @@ class JsonDrivenScene(MovingCameraScene):
                             parts.extend(flash_anims)
                             self.add(trail)
                             self.play(AnimationGroup(*parts, lag_ratio=0.0), run_time=run_time)
+                            if moving_agent is not None:
+                                self.remove(moving_agent)
                             current_time += run_time
                         else:
                             self.play(ReplacementTransform(source_obj, new_obj), run_time=run_time)
