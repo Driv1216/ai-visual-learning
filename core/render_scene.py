@@ -227,35 +227,46 @@ class JsonDrivenScene(MovingCameraScene):
             ring.set_fill(opacity=0)
             return ring
 
-        def taxonomy_density_glints(params, max_lines=38):
+        def taxonomy_density_glints(params, max_lines=56):
             points = params.get("points", [])
             clusters = params.get("clusters", [])
             if not points or not clusters:
                 return VGroup()
-            dense = []
-            for index, point in enumerate(points):
-                p = vector_from_param(point)
-                density = 0.0
-                for cluster in clusters:
-                    center = vector_from_param(cluster.get("center"))
-                    radius = cluster.get("radius", 1.0)
-                    density = max(density, max(0.0, 1.0 - np.linalg.norm(p - center) / radius))
-                if density > 0.42:
-                    dense.append((index, p, density))
-            candidates = []
-            for left_i, left_p, left_density in dense:
-                for right_i, right_p, right_density in dense:
-                    if right_i <= left_i:
-                        continue
-                    distance = np.linalg.norm(left_p - right_p)
-                    if 0.28 <= distance <= 0.58:
-                        candidates.append((distance, left_density + right_density, left_p, right_p))
-            candidates.sort(key=lambda item: (-item[1], item[0]))
+
             glints = VGroup()
-            for _, strength, left_p, right_p in candidates[:max_lines]:
-                line = Line(left_p, right_p)
-                line.set_stroke(TAXONOMY_COLORS["cluster"], width=1.05, opacity=min(0.28, 0.075 + strength * 0.070))
-                glints.add(line)
+            used_pairs = set()
+            lines_per_cluster = max(5, max_lines // max(1, len(clusters)))
+            for cluster in clusters:
+                center = vector_from_param(cluster.get("center"))
+                radius = cluster.get("radius", 1.0)
+                local_dense = []
+                for index, point in enumerate(points):
+                    p = vector_from_param(point)
+                    density = max(0.0, 1.0 - np.linalg.norm(p - center) / radius)
+                    if density > 0.34:
+                        local_dense.append((index, p, density))
+                local_candidates = []
+                for left_i, left_p, left_density in local_dense:
+                    for right_i, right_p, right_density in local_dense:
+                        if right_i <= left_i:
+                            continue
+                        pair_key = tuple(sorted((left_i, right_i)))
+                        if pair_key in used_pairs:
+                            continue
+                        distance = np.linalg.norm(left_p - right_p)
+                        if 0.24 <= distance <= 0.72:
+                            # Prefer short, high-density internal constellation links.
+                            local_candidates.append((distance, left_density + right_density, pair_key, left_p, right_p))
+                local_candidates.sort(key=lambda item: (-item[1], item[0]))
+                for _, strength, pair_key, left_p, right_p in local_candidates[:lines_per_cluster]:
+                    used_pairs.add(pair_key)
+                    line = Line(left_p, right_p)
+                    line.set_stroke(
+                        TAXONOMY_COLORS["cluster"],
+                        width=1.18,
+                        opacity=min(0.34, 0.095 + strength * 0.082),
+                    )
+                    glints.add(line)
             return glints
 
         def taxonomy_broken_wavefronts(anchor_center, color, max_radius=1.55, rings=4):
@@ -1043,10 +1054,26 @@ class JsonDrivenScene(MovingCameraScene):
                                 *label_anims,
                                 lag_ratio=0.0,
                             ),
-                            run_time=run_time * 0.78,
+                            run_time=run_time * 0.60,
                         )
                         self.remove(sheen, leading_edge)
-                        self.wait(run_time * 0.22)
+                        confirmation = VGroup()
+                        for point_index, dot in enumerate(dot_items):
+                            if point_index >= len(classes):
+                                continue
+                            color = TAXONOMY_COLORS["amber"] if classes[point_index] == "a" else TAXONOMY_COLORS["blue"]
+                            confirm = taxonomy_point_flash(dot, color, radius_scale=2.15, opacity=0.18)
+                            confirmation.add(confirm)
+                        if len(confirmation) != 0:
+                            self.play(
+                                Succession(
+                                    FadeIn(confirmation, scale=0.82),
+                                    Wait(run_time * 0.06),
+                                    FadeOut(confirmation, scale=1.42),
+                                ),
+                                run_time=run_time * 0.22,
+                            )
+                        self.wait(run_time * 0.18)
                         current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -1226,12 +1253,21 @@ class JsonDrivenScene(MovingCameraScene):
                                 anims.append(AnimationGroup(*remaining, lag_ratio=0.0))
                         if len(glows) != 0:
                             self.add(glows)
-                            anims.append(FadeIn(glows))
+                            anims.append(FadeIn(glows, scale=1.06))
                         if len(glints) != 0:
                             self.add(glints)
-                            anims.append(Succession(FadeIn(glints), FadeOut(glints)))
+                            anims.append(
+                                Succession(
+                                    FadeIn(glints),
+                                    Wait(run_time * 0.20),
+                                    glints.animate.set_opacity(0.18),
+                                    Wait(run_time * 0.10),
+                                    FadeOut(glints),
+                                )
+                            )
                         if anims:
-                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time * 0.86)
+                            self.wait(run_time * 0.14)
                             current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -1323,7 +1359,8 @@ class JsonDrivenScene(MovingCameraScene):
                                     )
                                 )
                         if anchor_steps or label_anims:
-                            self.play(AnimationGroup(Succession(*anchor_steps), *label_anims, lag_ratio=0.0), run_time=run_time)
+                            self.play(AnimationGroup(Succession(*anchor_steps), *label_anims, lag_ratio=0.0), run_time=run_time * 0.74)
+                            self.wait(run_time * 0.26)
                             current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -1402,7 +1439,8 @@ class JsonDrivenScene(MovingCameraScene):
                             if halo_stages:
                                 anims.append(Succession(*halo_stages))
                         if anims:
-                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time)
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time * 0.82)
+                            self.wait(run_time * 0.18)
                             current_time += run_time
                         else:
                             self.wait(run_time)
