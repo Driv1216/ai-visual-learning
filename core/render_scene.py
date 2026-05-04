@@ -215,19 +215,19 @@ class JsonDrivenScene(MovingCameraScene):
                 return np.array([value[0], value[1], z], dtype=float)
             return default
 
-        def taxonomy_point_flash(dot, color, radius_scale=2.45, opacity=0.18):
+        def taxonomy_point_flash(dot, color, radius_scale=2.85, opacity=0.28):
             flash = Dot(dot.get_center(), radius=max(dot.width, dot.height) * 0.5 * radius_scale, color=color)
             flash.set_opacity(opacity)
             return flash
 
         def taxonomy_anchor_ring(dot, color):
-            ring = Circle(radius=max(dot.width, dot.height) * 0.95, color=color, stroke_width=1.3)
+            ring = Circle(radius=0.16, color=color, stroke_width=2.0)
             ring.move_to(dot.get_center())
-            ring.set_stroke(color=color, opacity=0.42)
+            ring.set_stroke(color=color, opacity=0.72)
             ring.set_fill(opacity=0)
             return ring
 
-        def taxonomy_density_glints(params, max_lines=18):
+        def taxonomy_density_glints(params, max_lines=38):
             points = params.get("points", [])
             clusters = params.get("clusters", [])
             if not points or not clusters:
@@ -254,25 +254,25 @@ class JsonDrivenScene(MovingCameraScene):
             glints = VGroup()
             for _, strength, left_p, right_p in candidates[:max_lines]:
                 line = Line(left_p, right_p)
-                line.set_stroke(TAXONOMY_COLORS["cluster"], width=0.72, opacity=min(0.16, 0.045 + strength * 0.045))
+                line.set_stroke(TAXONOMY_COLORS["cluster"], width=1.05, opacity=min(0.28, 0.075 + strength * 0.070))
                 glints.add(line)
             return glints
 
-        def taxonomy_broken_wavefronts(anchor_center, color, max_radius=1.35, rings=4):
+        def taxonomy_broken_wavefronts(anchor_center, color, max_radius=1.55, rings=4):
             stages = []
             for ring_index in range(rings):
                 radius = max_radius * (ring_index + 1) / rings
                 pieces = VGroup()
-                for start_angle in (15, 128, 246):
+                for start_angle in (15, 96, 178, 264):
                     arc = Arc(
                         radius=radius,
                         start_angle=start_angle * DEGREES,
-                        angle=42 * DEGREES,
+                        angle=36 * DEGREES,
                         color=color,
-                        stroke_width=1.0,
+                        stroke_width=1.65,
                     )
                     arc.move_arc_center_to(anchor_center)
-                    arc.set_stroke(color=color, opacity=max(0.035, 0.13 - ring_index * 0.022))
+                    arc.set_stroke(color=color, opacity=max(0.075, 0.28 - ring_index * 0.045))
                     pieces.add(arc)
                 stages.append(pieces)
             return stages
@@ -1023,26 +1023,30 @@ class JsonDrivenScene(MovingCameraScene):
                                 if point_index >= len(classes):
                                     continue
                                 color = TAXONOMY_COLORS["amber"] if classes[point_index] == "a" else TAXONOMY_COLORS["blue"]
-                                wave_anims.append(dot_items[point_index].animate.set_color(color).set_opacity(0.92))
-                                flashes.add(taxonomy_point_flash(dot_items[point_index], color, radius_scale=2.15, opacity=0.16))
+                                wave_anims.append(dot_items[point_index].animate.set_color(color).set_opacity(0.98).scale(1.18))
+                                flashes.add(taxonomy_point_flash(dot_items[point_index], color, radius_scale=2.85, opacity=0.28))
                             if wave_anims:
                                 tick = Succession(FadeIn(flashes, scale=1.15), FadeOut(flashes, scale=1.75)) if len(flashes) else Wait(0)
                                 waves.append(AnimationGroup(AnimationGroup(*wave_anims, lag_ratio=0.0), tick, lag_ratio=0.0))
-                        sheen = Rectangle(width=1.45, height=7.2, stroke_width=0)
-                        sheen.set_fill(TAXONOMY_COLORS["cluster"], opacity=0.020)
+                        sheen = Rectangle(width=1.75, height=7.2, stroke_width=0)
+                        sheen.set_fill(TAXONOMY_COLORS["cluster"], opacity=0.050)
                         sheen.move_to(LEFT * 6.2)
-                        self.add(sheen)
+                        leading_edge = Rectangle(width=0.035, height=7.2, stroke_width=0)
+                        leading_edge.set_fill(TAXONOMY_COLORS["cluster"], opacity=0.16)
+                        leading_edge.move_to(LEFT * 5.65)
+                        self.add(sheen, leading_edge)
                         self.play(
                             AnimationGroup(
                                 sheen.animate.shift(RIGHT * 12.4).set_opacity(0.0),
+                                leading_edge.animate.shift(RIGHT * 11.3).set_opacity(0.0),
                                 Succession(*waves),
                                 *label_anims,
                                 lag_ratio=0.0,
                             ),
-                            run_time=run_time * 0.82,
+                            run_time=run_time * 0.78,
                         )
-                        self.remove(sheen)
-                        self.wait(run_time * 0.18)
+                        self.remove(sheen, leading_edge)
+                        self.wait(run_time * 0.22)
                         current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -1193,14 +1197,31 @@ class JsonDrivenScene(MovingCameraScene):
                                     if index >= len(points):
                                         continue
                                     distance = np.linalg.norm(vector_from_param(points[index]) - center)
-                                    if distance <= radius * 0.78:
+                                    if distance <= radius * 0.98:
                                         local.append((distance, Transform(source_dot, target_dot)))
                                 local.sort(key=lambda item: item[0])
                                 if local:
-                                    staged.append(AnimationGroup(*[anim for _, anim in local[:10]], lag_ratio=0.0))
-                            remaining = [Transform(source_dot, target_dot) for source_dot, target_dot in zip(source_dots, target_dots)]
+                                    core_count = max(3, len(local) // 3)
+                                    neighbor_count = max(core_count + 1, (len(local) * 2) // 3)
+                                    staged.append(AnimationGroup(*[anim for _, anim in local[:core_count]], lag_ratio=0.0))
+                                    if len(local) > core_count:
+                                        staged.append(AnimationGroup(*[anim for _, anim in local[core_count:neighbor_count]], lag_ratio=0.0))
+                                    if len(local) > neighbor_count:
+                                        staged.append(AnimationGroup(*[anim for _, anim in local[neighbor_count:]], lag_ratio=0.0))
+                            staged_indices = set()
+                            for cluster in clusters:
+                                center = vector_from_param(cluster.get("center"))
+                                radius = cluster.get("radius", 1.0)
+                                for index, _point in enumerate(points):
+                                    if np.linalg.norm(vector_from_param(_point) - center) <= radius * 0.98:
+                                        staged_indices.add(index)
+                            remaining = [
+                                Transform(source_dot, target_dot)
+                                for index, (source_dot, target_dot) in enumerate(zip(source_dots, target_dots))
+                                if index not in staged_indices
+                            ]
                             if staged:
-                                anims.append(Succession(*staged))
+                                anims.append(Succession(*staged, AnimationGroup(*remaining, lag_ratio=0.0) if remaining else Wait(0)))
                             elif remaining:
                                 anims.append(AnimationGroup(*remaining, lag_ratio=0.0))
                         if len(glows) != 0:
@@ -1297,7 +1318,7 @@ class JsonDrivenScene(MovingCameraScene):
                                 anchor_steps.append(
                                     AnimationGroup(
                                         AnimationGroup(*pair_anims, lag_ratio=0.0),
-                                        Succession(FadeIn(rings, scale=1.25), FadeOut(rings, scale=0.38)),
+                                        Succession(FadeIn(rings, scale=0.65), rings.animate.scale(1.35).set_opacity(0.0)),
                                         lag_ratio=0.0,
                                     )
                                 )
@@ -1377,7 +1398,7 @@ class JsonDrivenScene(MovingCameraScene):
                                     (stage_index + 1) * len(ordered_influence) // halo_count
                                 ]
                                 if group_items:
-                                    halo_stages.append(AnimationGroup(*[halo.animate.set_opacity(0.036) for halo in group_items], lag_ratio=0.0))
+                                    halo_stages.append(AnimationGroup(*[halo.animate.set_opacity(0.085) for halo in group_items], lag_ratio=0.0))
                             if halo_stages:
                                 anims.append(Succession(*halo_stages))
                         if anims:

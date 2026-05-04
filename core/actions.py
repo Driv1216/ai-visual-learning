@@ -1733,7 +1733,7 @@ def _taxonomy_glows(params, stage):
             position = _taxonomy_point_position(point, params, drift)
             halo_radius = 0.052 + density * 0.045
             halo = Dot(position, radius=halo_radius, color=TAXONOMY_COLORS["cluster"])
-            halo.set_opacity((0.025 if stage == "unsupervised_clusters" else 0.035) * density)
+            halo.set_opacity((0.070 if stage == "unsupervised_clusters" else 0.085) * density)
             glows.add(halo)
 
     if stage == "supervised_boundary":
@@ -1793,7 +1793,7 @@ def _taxonomy_influence(params, stage):
         if strongest_amount <= 0.18 or strongest_color is None:
             continue
         halo = Dot(_as_vector(point), radius=0.055 + strongest_amount * 0.035, color=strongest_color)
-        halo.set_opacity((0.040 if stage == "semi_influence" else 0.052) * strongest_amount)
+        halo.set_opacity((0.095 if stage == "semi_influence" else 0.110) * strongest_amount)
         influence.add(halo)
     return influence
 
@@ -1822,8 +1822,8 @@ def _taxonomy_points(params, stage):
                 opacity = min(0.96, opacity + _taxonomy_mixed_neighborhood_amount(index, params) * 0.08)
         elif stage in {"unsupervised_clusters", "unsupervised_hold"}:
             density = _taxonomy_density_amount(point, params)
-            opacity = params.get("neutral_opacity", 0.24) + max(0.0, density - 0.22) * (0.18 if stage == "unsupervised_clusters" else 0.22)
-            color = _mix_hex(TAXONOMY_COLORS["neutral"], TAXONOMY_COLORS["cluster"], max(0.0, density - 0.30) * 0.16)
+            opacity = params.get("neutral_opacity", 0.24) + max(0.0, density - 0.22) * (0.34 if stage == "unsupervised_clusters" else 0.38)
+            color = _mix_hex(TAXONOMY_COLORS["neutral"], TAXONOMY_COLORS["cluster"], max(0.0, density - 0.24) * 0.28)
         elif stage in {"semi_anchors", *influence_stages} and index in anchor_indices:
             color = TAXONOMY_COLORS["amber"] if anchor_map[index] == "a" else TAXONOMY_COLORS["blue"]
             opacity = 0.96
@@ -1835,7 +1835,7 @@ def _taxonomy_points(params, stage):
                 if not 0 <= anchor_index < len(points):
                     continue
                 dist = np.linalg.norm(_as_vector(point) - _as_vector(points[anchor_index]))
-                amount = max(0.0, 1.0 - dist / 1.22) * 0.30
+                amount = max(0.0, 1.0 - dist / 1.35) * 0.42
                 if amount > nearest_amount:
                     nearest_amount = amount
                     nearest_color = TAXONOMY_COLORS["amber"] if anchor_class == "a" else TAXONOMY_COLORS["blue"]
