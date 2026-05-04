@@ -233,19 +233,19 @@ class JsonDrivenScene(MovingCameraScene):
             return tick
 
         def taxonomy_anchor_ring(dot, color):
-            ring = Circle(radius=0.16, color=color, stroke_width=2.0)
+            ring = Circle(radius=0.145, color=color, stroke_width=1.35)
             ring.move_to(dot.get_center())
-            ring.set_stroke(color=color, opacity=0.72)
+            ring.set_stroke(color=color, opacity=0.46)
             ring.set_fill(opacity=0)
             return ring
 
         def taxonomy_anchor_burst(dot, color):
             center = dot.get_center()
             burst = VGroup(taxonomy_anchor_ring(dot, color))
-            for angle in (25, 115, 205, 295):
+            for angle in (35, 145, 235, 325):
                 direction = np.array([np.cos(angle * DEGREES), np.sin(angle * DEGREES), 0])
-                line = Line(center + direction * 0.105, center + direction * 0.230)
-                line.set_stroke(color=color, width=1.55, opacity=0.74)
+                line = Line(center + direction * 0.100, center + direction * 0.185)
+                line.set_stroke(color=color, width=1.05, opacity=0.38)
                 burst.add(line)
             return burst
 
@@ -274,76 +274,33 @@ class JsonDrivenScene(MovingCameraScene):
 
                     cloud = VMobject()
                     cloud.set_points_smoothly(points + [points[0]])
-                    # These are held luminance clouds, not cluster borders: fill does the work;
-                    # the stroke is intentionally almost invisible.
-                    cloud.set_stroke(TAXONOMY_COLORS["cluster"], width=0.45, opacity=0.035 if held else 0.055)
+                    # These are soft luminance fields, not drawn cluster borders.
+                    # Keep the stroke invisible so the viewer reads density, not blobs.
+                    cloud.set_stroke(TAXONOMY_COLORS["cluster"], width=0.0, opacity=0.0)
                     cloud.set_fill(
                         TAXONOMY_COLORS["cluster"],
-                        opacity=(0.044 if held else 0.070) * (1.0 - layer_index * 0.22),
+                        opacity=(0.064 if held else 0.095) * (1.0 - layer_index * 0.26),
                     )
                     cloud_group.add(cloud)
                 ghosts.add(cloud_group)
             return ghosts
 
         def taxonomy_density_glints(params, max_lines=56):
-            points = params.get("points", [])
-            clusters = params.get("clusters", [])
-            if not points or not clusters:
-                return VGroup()
-
-            glints = VGroup()
-            used_pairs = set()
-            lines_per_cluster = max(5, max_lines // max(1, len(clusters)))
-            for cluster in clusters:
-                center = vector_from_param(cluster.get("center"))
-                radius = cluster.get("radius", 1.0)
-                local_dense = []
-                for index, point in enumerate(points):
-                    p = vector_from_param(point)
-                    density = max(0.0, 1.0 - np.linalg.norm(p - center) / radius)
-                    if density > 0.34:
-                        local_dense.append((index, p, density))
-                local_candidates = []
-                for left_i, left_p, left_density in local_dense:
-                    for right_i, right_p, right_density in local_dense:
-                        if right_i <= left_i:
-                            continue
-                        pair_key = tuple(sorted((left_i, right_i)))
-                        if pair_key in used_pairs:
-                            continue
-                        distance = np.linalg.norm(left_p - right_p)
-                        if 0.24 <= distance <= 0.72:
-                            # Prefer short, high-density internal constellation links.
-                            local_candidates.append((distance, left_density + right_density, pair_key, left_p, right_p))
-                local_candidates.sort(key=lambda item: (-item[1], item[0]))
-                for _, strength, pair_key, left_p, right_p in local_candidates[:lines_per_cluster]:
-                    used_pairs.add(pair_key)
-                    line = Line(left_p, right_p)
-                    line.set_stroke(
-                        TAXONOMY_COLORS["cluster"],
-                        width=1.18,
-                        opacity=min(0.34, 0.095 + strength * 0.082),
-                    )
-                    glints.add(line)
-            return glints
+            # The beat map asks for hidden structure as soft luminance, not line
+            # networks. Keeping this as an empty group prevents fast blinking
+            # connector clutter while preserving the existing call sites.
+            return VGroup()
 
         def taxonomy_broken_wavefronts(anchor_center, color, max_radius=1.55, rings=4):
             stages = []
             for ring_index in range(rings):
                 radius = max_radius * (ring_index + 1) / rings
-                pieces = VGroup()
-                for start_angle in (15, 96, 178, 264):
-                    arc = Arc(
-                        radius=radius,
-                        start_angle=start_angle * DEGREES,
-                        angle=36 * DEGREES,
-                        color=color,
-                        stroke_width=1.65,
-                    )
-                    arc.move_arc_center_to(anchor_center)
-                    arc.set_stroke(color=color, opacity=max(0.075, 0.28 - ring_index * 0.045))
-                    pieces.add(arc)
-                stages.append(pieces)
+                softness = VGroup()
+                for layer_index, layer_scale in enumerate((1.00, 0.68, 0.38)):
+                    glow = Dot(anchor_center, radius=radius * layer_scale, color=color)
+                    glow.set_opacity(max(0.018, 0.070 - ring_index * 0.010 - layer_index * 0.014))
+                    softness.add(glow)
+                stages.append(softness)
             return stages
 
         def taxonomy_influence_territories(params, held=False):
@@ -372,8 +329,8 @@ class JsonDrivenScene(MovingCameraScene):
                         ]))
                     patch = VMobject()
                     patch.set_points_smoothly(loop_points + [loop_points[0]])
-                    patch.set_stroke(color=color, width=0.55, opacity=0.035 if held else 0.055)
-                    patch.set_fill(color, opacity=(0.030 if held else 0.052) * (1.0 - layer_index * 0.28))
+                    patch.set_stroke(color=color, width=0.0, opacity=0.0)
+                    patch.set_fill(color, opacity=(0.046 if held else 0.068) * (1.0 - layer_index * 0.32))
                     territory.add(patch)
                 territories.add(territory)
             return territories
@@ -1112,7 +1069,7 @@ class JsonDrivenScene(MovingCameraScene):
                         ]
                         ordered = sorted(range(len(dot_items)), key=lambda index: points[index][0] if index < len(points) else 0)
                         waves = []
-                        wave_count = 10
+                        wave_count = 3
                         for wave_index in range(wave_count):
                             wave_indices = ordered[
                                 wave_index * len(ordered) // wave_count:
@@ -1145,7 +1102,7 @@ class JsonDrivenScene(MovingCameraScene):
                                 *label_anims,
                                 lag_ratio=0.0,
                             ),
-                            run_time=run_time * 0.60,
+                            run_time=run_time * 0.44,
                         )
                         self.remove(sheen, leading_edge)
                         confirmation = VGroup()
@@ -1162,9 +1119,9 @@ class JsonDrivenScene(MovingCameraScene):
                             confirmation.add(confirm)
                             # Keep a sparse subset of label marks readable during the hold so
                             # the frame says "labeled examples", not only "colored dots".
-                            if point_index % 7 == 0:
+                            if point_index % 6 == 0:
                                 held_tick = taxonomy_label_tick(dot, color)
-                                held_tick.set_stroke(color=color, width=1.45, opacity=0.58)
+                                held_tick.set_stroke(color=color, width=1.55, opacity=0.62)
                                 held_label_ticks.add(held_tick)
                         if len(confirmation) != 0:
                             self.play(
@@ -1177,12 +1134,13 @@ class JsonDrivenScene(MovingCameraScene):
                                 FadeOut(confirmation, scale=1.22),
                                 run_time=run_time * 0.08,
                             )
-                            self.wait(run_time * 0.18)
-                            if len(held_label_ticks) != 0:
-                                self.play(FadeOut(held_label_ticks, scale=1.08), run_time=run_time * 0.06)
+                            self.wait(run_time * 0.40)
                         else:
                             self.wait(run_time * 0.12)
-                        self.wait(run_time * 0.04)
+                        self.wait(run_time * 0.08)
+                        if len(held_label_ticks) != 0:
+                            new_obj.add(held_label_ticks)
+                            new_obj.taxonomy_label_marks = held_label_ticks
                         current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -1241,6 +1199,10 @@ class JsonDrivenScene(MovingCameraScene):
                         self.remove(source_obj)
                         self.add(new_obj)
                         target_new_glows = getattr(new_obj, "taxonomy_glows", VGroup())
+                        source_label_marks = getattr(source_obj, "taxonomy_label_marks", VGroup())
+                        if len(source_label_marks) != 0:
+                            new_obj.add(source_label_marks)
+                            new_obj.taxonomy_label_marks = source_label_marks
                         if len(target_new_glows) != 0:
                             target_new_glows.set_opacity(0.0)
                         forget_object(source_obj)
@@ -1274,6 +1236,7 @@ class JsonDrivenScene(MovingCameraScene):
                         dot_items = list(getattr(getattr(source_obj, "taxonomy_points", VGroup()), "dot_items", []))
                         labels = list(getattr(source_obj, "taxonomy_labels", VGroup()))
                         glows = getattr(source_obj, "taxonomy_glows", VGroup())
+                        label_marks = getattr(source_obj, "taxonomy_label_marks", VGroup())
                         ordered = sorted(range(len(dot_items)), key=lambda index: dot_items[index].get_center()[0])
                         drain_groups = []
                         group_count = 6
@@ -1301,8 +1264,9 @@ class JsonDrivenScene(MovingCameraScene):
                             for label, opacity in zip(labels, [0.055, 0.88, 0.055, 0.055])
                         ]
                         glow_anims = [FadeOut(glows)] if len(glows) != 0 else []
+                        label_mark_anims = [FadeOut(label_marks)] if len(label_marks) != 0 else []
                         self.play(
-                            AnimationGroup(Succession(*drain_groups), *label_anims, *glow_anims, lag_ratio=0.0),
+                            AnimationGroup(Succession(*drain_groups), *label_anims, *glow_anims, *label_mark_anims, lag_ratio=0.0),
                             run_time=run_time,
                         )
                         current_time += run_time
@@ -1387,8 +1351,8 @@ class JsonDrivenScene(MovingCameraScene):
                                 )
                             )
                         if anims:
-                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time * 0.82)
-                            self.wait(run_time * 0.18)
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time * 0.74)
+                            self.wait(run_time * 0.26)
                             current_time += run_time
                         self.remove(source_obj)
                         if len(ghosts) != 0:
@@ -1420,11 +1384,11 @@ class JsonDrivenScene(MovingCameraScene):
                             hold_anims.append(Succession(Transform(source_glows, pulse_glows), Transform(source_glows, target_glows)))
                         if len(source_clouds) != 0:
                             cloud_breath = source_clouds.copy()
-                            cloud_breath.set_opacity(0.34)
-                            hold_anims.append(Succession(Transform(source_clouds, cloud_breath), source_clouds.animate.set_opacity(0.26)))
+                            cloud_breath.set_opacity(0.40)
+                            hold_anims.append(Succession(Transform(source_clouds, cloud_breath), source_clouds.animate.set_opacity(0.34)))
                         if hold_anims:
-                            self.play(AnimationGroup(*hold_anims, lag_ratio=0.0), run_time=run_time * 0.58)
-                            self.wait(run_time * 0.42)
+                            self.play(AnimationGroup(*hold_anims, lag_ratio=0.0), run_time=run_time * 0.38)
+                            self.wait(run_time * 0.62)
                             current_time += run_time
                         else:
                             self.wait(run_time)
@@ -1497,13 +1461,13 @@ class JsonDrivenScene(MovingCameraScene):
                                 anchor_steps.append(
                                     AnimationGroup(
                                         AnimationGroup(*pair_anims, lag_ratio=0.0),
-                                        Succession(FadeIn(rings, scale=0.55), Wait(run_time * 0.030), rings.animate.scale(1.42).set_opacity(0.0)),
+                                        Succession(FadeIn(rings, scale=0.72), Wait(run_time * 0.040), rings.animate.scale(1.22).set_opacity(0.0)),
                                         lag_ratio=0.0,
                                     )
                                 )
                         if anchor_steps or label_anims:
-                            self.play(AnimationGroup(Succession(*anchor_steps), *label_anims, lag_ratio=0.0), run_time=run_time * 0.58)
-                            self.wait(run_time * 0.42)
+                            self.play(AnimationGroup(Succession(*anchor_steps), *label_anims, lag_ratio=0.0), run_time=run_time * 0.46)
+                            self.wait(run_time * 0.54)
                             current_time += run_time
                         self.remove(source_obj)
                         self.add(new_obj)
@@ -1529,7 +1493,7 @@ class JsonDrivenScene(MovingCameraScene):
                             color = TAXONOMY_COLORS["amber"] if anchor.get("class", "a") == "a" else TAXONOMY_COLORS["blue"]
                             waves = taxonomy_broken_wavefronts(vector_from_param(points[anchor_index]), color)
                             for wave_group in waves:
-                                wave_steps.append(Succession(FadeIn(wave_group), FadeOut(wave_group)))
+                                wave_steps.append(Succession(FadeIn(wave_group, scale=0.86), Wait(run_time * 0.020), FadeOut(wave_group, scale=1.18)))
                         if point_source is not None and point_target is not None:
                             source_dots = list(getattr(point_source, "dot_items", []))
                             target_dots = list(getattr(point_target, "dot_items", []))
@@ -1586,7 +1550,7 @@ class JsonDrivenScene(MovingCameraScene):
                                     (stage_index + 1) * len(ordered_influence) // halo_count
                                 ]
                                 if group_items:
-                                    halo_stages.append(AnimationGroup(*[halo.animate.set_opacity(0.085) for halo in group_items], lag_ratio=0.0))
+                                    halo_stages.append(AnimationGroup(*[halo.animate.set_opacity(0.115) for halo in group_items], lag_ratio=0.0))
                             if halo_stages:
                                 anims.append(Succession(*halo_stages))
                         if len(territories) != 0:
@@ -1602,8 +1566,8 @@ class JsonDrivenScene(MovingCameraScene):
                                 )
                             )
                         if anims:
-                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time * 0.62)
-                            self.wait(run_time * 0.38)
+                            self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=run_time * 0.72)
+                            self.wait(run_time * 0.28)
                             current_time += run_time
                         else:
                             self.wait(run_time)
@@ -1641,12 +1605,12 @@ class JsonDrivenScene(MovingCameraScene):
                         if anchor_anims:
                             hold_parts.append(AnimationGroup(*anchor_anims, lag_ratio=0.08))
                         if len(source_territories) != 0:
-                            territory_breath = source_territories.copy()
-                            territory_breath.set_opacity(0.82)
-                            hold_parts.append(Succession(Transform(source_territories, territory_breath), source_territories.animate.set_opacity(0.72)))
+                            steady_territories = source_territories.copy()
+                            steady_territories.set_opacity(0.88)
+                            hold_parts.append(Transform(source_territories, steady_territories))
                         if hold_parts:
-                            self.play(AnimationGroup(*hold_parts, lag_ratio=0.0), run_time=run_time * 0.50)
-                            self.wait(run_time * 0.50)
+                            self.play(AnimationGroup(*hold_parts, lag_ratio=0.0), run_time=run_time * 0.36)
+                            self.wait(run_time * 0.64)
                             current_time += run_time
                         else:
                             self.wait(run_time)
@@ -1730,8 +1694,9 @@ class JsonDrivenScene(MovingCameraScene):
                                 flash_anims.append(
                                     Succession(
                                         Wait(run_time * delay),
-                                        FadeIn(flash_dot, scale=1.35, run_time=0.06),
-                                        FadeOut(flash_dot, scale=1.75, run_time=0.24),
+                                        FadeIn(flash_dot, scale=1.25, run_time=0.10),
+                                        Wait(0.08),
+                                        FadeOut(flash_dot, scale=1.65, run_time=0.34),
                                     )
                                 )
                                 if flash.get("kind") == "reward":
@@ -1741,7 +1706,7 @@ class JsonDrivenScene(MovingCameraScene):
                                     flash_anims.append(
                                         Succession(
                                             Wait(run_time * min(0.97, delay + 0.035)),
-                                            residue.animate.set_opacity(0.060),
+                                            residue.animate.set_opacity(0.085),
                                         )
                                     )
                             moving_agent = agent.copy() if agent is not None else None

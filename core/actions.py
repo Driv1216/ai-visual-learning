@@ -1731,9 +1731,9 @@ def _taxonomy_glows(params, stage):
             if density < 0.38:
                 continue
             position = _taxonomy_point_position(point, params, drift)
-            halo_radius = 0.052 + density * 0.045
+            halo_radius = 0.062 + density * 0.060
             halo = Dot(position, radius=halo_radius, color=TAXONOMY_COLORS["cluster"])
-            halo.set_opacity((0.070 if stage == "unsupervised_clusters" else 0.085) * density)
+            halo.set_opacity((0.105 if stage == "unsupervised_clusters" else 0.125) * density)
             glows.add(halo)
 
     if stage == "supervised_boundary":
@@ -1743,8 +1743,8 @@ def _taxonomy_glows(params, stage):
             if mixed < 0.42:
                 continue
             p = _as_vector(point)
-            halo = Dot(p, radius=0.070 + 0.035 * mixed, color=TAXONOMY_COLORS["cluster"])
-            halo.set_opacity(0.026 * mixed)
+            halo = Dot(p, radius=0.078 + 0.046 * mixed, color=TAXONOMY_COLORS["cluster"])
+            halo.set_opacity(0.036 * mixed)
             glows.add(halo)
 
     if stage in {"rl_navigation", "rl_resolution"}:
@@ -1792,8 +1792,8 @@ def _taxonomy_influence(params, stage):
                 strongest_color = TAXONOMY_COLORS["amber"] if anchor_class == "a" else TAXONOMY_COLORS["blue"]
         if strongest_amount <= 0.18 or strongest_color is None:
             continue
-        halo = Dot(_as_vector(point), radius=0.055 + strongest_amount * 0.035, color=strongest_color)
-        halo.set_opacity((0.095 if stage == "semi_influence" else 0.110) * strongest_amount)
+        halo = Dot(_as_vector(point), radius=0.066 + strongest_amount * 0.048, color=strongest_color)
+        halo.set_opacity((0.125 if stage == "semi_influence" else 0.118) * strongest_amount)
         influence.add(halo)
     return influence
 
@@ -1841,7 +1841,7 @@ def _taxonomy_points(params, stage):
                     nearest_color = TAXONOMY_COLORS["amber"] if anchor_class == "a" else TAXONOMY_COLORS["blue"]
             if nearest_amount > 0:
                 color = _mix_hex(TAXONOMY_COLORS["neutral"], nearest_color, nearest_amount)
-                opacity = params.get("neutral_opacity", 0.24) + nearest_amount * 0.38
+                opacity = params.get("neutral_opacity", 0.24) + nearest_amount * 0.32
 
         dot = Dot(position, radius=radius, color=color)
         dot.set_opacity(opacity)

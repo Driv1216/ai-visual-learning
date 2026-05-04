@@ -175,7 +175,7 @@
       "transition_in": "transform",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.05,
+      "duration": 1.2,
       "params": {
         "source_id": "s6_v02_four_names",
         "stage": "supervised_full"
@@ -190,7 +190,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.45,
+      "duration": 1.65,
       "params": {
         "source_id": "s6_v03_supervised_full",
         "stage": "supervised_boundary"
@@ -205,7 +205,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.55,
+      "duration": 1.45,
       "params": {
         "source_id": "s6_v04_boundary_suggestion",
         "stage": "unsupervised_neutral"
@@ -220,7 +220,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.9,
+      "duration": 2.05,
       "params": {
         "source_id": "s6_v05_unsupervised_drain",
         "stage": "unsupervised_clusters"
@@ -235,7 +235,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.25,
+      "duration": 1.55,
       "params": {
         "source_id": "s6_v06_structure_emerges",
         "stage": "unsupervised_hold"
@@ -250,7 +250,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.75,
+      "duration": 0.65,
       "params": {
         "source_id": "s6_v07_unnamed_structure",
         "stage": "semi_neutral"
@@ -265,7 +265,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.45,
+      "duration": 1.65,
       "params": {
         "source_id": "s6_v08_semi_neutral",
         "stage": "semi_anchors"
@@ -280,7 +280,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 2.0,
+      "duration": 2.1,
       "params": {
         "source_id": "s6_v09_sparse_anchors",
         "stage": "semi_influence"
@@ -295,7 +295,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.15,
+      "duration": 1.35,
       "params": {
         "source_id": "s6_v10_influence_propagates",
         "stage": "semi_hold"
@@ -310,7 +310,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.9,
+      "duration": 0.8,
       "params": {
         "source_id": "s6_v11_influence_holds",
         "stage": "rl_neutral"
@@ -325,7 +325,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 0.75,
+      "duration": 0.7,
       "params": {
         "source_id": "s6_v12_rl_neutral_reset",
         "stage": "rl_agent"
@@ -340,7 +340,7 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 4.1,
+      "duration": 3.9,
       "params": {
         "source_id": "s6_v13_agent_appears",
         "stage": "rl_navigation"
