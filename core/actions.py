@@ -2321,6 +2321,179 @@ def make_show_plot(params, zone):
     return plot
 
 
+def make_workflow_cycle(params, zone):
+    """
+    Scene 7 — Professional Workflow cycle diagram.
+
+    Builds a single evolving object that starts as a partial left-to-right
+    chain of nodes and, when complete, forms a closed loop.
+
+    params:
+      nodes         List[str]  — node labels to include (in order).
+                                 Subset of the full 5-node sequence.
+      complete      bool       — if True, draw the closing return arrow.
+      noise_node    str | None — label of the node that shows data-noise state.
+      warn_node     str | None — label of the node that shows warning (amber) state.
+      node_spacing  float      — horizontal spacing between nodes (default 1.85).
+      node_radius   float      — circle radius (default 0.42).
+      curve_return  bool       — draw the closing curve back to first node.
+                                 Alias for complete.
+    """
+    all_labels = ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION", "IMPROVEMENT"]
+
+    requested = params.get("nodes", all_labels)
+    node_radius = params.get("node_radius", 0.42)
+    node_spacing = params.get("node_spacing", 1.85)
+    noise_node = params.get("noise_node", None)
+    warn_node = params.get("warn_node", None)
+    complete = params.get("complete", False) or params.get("curve_return", False)
+
+    # ── Node visual construction ──────────────────────────────────────────
+    def make_node(label, is_warn=False, is_noise=False):
+        stroke_col = "#E8A838" if is_warn else PRIMARY   # amber vs default blue
+        fill_col   = "#1a1006" if is_warn else "#0d1520"
+        glow_opacity = 0.22 if is_warn else 0.14
+
+        outer = Circle(
+            radius=node_radius + 0.08,
+            stroke_color=stroke_col,
+            stroke_width=1.0,
+            fill_opacity=0,
+        ).set_stroke(opacity=glow_opacity)
+
+        ring = Circle(
+            radius=node_radius,
+            stroke_color=stroke_col,
+            stroke_width=2.6,
+            fill_color=fill_col,
+            fill_opacity=1.0,
+        )
+
+        txt = Text(label, font_size=16, weight=MEDIUM, color=TEXT_MAIN)
+        fit_to_width(txt, node_radius * 1.55)
+        txt.move_to(ring.get_center())
+
+        node_group = VGroup(outer, ring, txt)
+
+        # Noise specks inside the DATA node
+        if is_noise:
+            specks = VGroup(
+                *[
+                    Dot(
+                        ring.get_center()
+                        + np.array([
+                            (i % 3 - 1) * 0.14,
+                            ((i // 3) - 1) * 0.10,
+                            0,
+                        ]),
+                        radius=0.028,
+                        color=MUTED,
+                    ).set_opacity(0.45)
+                    for i in range(6)
+                ]
+            )
+            node_group.add(specks)
+
+        # Warn halo: second ring visible on warn node
+        if is_warn:
+            warn_halo = Circle(
+                radius=node_radius + 0.18,
+                stroke_color="#E8A838",
+                stroke_width=2.4,
+                fill_opacity=0,
+            ).set_stroke(opacity=0.38)
+            node_group.add(warn_halo)
+
+        return node_group
+
+    # ── Build nodes ───────────────────────────────────────────────────────
+    node_objects = []
+    for label in requested:
+        is_warn  = (warn_node is not None and label == warn_node)
+        is_noise = (noise_node is not None and label == noise_node)
+        node_objects.append(make_node(label, is_warn=is_warn, is_noise=is_noise))
+
+    n = len(node_objects)
+
+    # ── Position nodes in a gentle arc ────────────────────────────────────
+    # For fewer than 5 nodes: strict left-to-right horizontal line.
+    # For 5 nodes: slight downward arc toward the right to prepare the loop.
+    positions = []
+    for i, _ in enumerate(node_objects):
+        x = (i - (n - 1) / 2.0) * node_spacing
+        # Gentle downward arc only when we have 4+ nodes
+        sag = 0.0
+        if n >= 4:
+            # Normalize i across range, peak sag at the rightmost end
+            t = i / max(1, n - 1)  # 0 → 1
+            sag = -0.28 * t * t    # small downward sag grows toward right
+        positions.append(np.array([x, sag, 0.0]))
+
+    for node_obj, pos in zip(node_objects, positions):
+        node_obj.move_to(pos)
+
+    group = VGroup(*node_objects)
+
+    # ── Draw arrows between consecutive nodes ─────────────────────────────
+    arrows = VGroup()
+    for i in range(n - 1):
+        start = positions[i]   + RIGHT * (node_radius + 0.10)
+        end   = positions[i+1] + LEFT  * (node_radius + 0.10)
+        # Correct for the sag difference
+        start = node_objects[i].get_right()   + RIGHT * 0.10
+        end   = node_objects[i+1].get_left()  + LEFT  * 0.10
+        arr = Arrow(
+            start, end,
+            buff=0.0,
+            stroke_width=2.4,
+            color=TEXT_SUB,
+            max_stroke_width_to_length_ratio=10,
+            tip_length=0.18,
+        )
+        arrows.add(arr)
+
+    # ── Closing return arc (loop completion) ──────────────────────────────
+    return_arrow = VGroup()
+    if complete and n == len(all_labels):
+        # Arc from IMPROVEMENT node bottom-right back up to DATA node top-left
+        last_node  = node_objects[-1]
+        first_node = node_objects[0]
+
+        arc_start = last_node.get_bottom()  + DOWN  * 0.08
+        arc_end   = first_node.get_bottom() + DOWN  * 0.08
+
+        # A large downward arc — sweeps below the diagram
+        closing_arc = ArcBetweenPoints(
+            arc_start,
+            arc_end,
+            angle=PI * 0.72,          # positive angle → curves downward
+            color=SECONDARY,
+            stroke_width=2.4,
+        )
+
+        # Manual arrowhead at the arc end
+        tip = Triangle(
+            color=SECONDARY,
+            fill_color=SECONDARY,
+            fill_opacity=1.0,
+        ).scale(0.08)
+        # Point tip upward-left toward DATA node bottom
+        tip.move_to(arc_end + UP * 0.04)
+
+        return_arrow = VGroup(closing_arc, tip)
+
+    full = VGroup(group, arrows, return_arrow)
+
+    # Store sub-groups as attributes so the renderer can animate them
+    full.cycle_nodes  = node_objects   # list of VGroup, one per node
+    full.cycle_arrows = arrows
+    full.cycle_return = return_arrow
+    full.cycle_labels = requested
+
+    place_in_zone(full, zone)
+    return full
+
+
 def transition_in_for(obj, transition_name: str):
     if transition_name in {"none", "smooth"}:
         return FadeIn(obj)
@@ -2453,6 +2626,9 @@ def build_object(step_dict):
 
     if action == "show_taxonomy_field":
         return make_taxonomy_field(params, zone)
+
+    if action == "show_workflow_cycle":
+        return make_workflow_cycle(params, zone)
 
     if action == "fade_out":
         return None

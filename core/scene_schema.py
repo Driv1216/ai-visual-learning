@@ -48,6 +48,8 @@ AllowedAction = Literal[
     "show_build_use_summary",
     "show_generalization_pattern",
     "show_taxonomy_field",
+    "show_workflow_cycle",
+    "mutate_workflow_cycle",
 ]
 
 AllowedZone = Literal[

@@ -380,6 +380,8 @@ class JsonDrivenScene(MovingCameraScene):
             "highlight_inference_side",
             "transform_split_to_clean_flow",
             "show_taxonomy_field",
+            "show_workflow_cycle",
+            "mutate_workflow_cycle",
         }
 
         for idx, step in enumerate(visual_steps):
@@ -526,6 +528,384 @@ class JsonDrivenScene(MovingCameraScene):
                     current_time += run_time
                     register_object(step.id, step.zone, new_obj)
                     handled = True
+
+                elif step.action == "show_workflow_cycle":
+                    # ── Build the cycle diagram object ────────────────────
+                    # ISSUE 2 FIX: node circles use Create (pen-draw), not FadeIn.
+                    merged_params = dict(step.params)
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": merged_params,
+                            "zone": step.zone,
+                        }
+                    )
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+
+                    node_list = getattr(new_obj, "cycle_nodes",  [])
+                    arrows    = getattr(new_obj, "cycle_arrows", VGroup())
+                    ret_arrow = getattr(new_obj, "cycle_return",  VGroup())
+
+                    if outgoing_anims:
+                        self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=0.28)
+                        current_time += 0.28
+
+                    if node_list:
+                        # Each node: Create the ring (pen-draw feel), then FadeIn the label.
+                        # This gives the "circle tracing itself" quality from the brief.
+                        node_draw_time = min(0.70, run_time * 0.55)
+                        node_anims = []
+                        for node in node_list:
+                            # node structure: [outer_glow, ring, txt, ...]
+                            ring_obj  = node[1] if len(node) > 1 else node
+                            label_obj = node[2] if len(node) > 2 else None
+                            rest      = list(node)[3:] if len(node) > 3 else []
+                            node_anims.append(
+                                Succession(
+                                    Create(ring_obj, run_time=node_draw_time * 0.55),
+                                    AnimationGroup(
+                                        FadeIn(node[0]),            # outer glow
+                                        FadeIn(label_obj) if label_obj else Wait(0),
+                                        *[FadeIn(r) for r in rest],
+                                        lag_ratio=0.0,
+                                        run_time=node_draw_time * 0.45,
+                                    ),
+                                )
+                            )
+                        self.play(
+                            AnimationGroup(*node_anims, lag_ratio=0.22),
+                            run_time=node_draw_time,
+                        )
+                        current_time += node_draw_time
+
+                        if len(arrows) > 0:
+                            arrow_time = max(0.18, run_time - node_draw_time)
+                            self.play(
+                                AnimationGroup(
+                                    *[Create(a) for a in arrows],
+                                    lag_ratio=0.25,
+                                ),
+                                run_time=arrow_time,
+                            )
+                            current_time += arrow_time
+
+                        if len(ret_arrow) > 0:
+                            self.play(Create(ret_arrow), run_time=min(1.4, run_time * 0.55))
+                            current_time += min(1.4, run_time * 0.55)
+                    else:
+                        self.play(FadeIn(new_obj), run_time=run_time)
+                        current_time += run_time
+
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "mutate_workflow_cycle":
+                    # ── Mutate an existing cycle diagram in-place ─────────
+                    # Supported modes:
+                    #   "add_nodes"     — add new node(s) + arrow to existing without rebuilding
+                    #   "warn_node"     — warm-colour the named node with a bloom + pulse
+                    #   "noise_node"    — jitter animation on named node to signal messy data
+                    #   "internal_node" — convergence animation inside a single named node
+                    #   "close_loop"    — animate only the closing arc; leave nodes untouched
+                    #   "pulse_all"     — unified brightness pulse across all nodes
+
+                    source_id = step.params.get("source_id")
+                    cycle_obj = object_registry.get(source_id)
+
+                    if cycle_obj is None:
+                        print(
+                            f"[mutate_workflow_cycle] WARNING: source_id={source_id} not found. Skipping."
+                        )
+                        handled = True
+                        continue
+
+                    mode = step.params.get("mode", "pulse_all")
+
+                    if mode == "add_nodes":
+                        # ISSUE 3 FIX: Do NOT ReplacementTransform the whole diagram.
+                        # Build the full new object (correct positions for n+1 nodes),
+                        # then move existing nodes smoothly to new positions via animate,
+                        # and Create the new node + arrow on top.
+                        merged_params = dict(step.params)
+                        new_obj = build_object(
+                            {
+                                "id": step.id,
+                                "action": "show_workflow_cycle",
+                                "params": merged_params,
+                                "zone": step.zone,
+                            }
+                        )
+                        new_node_list  = getattr(new_obj, "cycle_nodes",  [])
+                        new_arrows     = getattr(new_obj, "cycle_arrows", VGroup())
+                        old_labels     = getattr(cycle_obj, "cycle_labels", [])
+                        n_existing     = len(old_labels)
+                        arriving_nodes = new_node_list[n_existing:]
+                        new_connecting_arrows = list(new_arrows)[max(0, n_existing - 1):]
+
+                        # Phase 1 — slide existing nodes to their new (slightly shifted) positions
+                        old_nodes = getattr(cycle_obj, "cycle_nodes", [])
+                        reposition_anims = []
+                        for old_node, new_node in zip(old_nodes, new_node_list[:n_existing]):
+                            target_pos = new_node.get_center()
+                            reposition_anims.append(old_node.animate.move_to(target_pos))
+                        old_arrows = getattr(cycle_obj, "cycle_arrows", VGroup())
+                        for old_arr, new_arr in zip(list(old_arrows), list(new_arrows)[:max(0, n_existing - 1)]):
+                            reposition_anims.append(
+                                old_arr.animate.put_start_and_end_on(
+                                    new_arr.get_start(), new_arr.get_end()
+                                )
+                            )
+
+                        reposition_time = run_time * 0.30 if reposition_anims else 0.0
+                        if reposition_anims:
+                            self.play(
+                                AnimationGroup(*reposition_anims, lag_ratio=0.0),
+                                run_time=reposition_time,
+                            )
+                            current_time += reposition_time
+
+                        # Phase 2 — Create the new node(s) and connecting arrow(s)
+                        arrive_time = run_time - reposition_time
+                        arrive_anims = []
+                        for node in arriving_nodes:
+                            ring_obj  = node[1] if len(node) > 1 else node
+                            label_obj = node[2] if len(node) > 2 else None
+                            rest      = list(node)[3:] if len(node) > 3 else []
+                            arrive_anims.append(
+                                Succession(
+                                    Create(ring_obj, run_time=arrive_time * 0.50),
+                                    AnimationGroup(
+                                        FadeIn(node[0]),
+                                        FadeIn(label_obj) if label_obj else Wait(0),
+                                        *[FadeIn(r) for r in rest],
+                                        lag_ratio=0.0,
+                                        run_time=arrive_time * 0.30,
+                                    ),
+                                )
+                            )
+                        connecting_arrow_anims = [Create(a) for a in new_connecting_arrows]
+                        all_arrive = arrive_anims + connecting_arrow_anims
+                        if all_arrive:
+                            self.play(
+                                AnimationGroup(*all_arrive, lag_ratio=0.18),
+                                run_time=max(0.20, arrive_time),
+                            )
+                            current_time += max(0.20, arrive_time)
+
+                        # Swap the registry entry: new_obj holds the updated cycle attrs,
+                        # but the old node VGroups (now repositioned) are already on screen.
+                        # We carry forward new_obj as the authoritative object — it has the
+                        # correct cycle_nodes list for subsequent mutations.
+                        self.add(new_obj)
+                        self.remove(cycle_obj)
+                        forget_object(cycle_obj)
+                        register_object(step.id, step.zone, new_obj)
+                        handled = True
+
+                    elif mode == "warn_node":
+                        # Warm-colour bloom + pulse on the named node.
+                        # The cycle_obj stays on screen; we only animate the target ring.
+                        node_label  = step.params.get("node_label", "EVALUATION")
+                        node_labels = getattr(cycle_obj, "cycle_labels", [])
+                        node_list   = getattr(cycle_obj, "cycle_nodes",  [])
+                        try:
+                            idx         = node_labels.index(node_label)
+                            target_node = node_list[idx]
+                        except (ValueError, IndexError):
+                            target_node = None
+
+                        if target_node is not None:
+                            # node[0]=outer_glow, node[1]=main_ring, node[2]=txt
+                            outer = target_node[0] if len(target_node) > 0 else None
+                            ring  = target_node[1] if len(target_node) > 1 else target_node
+                            amber = "#E8A838"
+                            # Step 1: colour bloom
+                            bloom_anims = [ring.animate.set_stroke(color=amber, opacity=1.0).set_fill(color="#1a1006")]
+                            if outer is not None:
+                                bloom_anims.append(outer.animate.set_stroke(color=amber, opacity=0.38))
+                            self.play(
+                                AnimationGroup(*bloom_anims, lag_ratio=0.0),
+                                run_time=run_time * 0.36,
+                            )
+                            # Step 2: single pulse — widen stroke then settle
+                            self.play(
+                                ring.animate.set_stroke(width=5.2, opacity=1.0),
+                                run_time=run_time * 0.26,
+                            )
+                            self.play(
+                                ring.animate.set_stroke(width=2.6, opacity=0.88),
+                                run_time=run_time * 0.38,
+                            )
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+
+                        object_registry[step.id] = cycle_obj
+                        step_zone_map[step.id] = step.zone
+                        handled = True
+
+                    elif mode == "noise_node":
+                        # Brief jitter on the named node — signals messy raw data.
+                        node_label  = step.params.get("node_label", "DATA")
+                        node_labels = getattr(cycle_obj, "cycle_labels", [])
+                        node_list   = getattr(cycle_obj, "cycle_nodes",  [])
+                        try:
+                            idx         = node_labels.index(node_label)
+                            target_node = node_list[idx]
+                        except (ValueError, IndexError):
+                            target_node = None
+
+                        if target_node is not None:
+                            orig_center = target_node.get_center().copy()
+                            self.play(target_node.animate.shift(RIGHT * 0.045 + UP  * 0.030), run_time=run_time * 0.18)
+                            self.play(target_node.animate.shift(LEFT  * 0.080 + DOWN * 0.050), run_time=run_time * 0.17)
+                            self.play(target_node.animate.shift(RIGHT * 0.055 + DOWN * 0.025), run_time=run_time * 0.15)
+                            self.play(target_node.animate.move_to(orig_center),                run_time=run_time * 0.20)
+                            # Slight opacity drop — leaves a "residual imperfection" feel
+                            self.play(target_node.animate.set_opacity(0.74),                   run_time=run_time * 0.30)
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+
+                        object_registry[step.id] = cycle_obj
+                        step_zone_map[step.id] = step.zone
+                        handled = True
+
+                    elif mode == "internal_node":
+                        # ISSUE 6 FIX: convergence animation inside a single named node.
+                        # Used for TRAINING beat — "something learning inside here."
+                        # Three faint dots orbit inward toward center, then fade.
+                        node_label  = step.params.get("node_label", "TRAINING")
+                        node_labels = getattr(cycle_obj, "cycle_labels", [])
+                        node_list   = getattr(cycle_obj, "cycle_nodes",  [])
+                        try:
+                            idx         = node_labels.index(node_label)
+                            target_node = node_list[idx]
+                        except (ValueError, IndexError):
+                            target_node = None
+
+                        if target_node is not None:
+                            center = target_node.get_center()
+                            node_radius_val = step.params.get("node_radius", 0.42)
+                            # Three small dots placed near the edge of the node
+                            angles = [PI * 0.25, PI * 0.85, PI * 1.55]
+                            inner_dots = VGroup(
+                                *[
+                                    Dot(
+                                        center + np.array([
+                                            np.cos(a) * node_radius_val * 0.62,
+                                            np.sin(a) * node_radius_val * 0.62,
+                                            0,
+                                        ]),
+                                        radius=0.032,
+                                        color=ACCENT,
+                                    ).set_opacity(0.0)
+                                    for a in angles
+                                ]
+                            )
+                            self.add(inner_dots)
+                            # Fade in
+                            self.play(inner_dots.animate.set_opacity(0.72), run_time=run_time * 0.22)
+                            # Converge toward center
+                            self.play(
+                                AnimationGroup(
+                                    *[d.animate.move_to(center + (d.get_center() - center) * 0.18)
+                                      for d in inner_dots],
+                                    lag_ratio=0.12,
+                                ),
+                                run_time=run_time * 0.46,
+                            )
+                            # Fade out as learning "settles"
+                            self.play(inner_dots.animate.set_opacity(0.0), run_time=run_time * 0.32)
+                            self.remove(inner_dots)
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+
+                        object_registry[step.id] = cycle_obj
+                        step_zone_map[step.id] = step.zone
+                        handled = True
+
+                    elif mode == "close_loop":
+                        # ISSUE 5 FIX: Do NOT ReplacementTransform the existing diagram.
+                        # The existing cycle_obj stays on screen exactly as-is.
+                        # We only build the return arc geometry and Create it on top.
+                        merged_params = dict(step.params)
+                        merged_params["complete"] = True
+                        arc_obj = build_object(
+                            {
+                                "id": step.id,
+                                "action": "show_workflow_cycle",
+                                "params": merged_params,
+                                "zone": step.zone,
+                            }
+                        )
+                        ret_arrow = getattr(arc_obj, "cycle_return", VGroup())
+
+                        if len(ret_arrow) > 0:
+                            # Add only the return arc — the existing diagram nodes stay untouched
+                            self.add(ret_arrow)
+                            self.play(
+                                Create(ret_arrow),
+                                run_time=run_time,
+                            )
+                            current_time += run_time
+                            # Attach the arc to the existing cycle_obj so future pulses find it
+                            cycle_obj.add(ret_arrow)
+                            cycle_obj.cycle_return = ret_arrow
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+
+                        # Keep cycle_obj as the registered object — only arc was added
+                        object_registry[step.id] = cycle_obj
+                        step_zone_map[step.id]   = step.zone
+                        active_objects[step.zone] = cycle_obj
+                        handled = True
+
+                    elif mode == "pulse_all":
+                        # Unified brightness pulse — scene resolution beat.
+                        nodes = getattr(cycle_obj, "cycle_nodes", [])
+                        if nodes:
+                            self.play(
+                                AnimationGroup(
+                                    *[n.animate.set_opacity(1.0) for n in nodes],
+                                    lag_ratio=0.0,
+                                ),
+                                run_time=run_time * 0.35,
+                            )
+                            self.play(
+                                AnimationGroup(
+                                    *[n.animate.set_opacity(0.88) for n in nodes],
+                                    lag_ratio=0.0,
+                                ),
+                                run_time=run_time * 0.65,
+                            )
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+
+                        object_registry[step.id] = cycle_obj
+                        step_zone_map[step.id] = step.zone
+                        handled = True
+
+                    else:
+                        print(f"[mutate_workflow_cycle] WARNING: unknown mode={mode}. Skipping.")
+                        handled = True
 
                 elif step.action == "transform_manual_rule_card":
                     source_id = step.params.get("source_id")
