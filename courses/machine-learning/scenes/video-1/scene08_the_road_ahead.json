@@ -1,0 +1,164 @@
+{
+  "scene_id": "scene08_the_road_ahead",
+  "video_title": "What Is Machine Learning?",
+  "scene_title": "The Road Ahead",
+  "order": 8,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s8_01",
+      "text": "Machine learning can sound mysterious at first.",
+      "emphasis": "mysterious"
+    },
+    {
+      "id": "s8_02",
+      "text": "But once you look closely, it is not magic. It is mathematics, data, and structured learning working together.",
+      "emphasis": "not magic"
+    },
+    {
+      "id": "s8_03",
+      "text": "We are moving from a world where we tell computers exactly what to do, to a world where we teach them how to learn from examples.",
+      "emphasis": "teach them how to learn"
+    },
+    {
+      "id": "s8_04",
+      "text": "That shift is important. It changes how we build software. It changes how we think about intelligence. And it changes what kinds of problems we can solve.",
+      "emphasis": "it changes"
+    },
+    {
+      "id": "s8_05",
+      "text": "That is where the real journey begins.",
+      "emphasis": "begins"
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v8_road_field",
+      "anchor": "s8_01",
+      "offset": 0.0,
+      "action": "show_road_ahead_field",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 0.1,
+      "params": {
+        "horizon_y": -0.18,
+        "line_count": 5,
+        "initial_opacity": 0.32,
+        "upper_ambient_opacity": 0.0,
+        "horizon_half_width": 5.55,
+        "point_start": [0.0, -0.64, 0.0]
+      }
+    },
+    {
+      "id": "v8_settle_mystery",
+      "anchor": "s8_01",
+      "offset": 0.12,
+      "action": "mutate_road_ahead_field",
+      "zone": "full",
+      "persist": true,
+      "duration": 4.2,
+      "params": {
+        "source_id": "v8_road_field",
+        "mode": "settle",
+        "shift_down": 0.34,
+        "target_opacity": 0.34
+      }
+    },
+    {
+      "id": "v8_settle_clarity",
+      "anchor": "s8_02",
+      "offset": 0.0,
+      "action": "mutate_road_ahead_field",
+      "zone": "full",
+      "persist": true,
+      "duration": 6.8,
+      "params": {
+        "source_id": "v8_settle_mystery",
+        "mode": "settle",
+        "shift_down": 0.24,
+        "target_opacity": 0.40
+      }
+    },
+    {
+      "id": "v8_horizon_emergence",
+      "anchor": "s8_03",
+      "offset": 0.4,
+      "action": "mutate_road_ahead_field",
+      "zone": "full",
+      "persist": true,
+      "duration": 2.1,
+      "params": {
+        "source_id": "v8_settle_clarity",
+        "mode": "emerge_horizon",
+        "horizon_half_width": 5.55,
+        "core_opacity": 1.0,
+        "wing_opacity": 0.92,
+        "glow_opacity": 0.15,
+        "lower_opacity": 0.30,
+        "compress_shift": 0.18
+      }
+    },
+    {
+      "id": "v8_upper_field_warmth",
+      "anchor": "s8_04",
+      "offset": 0.0,
+      "action": "mutate_road_ahead_field",
+      "zone": "full",
+      "persist": true,
+      "duration": 9.0,
+      "params": {
+        "source_id": "v8_horizon_emergence",
+        "mode": "warm_upper_field",
+        "target_opacity": 0.10,
+        "target_color": "#182135"
+      }
+    },
+    {
+      "id": "v8_point_crossing",
+      "anchor": "s8_05",
+      "offset": 0.0,
+      "action": "mutate_road_ahead_field",
+      "zone": "full",
+      "persist": true,
+      "duration": 3.0,
+      "params": {
+        "source_id": "v8_upper_field_warmth",
+        "mode": "cross_point",
+        "start": [0.0, -0.64, 0.0],
+        "cross": [0.0, -0.14, 0.0],
+        "rest": [0.0, 1.04, 0.0],
+        "cross_at": 1.15,
+        "point_opacity": 1.0,
+        "point_halo_opacity": 0.20,
+        "rest_halo_opacity": 0.13,
+        "line_response_opacity": 1.0,
+        "response_glow_opacity": 0.22
+      }
+    },
+    {
+      "id": "v8_final_rest",
+      "anchor": "s8_05",
+      "offset": 3.05,
+      "action": "mutate_road_ahead_field",
+      "zone": "full",
+      "persist": true,
+      "duration": 2.2,
+      "params": {
+        "source_id": "v8_point_crossing",
+        "mode": "final_hold"
+      }
+    }
+  ],
+  "notes": {
+    "tone": "quiet threshold; final-frame-first, no title, labels, text, icons, diagrams, or replacements",
+    "pacing": "One persistent field opens already present, settles through the first two beats, resolves into a horizon on the transition beat, warms the upper field continuously across the three change statements, then lets a single point cross and hold.",
+    "animation_guidelines": "Use only the road-ahead field mutation modes. Horizon emergence must read center-out, upper-field warmth must be continuous and subtle, and the point crossing timing should be adjusted to the exact word begins after WAV timestamps are generated. WAV-only pipeline."
+  }
+}

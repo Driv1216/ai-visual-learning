@@ -1,0 +1,264 @@
+{
+  "scene_id": "scene07_professional_workflow",
+  "video_title": "What Is Machine Learning?",
+  "scene_title": "The Professional Workflow",
+  "order": 7,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s7_01",
+      "text": "It is also important to see machine learning as a workflow, not just a collection of algorithms.",
+      "emphasis": "workflow"
+    },
+    {
+      "id": "s7_02",
+      "text": "The process usually begins with data collection. We gather the information we need.",
+      "emphasis": "data collection"
+    },
+    {
+      "id": "s7_03",
+      "text": "But raw data is rarely clean. It often contains missing values, noise, and inconsistencies.",
+      "emphasis": "rarely clean"
+    },
+    {
+      "id": "s7_04",
+      "text": "So the next step is preprocessing. Here we clean the data, organize it, and transform it into a form the model can use.",
+      "emphasis": "preprocessing"
+    },
+    {
+      "id": "s7_05",
+      "text": "Then comes model selection and training. We choose a model, train it on the data, and let it learn the pattern.",
+      "emphasis": "training"
+    },
+    {
+      "id": "s7_06",
+      "text": "After that comes evaluation. This is where we test how well the model performs on new data.",
+      "emphasis": "evaluation"
+    },
+    {
+      "id": "s7_07",
+      "text": "This step matters because a model can sometimes do well on training data but fail on unseen data. That problem is called overfitting.",
+      "emphasis": "overfitting"
+    },
+    {
+      "id": "s7_08",
+      "text": "Finally, we move to deployment and improvement. A model is usually not the end of the story.",
+      "emphasis": "deployment and improvement"
+    },
+    {
+      "id": "s7_09",
+      "text": "Once it is used in the real world, we monitor its performance and improve it over time.",
+      "emphasis": "improve it over time"
+    },
+    {
+      "id": "s7_10",
+      "text": "So machine learning is not a one-step process. It is a loop: data, preprocessing, training, evaluation, improvement.",
+      "emphasis": "loop"
+    },
+    {
+      "id": "s7_11",
+      "text": "That loop is the real workflow of the field.",
+      "emphasis": "real workflow"
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v7_title",
+      "anchor": "s7_01",
+      "offset": 0.0,
+      "action": "show_title",
+      "zone": "title",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "duration": 1.1,
+      "params": {
+        "text": "The Professional Workflow"
+      }
+    },
+    {
+      "id": "v7_node_data_unlabeled",
+      "anchor": "s7_01",
+      "offset": 0.5,
+      "action": "show_workflow_cycle",
+      "zone": "center",
+      "transition_in": "create",
+      "persist": true,
+      "duration": 1.2,
+      "params": {
+        "nodes": ["DATA"],
+        "node_radius": 0.42,
+        "unlabeled": true
+      }
+    },
+    {
+      "id": "v7_reveal_data_label",
+      "anchor": "s7_02",
+      "offset": 0.0,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 0.9,
+      "params": {
+        "source_id": "v7_node_data_unlabeled",
+        "mode": "reveal_label",
+        "node_label": "DATA"
+      }
+    },
+    {
+      "id": "v7_noise_data",
+      "anchor": "s7_03",
+      "offset": 0.3,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 1.6,
+      "params": {
+        "source_id": "v7_node_data_unlabeled",
+        "mode": "noise_node",
+        "node_label": "DATA",
+        "node_radius": 0.42
+      }
+    },
+    {
+      "id": "v7_add_preprocessing",
+      "anchor": "s7_04",
+      "offset": 0.0,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 1.5,
+      "params": {
+        "source_id": "v7_node_data_unlabeled",
+        "mode": "add_nodes",
+        "nodes": ["DATA", "PREPROCESSING"],
+        "node_radius": 0.42
+      }
+    },
+    {
+      "id": "v7_add_training",
+      "anchor": "s7_05",
+      "offset": 0.0,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 1.5,
+      "params": {
+        "source_id": "v7_add_preprocessing",
+        "mode": "add_nodes",
+        "nodes": ["DATA", "PREPROCESSING", "TRAINING"],
+        "node_radius": 0.42
+      }
+    },
+    {
+      "id": "v7_training_internal",
+      "anchor": "s7_05",
+      "offset": 1.8,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 1.4,
+      "params": {
+        "source_id": "v7_add_training",
+        "mode": "internal_node",
+        "node_label": "TRAINING",
+        "node_radius": 0.42
+      }
+    },
+    {
+      "id": "v7_add_evaluation",
+      "anchor": "s7_06",
+      "offset": 0.0,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 1.5,
+      "params": {
+        "source_id": "v7_add_training",
+        "mode": "add_nodes",
+        "nodes": ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION"],
+        "node_radius": 0.42
+      }
+    },
+    {
+      "id": "v7_warn_evaluation",
+      "anchor": "s7_07",
+      "offset": 0.4,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 1.8,
+      "params": {
+        "source_id": "v7_add_evaluation",
+        "mode": "warn_node",
+        "node_label": "EVALUATION"
+      }
+    },
+    {
+      "id": "v7_add_improvement",
+      "anchor": "s7_08",
+      "offset": 0.0,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 1.6,
+      "params": {
+        "source_id": "v7_add_evaluation",
+        "mode": "add_nodes",
+        "nodes": ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION", "IMPROVEMENT"],
+        "node_radius": 0.42,
+        "warn_node": "EVALUATION"
+      }
+    },
+    {
+      "id": "v7_close_loop",
+      "anchor": "s7_10",
+      "offset": 0.6,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 2.2,
+      "params": {
+        "source_id": "v7_add_improvement",
+        "mode": "close_loop",
+        "nodes": ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION", "IMPROVEMENT"],
+        "node_radius": 0.42,
+        "warn_node": "EVALUATION",
+        "complete": true
+      }
+    },
+    {
+      "id": "v7_pulse_resolution",
+      "anchor": "s7_11",
+      "offset": 0.0,
+      "action": "mutate_workflow_cycle",
+      "zone": "center",
+      "persist": true,
+      "duration": 1.4,
+      "params": {
+        "source_id": "v7_close_loop",
+        "mode": "pulse_all"
+      }
+    },
+    {
+      "id": "v7_final_hold",
+      "anchor": "s7_11",
+      "offset": 1.5,
+      "action": "hold",
+      "zone": "center",
+      "persist": true,
+      "duration": 2.2,
+      "params": {}
+    }
+  ],
+  "notes": {
+    "tone": "deliberate and elegant — a pipeline that discovers it is a loop",
+    "pacing": "Beat 1: unlabeled circle under title. Beat 2: label reveals. Each subsequent node arrives with its narration beat. EVALUATION warning is fully isolated. Closing arc is the most expressive motion. Final 2.2s hold is guaranteed.",
+    "animation_guidelines": "Arc geometry: nodes on elliptical arc so closing arrow completes a genuine loop. DATA noise uses internal specks not jitter. TRAINING uses dim-white converging dots. EVALUATION amber persists via warn_node param on all subsequent steps. Final hold is explicit in timeline."
+  }
+}

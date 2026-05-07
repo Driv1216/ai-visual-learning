@@ -1,0 +1,308 @@
+{
+  "scene_id": "video03_scene01_intro_to_supervised_learning",
+  "video_title": "Supervised Learning",
+  "scene_title": "Introduction to Supervised Learning",
+  "order": 1,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "v3s1_01",
+      "text": "Hello, and welcome! Today, we're diving into the fascinating world of Supervised Learning."
+    },
+    {
+      "id": "v3s1_02",
+      "text": "It's about teaching machines to learn from examples where the correct answer is already known."
+    },
+    {
+      "id": "v3s1_03",
+      "text": "We provide a machine with two things: Inputs and their corresponding Labels."
+    },
+    {
+      "id": "v3s1_04",
+      "text": "Student marks and whether they passed or failed. Email content — spam or not spam. House features and the price it sold for."
+    },
+    {
+      "id": "v3s1_05",
+      "text": "Can a machine learn the hidden rule behind these examples? Can it look at a new, unlabeled input and predict the correct label?"
+    },
+    {
+      "id": "v3s1_06",
+      "text": "Sometimes the rule is given directly. Like — if a data point is on the right side, classify it as Red. If it's on the left, classify it as Blue."
+    },
+    {
+      "id": "v3s1_07",
+      "text": "But in Supervised Learning… the model itself learns this rule. It observes hundreds of examples, and then… it infers the underlying pattern."
+    },
+    {
+      "id": "v3s1_08",
+      "text": "Sometimes the answer is a category — like spam. Other times it's a continuous number — like a house price. These two types lead us to Classification and Regression. Let's explore those next."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v3s1_field_arrival",
+      "anchor": "v3s1_01",
+      "action": "show_supervised_field",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": "full",
+      "duration": 1.5,
+      "params": {
+        "neutral_color": "#6F7786",
+        "warm_color": "#F2A65A",
+        "cool_color": "#6EA8FE",
+        "dot_radius": 0.055,
+        "dot_opacity": 0.62,
+        "colored_opacity": 0.96,
+        "dim_opacity": 0.55,
+        "field_scale": 0.92,
+        "line_color": "#EAF1FF",
+        "line_glow_color": "#DCE9FF",
+        "line_stroke_width": 3.0,
+        "line_glow_width": 8.0
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v3s1_opening_stillness",
+      "anchor": "v3s1_01",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 1.1,
+      "params": {
+        "source_id": "v3s1_field_arrival",
+        "mode": "hold"
+      },
+      "offset": 1.55
+    },
+    {
+      "id": "v3s1_color_wave_in",
+      "anchor": "v3s1_02",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 1.85,
+      "params": {
+        "source_id": "v3s1_opening_stillness",
+        "mode": "color_wave_in",
+        "wave_count": 7
+      },
+      "offset": 0.2
+    },
+    {
+      "id": "v3s1_input_label_words",
+      "anchor": "v3s1_03",
+      "action": "show_supervised_examples",
+      "zone": "full",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "duration": 2.3,
+      "params": {
+        "source_id": "v3s1_color_wave_in",
+        "font_size": 27,
+        "text_opacity": 0.84,
+        "labels": [
+          {
+            "text": "Input",
+            "position": [-2.55, 1.55, 0],
+            "color": "#F2A65A"
+          },
+          {
+            "text": "Label",
+            "position": [2.35, -1.68, 0],
+            "color": "#6EA8FE"
+          }
+        ]
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v3s1_example_pairs",
+      "anchor": "v3s1_04",
+      "action": "show_supervised_examples",
+      "zone": "full",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "duration": 7.8,
+      "params": {
+        "source_id": "v3s1_input_label_words",
+        "font_size": 31,
+        "text_opacity": 0.93,
+        "position": [0.0, 0.08, 0.0],
+        "fade_time": 0.3,
+        "hold_time": 2.0,
+        "pairs": [
+          "marks → pass / fail",
+          "email → spam / not spam",
+          "house → price"
+        ]
+      },
+      "offset": 0.1
+    },
+    {
+      "id": "v3s1_color_wave_out",
+      "anchor": "v3s1_05",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 1.85,
+      "params": {
+        "source_id": "v3s1_example_pairs",
+        "mode": "color_wave_out",
+        "wave_count": 7
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v3s1_question_hold",
+      "anchor": "v3s1_05",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 0.8,
+      "params": {
+        "source_id": "v3s1_color_wave_out",
+        "mode": "hold"
+      },
+      "offset": 1.9
+    },
+    {
+      "id": "v3s1_declared_rule",
+      "anchor": "v3s1_06",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 0.05,
+      "params": {
+        "source_id": "v3s1_question_hold",
+        "mode": "declare_rule",
+        "line_opacity": 0.96,
+        "line_glow_opacity": 0.16
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v3s1_declared_hold",
+      "anchor": "v3s1_06",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 1.2,
+      "params": {
+        "source_id": "v3s1_declared_rule",
+        "mode": "hold"
+      },
+      "offset": 0.1
+    },
+    {
+      "id": "v3s1_inferred_rule",
+      "anchor": "v3s1_07",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 3.3,
+      "params": {
+        "source_id": "v3s1_declared_hold",
+        "mode": "infer_rule",
+        "line_opacity": 0.96,
+        "line_glow_opacity": 0.16,
+        "dim_opacity": 0.55
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v3s1_inference_settles",
+      "anchor": "v3s1_07",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 0.7,
+      "params": {
+        "source_id": "v3s1_inferred_rule",
+        "mode": "hold"
+      },
+      "offset": 3.35
+    },
+    {
+      "id": "v3s1_line_curve_resolution",
+      "anchor": "v3s1_08",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.35,
+      "params": {
+        "source_id": "v3s1_inference_settles",
+        "mode": "curve_suggestion",
+        "bow": 0.28
+      },
+      "offset": 0.2
+    },
+    {
+      "id": "v3s1_final_title",
+      "anchor": "v3s1_08",
+      "action": "show_supervised_resolution",
+      "zone": "full",
+      "transition_in": "fade",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 1.0,
+      "params": {
+        "source_id": "v3s1_line_curve_resolution",
+        "text": "Supervised Learning",
+        "font_size": 38,
+        "color": "#F5F7FB",
+        "opacity": 0.95,
+        "position": [0.0, -3.05, 0.0]
+      },
+      "offset": 1.7
+    },
+    {
+      "id": "v3s1_final_rest",
+      "anchor": "v3s1_08",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 1.2,
+      "params": {
+        "source_id": "v3s1_final_title",
+        "mode": "hold"
+      },
+      "offset": 2.8
+    }
+  ],
+  "notes": {
+    "tone": "calm, premium, concept-first introduction to supervised learning",
+    "pacing": "audio-driven with restrained motion; color and line behavior carry the meaning",
+    "animation_guidelines": "Use one persistent dot field. Dots never move or resize. Only color, temporary text, and one rule line change. No axes, gridlines, arrows, boxes, panels, or extra text."
+  }
+}

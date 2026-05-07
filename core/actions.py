@@ -2325,34 +2325,69 @@ def make_workflow_cycle(params, zone):
     """
     Scene 7 — Professional Workflow cycle diagram.
 
-    Builds a single evolving object that starts as a partial left-to-right
-    chain of nodes and, when complete, forms a closed loop.
+    KEY GEOMETRY DESIGN:
+    All 5 nodes are pre-positioned on a flattened elliptical arc so that
+    when the return arrow closes, the diagram reads as a genuine loop —
+    not a horizontal pipeline with an underbelly arc.
+
+    Nodes 1–3 appear to be on a straight line (the ellipse top is nearly
+    flat). Node 4 dips slightly. Node 5 dips more. The closing arc from 5
+    back to 1 is a short, tight curve — not a long sweeping belly — because
+    the nodes are already curving toward each other.
+
+    This is the key fix for the "too horizontal" audit finding.
 
     params:
-      nodes         List[str]  — node labels to include (in order).
-                                 Subset of the full 5-node sequence.
-      complete      bool       — if True, draw the closing return arrow.
-      noise_node    str | None — label of the node that shows data-noise state.
-      warn_node     str | None — label of the node that shows warning (amber) state.
-      node_spacing  float      — horizontal spacing between nodes (default 1.85).
-      node_radius   float      — circle radius (default 0.42).
-      curve_return  bool       — draw the closing curve back to first node.
-                                 Alias for complete.
+      nodes           List[str]  — labels to include (subset of all 5).
+      complete        bool       — draw the closing return arrow.
+      unlabeled       bool       — if True, node text is hidden (Beat 1 state).
+      warn_node       str|None   — label of node shown in amber warning state.
+      node_radius     float      — circle radius (default 0.42).
     """
-    all_labels = ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION", "IMPROVEMENT"]
+    ALL_LABELS = ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION", "IMPROVEMENT"]
 
-    requested = params.get("nodes", all_labels)
+    requested   = params.get("nodes", ALL_LABELS)
     node_radius = params.get("node_radius", 0.42)
-    node_spacing = params.get("node_spacing", 1.85)
-    noise_node = params.get("noise_node", None)
-    warn_node = params.get("warn_node", None)
-    complete = params.get("complete", False) or params.get("curve_return", False)
+    warn_node   = params.get("warn_node",   None)
+    unlabeled   = params.get("unlabeled",   False)
+    complete    = params.get("complete", False) or params.get("curve_return", False)
+
+    # ── GEOMETRY: fixed arc positions for all 5 slots ─────────────────────
+    # Nodes sit on a wide, flat ellipse.
+    # Horizontal semi-axis = 3.2, vertical semi-axis = 0.90.
+    # We sample 5 evenly-spaced angles along the TOP arc (from ~200° to ~340°
+    # in standard math convention, which maps to left→right visually).
+    # This gives a gently curving path — left side nearly level, right side
+    # dropping slightly — so the closing arrow only needs a short trip back.
+    ELLIPSE_A = 3.20   # horizontal radius
+    ELLIPSE_B = 0.82   # vertical radius  (controls how much curve)
+    # Angles for 5 nodes: spread across the upper half of the ellipse,
+    # biased so node 1 is upper-left and node 5 is upper-right but lower.
+    # Using angles from 210° → 330° (in degrees, CCW from right).
+    import math
+    angle_start_deg = 210
+    angle_end_deg   = 330
+    all_angles = [
+        math.radians(angle_start_deg + (angle_end_deg - angle_start_deg) * i / (len(ALL_LABELS) - 1))
+        for i in range(len(ALL_LABELS))
+    ]
+    # all_angles[0] = left, all_angles[4] = right
+    all_positions = [
+        np.array([ELLIPSE_A * math.cos(a), ELLIPSE_B * math.sin(a), 0.0])
+        for a in all_angles
+    ]
+    # Center the arc so its bounding box is at ORIGIN
+    arc_center_y = (max(p[1] for p in all_positions) + min(p[1] for p in all_positions)) / 2.0
+    all_positions = [p - np.array([0.0, arc_center_y, 0.0]) for p in all_positions]
+
+    # Map from label to fixed arc position
+    label_to_pos = {label: all_positions[i] for i, label in enumerate(ALL_LABELS)}
 
     # ── Node visual construction ──────────────────────────────────────────
-    def make_node(label, is_warn=False, is_noise=False):
-        stroke_col = "#E8A838" if is_warn else PRIMARY   # amber vs default blue
-        fill_col   = "#1a1006" if is_warn else "#0d1520"
-        glow_opacity = 0.22 if is_warn else 0.14
+    def make_node(label, is_warn=False):
+        stroke_col   = "#E8A838" if is_warn else PRIMARY
+        fill_col     = "#1a1006" if is_warn else "#0d1520"
+        glow_opacity = 0.24 if is_warn else 0.14
 
         outer = Circle(
             radius=node_radius + 0.08,
@@ -2369,130 +2404,285 @@ def make_workflow_cycle(params, zone):
             fill_opacity=1.0,
         )
 
-        txt = Text(label, font_size=16, weight=MEDIUM, color=TEXT_MAIN)
-        fit_to_width(txt, node_radius * 1.55)
+        # Label — hidden opacity when unlabeled=True (Beat 1 state)
+        txt = Text(label, font_size=15, weight=MEDIUM, color=TEXT_MAIN)
+        fit_to_width(txt, node_radius * 1.50)
         txt.move_to(ring.get_center())
+        if unlabeled:
+            txt.set_opacity(0.0)
 
         node_group = VGroup(outer, ring, txt)
 
-        # Noise specks inside the DATA node
-        if is_noise:
-            specks = VGroup(
-                *[
-                    Dot(
-                        ring.get_center()
-                        + np.array([
-                            (i % 3 - 1) * 0.14,
-                            ((i // 3) - 1) * 0.10,
-                            0,
-                        ]),
-                        radius=0.028,
-                        color=MUTED,
-                    ).set_opacity(0.45)
-                    for i in range(6)
-                ]
-            )
-            node_group.add(specks)
-
-        # Warn halo: second ring visible on warn node
+        # Warn halo — second ring, amber, visible only for warn node
         if is_warn:
             warn_halo = Circle(
-                radius=node_radius + 0.18,
+                radius=node_radius + 0.20,
                 stroke_color="#E8A838",
-                stroke_width=2.4,
+                stroke_width=2.2,
                 fill_opacity=0,
-            ).set_stroke(opacity=0.38)
+            ).set_stroke(opacity=0.35)
             node_group.add(warn_halo)
 
         return node_group
 
-    # ── Build nodes ───────────────────────────────────────────────────────
+    # ── Build nodes at their fixed arc positions ──────────────────────────
     node_objects = []
     for label in requested:
-        is_warn  = (warn_node is not None and label == warn_node)
-        is_noise = (noise_node is not None and label == noise_node)
-        node_objects.append(make_node(label, is_warn=is_warn, is_noise=is_noise))
-
-    n = len(node_objects)
-
-    # ── Position nodes in a gentle arc ────────────────────────────────────
-    # For fewer than 5 nodes: strict left-to-right horizontal line.
-    # For 5 nodes: slight downward arc toward the right to prepare the loop.
-    positions = []
-    for i, _ in enumerate(node_objects):
-        x = (i - (n - 1) / 2.0) * node_spacing
-        # Gentle downward arc only when we have 4+ nodes
-        sag = 0.0
-        if n >= 4:
-            # Normalize i across range, peak sag at the rightmost end
-            t = i / max(1, n - 1)  # 0 → 1
-            sag = -0.28 * t * t    # small downward sag grows toward right
-        positions.append(np.array([x, sag, 0.0]))
-
-    for node_obj, pos in zip(node_objects, positions):
-        node_obj.move_to(pos)
+        is_warn = (warn_node is not None and label == warn_node)
+        node = make_node(label, is_warn=is_warn)
+        node.move_to(label_to_pos[label])
+        node_objects.append(node)
 
     group = VGroup(*node_objects)
 
-    # ── Draw arrows between consecutive nodes ─────────────────────────────
+    # ── Arrows between consecutive nodes ──────────────────────────────────
+    # Because nodes are on a curve, arrow direction follows the curve
+    # naturally — we just connect adjacent node edges.
     arrows = VGroup()
-    for i in range(n - 1):
-        start = positions[i]   + RIGHT * (node_radius + 0.10)
-        end   = positions[i+1] + LEFT  * (node_radius + 0.10)
-        # Correct for the sag difference
-        start = node_objects[i].get_right()   + RIGHT * 0.10
-        end   = node_objects[i+1].get_left()  + LEFT  * 0.10
+    for i in range(len(node_objects) - 1):
+        start = node_objects[i].get_right()   + RIGHT * 0.08
+        end   = node_objects[i + 1].get_left() + LEFT  * 0.08
+        # For nodes on an arc the "right" and "left" edges are not perfectly
+        # aligned — use center-to-center direction for cleaner arrows
+        p_start = label_to_pos[requested[i]]
+        p_end   = label_to_pos[requested[i + 1]]
+        direction = p_end - p_start
+        direction = direction / np.linalg.norm(direction)
+        start = label_to_pos[requested[i]]     + direction * (node_radius + 0.12)
+        end   = label_to_pos[requested[i + 1]] - direction * (node_radius + 0.12)
         arr = Arrow(
             start, end,
             buff=0.0,
             stroke_width=2.4,
             color=TEXT_SUB,
             max_stroke_width_to_length_ratio=10,
-            tip_length=0.18,
+            tip_length=0.17,
         )
         arrows.add(arr)
 
-    # ── Closing return arc (loop completion) ──────────────────────────────
+    # ── Closing return arc ─────────────────────────────────────────────────
+    # Because nodes are on an elliptical arc, the closing arrow from node 5
+    # back to node 1 completes the ellipse — it is a short arc, not a long
+    # underbelly sweep. This is what makes the final frame read as a loop.
     return_arrow = VGroup()
-    if complete and n == len(all_labels):
-        # Arc from IMPROVEMENT node bottom-right back up to DATA node top-left
-        last_node  = node_objects[-1]
-        first_node = node_objects[0]
+    if complete and len(requested) == len(ALL_LABELS):
+        first_pos = label_to_pos[requested[0]]
+        last_pos  = label_to_pos[requested[-1]]
 
-        arc_start = last_node.get_bottom()  + DOWN  * 0.08
-        arc_end   = first_node.get_bottom() + DOWN  * 0.08
+        # Arc continues the ellipse from node 5 back around to node 1.
+        # The angle of the bottom arc in our ellipse goes from ~330° back to ~210°
+        # traveling clockwise (i.e. downward through the bottom).
+        # We use ArcBetweenPoints with a positive angle to curve downward.
+        arc_start = last_pos  + np.array([0.0, -(node_radius + 0.12), 0.0])
+        arc_end   = first_pos + np.array([0.0, -(node_radius + 0.12), 0.0])
 
-        # A large downward arc — sweeps below the diagram
         closing_arc = ArcBetweenPoints(
             arc_start,
             arc_end,
-            angle=PI * 0.72,          # positive angle → curves downward
+            angle=PI * 0.85,    # curves downward — completes the ellipse
             color=SECONDARY,
             stroke_width=2.4,
         )
+        closing_arc.set_stroke(opacity=0.90)
 
-        # Manual arrowhead at the arc end
+        # Arrowhead: a small tip pointing upward toward DATA node bottom
         tip = Triangle(
             color=SECONDARY,
             fill_color=SECONDARY,
             fill_opacity=1.0,
-        ).scale(0.08)
-        # Point tip upward-left toward DATA node bottom
-        tip.move_to(arc_end + UP * 0.04)
+        ).scale(0.075)
+        # Rotate to point roughly upward-right toward node 1
+        tip.rotate(PI * 0.08)
+        tip.move_to(arc_end + np.array([0.0, 0.05, 0.0]))
 
         return_arrow = VGroup(closing_arc, tip)
 
     full = VGroup(group, arrows, return_arrow)
 
-    # Store sub-groups as attributes so the renderer can animate them
-    full.cycle_nodes  = node_objects   # list of VGroup, one per node
+    # Expose sub-structure for renderer mutations
+    full.cycle_nodes  = node_objects
     full.cycle_arrows = arrows
     full.cycle_return = return_arrow
-    full.cycle_labels = requested
+    full.cycle_labels = list(requested)
 
     place_in_zone(full, zone)
     return full
 
+
+def make_road_ahead_field(params, zone):
+    horizon_y = params.get("horizon_y", -0.18)
+    line_count = params.get("line_count", 5)
+    line_color = params.get("line_color", "#C7D7EA")
+    horizon_color = params.get("horizon_color", "#F2F6FF")
+    ambient_color = params.get("ambient_color", "#172033")
+    point_color = params.get("point_color", "#F8FBFF")
+
+    lower_lines = VGroup()
+    line_specs = params.get("line_specs") or [
+        {"start": [-4.9, -0.92, 0], "end": [-1.4, -0.76, 0], "opacity": 0.28, "width": 1.4},
+        {"start": [-2.9, -1.58, 0], "end": [1.8, -1.38, 0], "opacity": 0.36, "width": 1.7},
+        {"start": [0.9, -2.12, 0], "end": [4.7, -1.96, 0], "opacity": 0.31, "width": 1.5},
+        {"start": [-5.4, -2.72, 0], "end": [-0.3, -2.50, 0], "opacity": 0.24, "width": 1.2},
+        {"start": [1.6, -3.02, 0], "end": [5.3, -2.82, 0], "opacity": 0.30, "width": 1.3},
+    ]
+    for spec in line_specs[:line_count]:
+        line = Line(
+            _as_vector(spec.get("start")),
+            _as_vector(spec.get("end")),
+            color=spec.get("color", line_color),
+            stroke_width=spec.get("width", 1.4),
+        )
+        line.set_stroke(opacity=spec.get("opacity", params.get("initial_opacity", 0.32)))
+        lower_lines.add(line)
+
+    frame_width = config.frame_width
+    frame_height = config.frame_height
+    upper_height = frame_height / 2 + abs(horizon_y) + 0.2
+    upper_ambient = Rectangle(
+        width=frame_width + 0.4,
+        height=upper_height,
+        stroke_width=0,
+        fill_color=ambient_color,
+        fill_opacity=params.get("upper_ambient_opacity", 0.0),
+    )
+    upper_ambient.move_to(np.array([0.0, horizon_y + upper_height / 2, 0.0]))
+
+    horizon_half_width = params.get("horizon_half_width", 5.5)
+    horizon_core = Line(
+        np.array([-0.26, horizon_y, 0.0]),
+        np.array([0.26, horizon_y, 0.0]),
+        color=horizon_color,
+        stroke_width=params.get("horizon_stroke_width", 2.2),
+    ).set_stroke(opacity=params.get("horizon_core_opacity", 0.0))
+    horizon_left = Line(
+        np.array([0.0, horizon_y, 0.0]),
+        np.array([-0.04, horizon_y, 0.0]),
+        color=horizon_color,
+        stroke_width=params.get("horizon_stroke_width", 2.0),
+    ).set_stroke(opacity=params.get("horizon_wing_opacity", 0.0))
+    horizon_right = Line(
+        np.array([0.0, horizon_y, 0.0]),
+        np.array([0.04, horizon_y, 0.0]),
+        color=horizon_color,
+        stroke_width=params.get("horizon_stroke_width", 2.0),
+    ).set_stroke(opacity=params.get("horizon_wing_opacity", 0.0))
+    horizon_glow = Line(
+        np.array([-horizon_half_width, horizon_y, 0.0]),
+        np.array([horizon_half_width, horizon_y, 0.0]),
+        color=horizon_color,
+        stroke_width=params.get("horizon_glow_width", 7.5),
+    ).set_stroke(opacity=params.get("horizon_glow_opacity", 0.0))
+
+    point_start = _as_vector(params.get("point_start", [0.0, horizon_y - 0.48, 0.0]))
+    point = Dot(point_start, radius=params.get("point_radius", 0.055), color=point_color)
+    point.set_opacity(params.get("point_opacity", 0.0))
+    point_halo = Circle(radius=params.get("point_halo_radius", 0.18), color=point_color, stroke_width=1.2)
+    point_halo.move_to(point_start)
+    point_halo.set_stroke(opacity=params.get("point_halo_opacity", 0.0))
+    point_halo.set_fill(point_color, opacity=0.0)
+
+    field = VGroup(upper_ambient, lower_lines, horizon_glow, horizon_left, horizon_right, horizon_core, point_halo, point)
+    field.road_lower_lines = lower_lines
+    field.road_upper_ambient = upper_ambient
+    field.road_horizon_glow = horizon_glow
+    field.road_horizon_core = horizon_core
+    field.road_horizon_left = horizon_left
+    field.road_horizon_right = horizon_right
+    field.road_point = point
+    field.road_point_halo = point_halo
+    field.road_horizon_y = horizon_y
+    field.road_horizon_half_width = horizon_half_width
+    field.road_horizon_color = horizon_color
+    field.road_line_color = line_color
+    place_in_zone(field, zone)
+    return field
+
+
+def make_supervised_field(params, zone):
+    neutral_color = params.get("neutral_color", "#6F7786")
+    warm_color = params.get("warm_color", "#F2A65A")
+    cool_color = params.get("cool_color", "#6EA8FE")
+    dot_radius = params.get("dot_radius", 0.055)
+    dot_opacity = params.get("dot_opacity", 0.62)
+    field_scale = params.get("field_scale", 1.0)
+
+    default_points = [
+        [-4.95, 1.35, 0], [-4.55, 0.82, 0], [-4.22, 1.92, 0], [-4.05, 0.28, 0],
+        [-3.72, 1.10, 0], [-3.42, 2.25, 0], [-3.18, 0.58, 0], [-2.92, 1.62, 0],
+        [-2.62, -0.12, 0], [-2.38, 0.92, 0], [-2.12, 1.96, 0], [-1.82, 0.34, 0],
+        [-1.48, 1.20, 0], [-1.20, -0.42, 0], [-0.82, 0.54, 0], [-0.52, 1.52, 0],
+        [-0.28, -0.02, 0], [0.18, 0.78, 0], [0.42, -0.54, 0], [0.72, 1.28, 0],
+        [-4.72, -1.28, 0], [-4.28, -2.02, 0], [-3.92, -0.72, 0], [-3.48, -1.58, 0],
+        [-3.05, -2.34, 0], [-2.66, -1.02, 0], [-2.22, -1.88, 0], [-1.76, -0.84, 0],
+        [-1.35, -2.22, 0], [-0.88, -1.32, 0], [-0.38, -2.02, 0], [0.06, -1.02, 0],
+        [0.48, -2.46, 0], [0.86, -1.54, 0], [1.18, -0.36, 0], [1.55, -2.08, 0],
+        [1.92, -0.92, 0], [2.24, -2.42, 0], [2.68, -1.44, 0], [3.05, -0.18, 0],
+        [3.42, -1.88, 0], [3.78, -0.72, 0], [4.18, -2.16, 0], [4.52, -1.18, 0],
+        [4.86, -0.34, 0], [3.92, 0.28, 0], [2.78, 0.42, 0], [1.36, 0.20, 0],
+    ]
+    default_classes = [
+        "warm", "warm", "warm", "warm", "warm", "warm", "warm", "warm",
+        "warm", "warm", "warm", "warm", "warm", "warm", "warm", "warm",
+        "cool", "warm", "cool", "warm",
+        "warm", "warm", "warm", "warm", "warm", "warm", "warm", "warm",
+        "warm", "cool", "warm", "cool", "cool", "cool", "cool", "cool",
+        "cool", "cool", "cool", "cool", "cool", "cool", "cool", "cool",
+        "cool", "cool", "cool", "cool",
+    ]
+
+    points = params.get("points", default_points)
+    classes = params.get("classes", default_classes)
+    initial_state = params.get("initial_state", "neutral")
+
+    dots = VGroup()
+    for index, point in enumerate(points):
+        cls = classes[index] if index < len(classes) else "warm"
+        color = neutral_color
+        if initial_state == "colored":
+            color = warm_color if cls == "warm" else cool_color
+        dot = Dot(_as_vector(point), radius=dot_radius, color=color)
+        dot.set_opacity(dot_opacity if initial_state == "neutral" else params.get("colored_opacity", 0.96))
+        dot.supervised_class = cls
+        dot.supervised_neutral_color = neutral_color
+        dot.supervised_target_color = warm_color if cls == "warm" else cool_color
+        dots.add(dot)
+
+    line_start = _as_vector(params.get("line_start", [-4.85, -2.72, 0]))
+    line_end = _as_vector(params.get("line_end", [4.85, 1.62, 0]))
+    boundary = Line(
+        line_start,
+        line_end,
+        color=params.get("line_color", "#EAF1FF"),
+        stroke_width=params.get("line_stroke_width", 3.0),
+    )
+    boundary.set_stroke(opacity=params.get("line_opacity", 0.0))
+    boundary_glow = Line(
+        line_start,
+        line_end,
+        color=params.get("line_glow_color", "#DCE9FF"),
+        stroke_width=params.get("line_glow_width", 8.0),
+    )
+    boundary_glow.set_stroke(opacity=params.get("line_glow_opacity", 0.0))
+
+    field = VGroup(dots, boundary_glow, boundary)
+    field.scale(field_scale)
+    place_in_zone(field, zone)
+
+    field.supervised_dots = dots
+    field.supervised_boundary = boundary
+    field.supervised_boundary_glow = boundary_glow
+    field.supervised_params = dict(params)
+    field.supervised_points = points
+    field.supervised_classes = classes
+    field.supervised_neutral_color = neutral_color
+    field.supervised_warm_color = warm_color
+    field.supervised_cool_color = cool_color
+    field.supervised_dot_opacity = dot_opacity
+    field.supervised_colored_opacity = params.get("colored_opacity", 0.96)
+    field.supervised_dim_opacity = params.get("dim_opacity", 0.55)
+    field.supervised_line_start = line_start
+    field.supervised_line_end = line_end
+    return field
 
 def transition_in_for(obj, transition_name: str):
     if transition_name in {"none", "smooth"}:
@@ -2629,6 +2819,12 @@ def build_object(step_dict):
 
     if action == "show_workflow_cycle":
         return make_workflow_cycle(params, zone)
+
+    if action == "show_road_ahead_field":
+        return make_road_ahead_field(params, zone)
+
+    if action == "show_supervised_field":
+        return make_supervised_field(params, zone)
 
     if action == "fade_out":
         return None

@@ -11,6 +11,7 @@ from actions import (
     BG_COLOR,
     TAXONOMY_COLORS,
     ZONE_POSITIONS,
+    _as_vector,
     build_object,
     make_manual_rule_force_indicator,
     make_links,
@@ -382,6 +383,11 @@ class JsonDrivenScene(MovingCameraScene):
             "show_taxonomy_field",
             "show_workflow_cycle",
             "mutate_workflow_cycle",
+            "mutate_road_ahead_field",
+            "show_supervised_field",
+            "mutate_supervised_field",
+            "show_supervised_examples",
+            "show_supervised_resolution",
         }
 
         for idx, step in enumerate(visual_steps):
@@ -531,7 +537,6 @@ class JsonDrivenScene(MovingCameraScene):
 
                 elif step.action == "show_workflow_cycle":
                     # ── Build the cycle diagram object ────────────────────
-                    # ISSUE 2 FIX: node circles use Create (pen-draw), not FadeIn.
                     merged_params = dict(step.params)
                     new_obj = build_object(
                         {
@@ -555,35 +560,47 @@ class JsonDrivenScene(MovingCameraScene):
                     node_list = getattr(new_obj, "cycle_nodes",  [])
                     arrows    = getattr(new_obj, "cycle_arrows", VGroup())
                     ret_arrow = getattr(new_obj, "cycle_return",  VGroup())
+                    is_unlabeled = merged_params.get("unlabeled", False)
 
                     if outgoing_anims:
                         self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=0.28)
                         current_time += 0.28
 
                     if node_list:
-                        # Each node: Create the ring (pen-draw feel), then FadeIn the label.
-                        # This gives the "circle tracing itself" quality from the brief.
-                        node_draw_time = min(0.70, run_time * 0.55)
+                        # Each node: Create ring (pen-draw), then FadeIn glow + label.
+                        # When unlabeled=True the label text opacity is 0 at build time —
+                        # so FadeIn(label) is a no-op and label stays hidden until a later
+                        # mutate step reveals it.
+                        node_draw_time = min(0.75, run_time * 0.60)
                         node_anims = []
                         for node in node_list:
-                            # node structure: [outer_glow, ring, txt, ...]
+                            # structure: [outer_glow(0), ring(1), txt(2), optional warn_halo(3)]
                             ring_obj  = node[1] if len(node) > 1 else node
                             label_obj = node[2] if len(node) > 2 else None
-                            rest      = list(node)[3:] if len(node) > 3 else []
-                            node_anims.append(
-                                Succession(
-                                    Create(ring_obj, run_time=node_draw_time * 0.55),
-                                    AnimationGroup(
-                                        FadeIn(node[0]),            # outer glow
-                                        FadeIn(label_obj) if label_obj else Wait(0),
-                                        *[FadeIn(r) for r in rest],
-                                        lag_ratio=0.0,
-                                        run_time=node_draw_time * 0.45,
-                                    ),
+                            extras    = list(node)[3:] if len(node) > 3 else []
+                            if is_unlabeled:
+                                # Only draw the ring — label is opacity 0, leave it hidden
+                                node_anims.append(
+                                    Succession(
+                                        Create(ring_obj, run_time=node_draw_time * 0.60),
+                                        FadeIn(node[0], run_time=node_draw_time * 0.40),
+                                    )
                                 )
-                            )
+                            else:
+                                node_anims.append(
+                                    Succession(
+                                        Create(ring_obj, run_time=node_draw_time * 0.55),
+                                        AnimationGroup(
+                                            FadeIn(node[0]),
+                                            FadeIn(label_obj) if label_obj is not None else Wait(0),
+                                            *[FadeIn(e) for e in extras],
+                                            lag_ratio=0.0,
+                                            run_time=node_draw_time * 0.45,
+                                        ),
+                                    )
+                                )
                         self.play(
-                            AnimationGroup(*node_anims, lag_ratio=0.22),
+                            AnimationGroup(*node_anims, lag_ratio=0.20),
                             run_time=node_draw_time,
                         )
                         current_time += node_draw_time
@@ -591,10 +608,7 @@ class JsonDrivenScene(MovingCameraScene):
                         if len(arrows) > 0:
                             arrow_time = max(0.18, run_time - node_draw_time)
                             self.play(
-                                AnimationGroup(
-                                    *[Create(a) for a in arrows],
-                                    lag_ratio=0.25,
-                                ),
+                                AnimationGroup(*[Create(a) for a in arrows], lag_ratio=0.25),
                                 run_time=arrow_time,
                             )
                             current_time += arrow_time
@@ -608,6 +622,436 @@ class JsonDrivenScene(MovingCameraScene):
 
                     register_object(step.id, step.zone, new_obj)
                     handled = True
+
+                elif step.action == "show_supervised_field":
+                    merged_params = dict(step.params)
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": merged_params,
+                            "zone": step.zone,
+                        }
+                    )
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+
+                    dots = list(getattr(new_obj, "supervised_dots", VGroup()))
+                    for dot in dots:
+                        dot.set_opacity(0.0)
+                    self.add(new_obj)
+                    if outgoing_anims:
+                        self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=min(0.35, run_time * 0.25))
+                    if dots:
+                        ordered = sorted(dots, key=lambda dot: (dot.get_center()[0] * 0.55 + dot.get_center()[1] * 0.18))
+                        self.play(
+                            LaggedStart(
+                                *[
+                                    dot.animate.set_opacity(getattr(new_obj, "supervised_dot_opacity", 0.62))
+                                    for dot in ordered
+                                ],
+                                lag_ratio=0.045,
+                            ),
+                            run_time=run_time,
+                            rate_func=rate_functions.ease_out_sine,
+                        )
+                    else:
+                        self.wait(run_time)
+                    current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "mutate_supervised_field":
+                    source_id = step.params.get("source_id")
+                    field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+
+                    if field_obj is None:
+                        print(
+                            f"[mutate_supervised_field] WARNING: source_id={source_id} not found. Skipping."
+                        )
+                        handled = True
+                        continue
+
+                    mode = step.params.get("mode", "color_wave_in")
+                    dots = list(getattr(field_obj, "supervised_dots", VGroup()))
+                    boundary = getattr(field_obj, "supervised_boundary", None)
+                    boundary_glow = getattr(field_obj, "supervised_boundary_glow", None)
+                    neutral_color = step.params.get("neutral_color", getattr(field_obj, "supervised_neutral_color", "#6F7786"))
+                    colored_opacity = step.params.get("colored_opacity", getattr(field_obj, "supervised_colored_opacity", 0.96))
+                    dot_opacity = step.params.get("dot_opacity", getattr(field_obj, "supervised_dot_opacity", 0.62))
+                    dim_opacity = step.params.get("dim_opacity", getattr(field_obj, "supervised_dim_opacity", 0.55))
+                    line_opacity = step.params.get("line_opacity", 0.96)
+                    glow_opacity = step.params.get("line_glow_opacity", 0.16)
+
+                    def register_same_field():
+                        object_registry[step.id] = field_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = field_obj
+
+                    if mode in {"color_wave_in", "color_wave_out"}:
+                        reverse = mode == "color_wave_out"
+                        ordered = sorted(dots, key=lambda dot: dot.get_center()[0], reverse=reverse)
+                        wave_count = step.params.get("wave_count", 6)
+                        wave_groups = []
+                        for wave_index in range(wave_count):
+                            group_dots = ordered[
+                                wave_index * len(ordered) // wave_count:
+                                (wave_index + 1) * len(ordered) // wave_count
+                            ]
+                            if not group_dots:
+                                continue
+                            if mode == "color_wave_in":
+                                wave_groups.append(
+                                    AnimationGroup(
+                                        *[
+                                            dot.animate.set_color(getattr(dot, "supervised_target_color", "#F2A65A")).set_opacity(colored_opacity)
+                                            for dot in group_dots
+                                        ],
+                                        lag_ratio=0.0,
+                                    )
+                                )
+                            else:
+                                wave_groups.append(
+                                    AnimationGroup(
+                                        *[
+                                            dot.animate.set_color(neutral_color).set_opacity(dot_opacity)
+                                            for dot in group_dots
+                                        ],
+                                        lag_ratio=0.0,
+                                    )
+                                )
+                        if wave_groups:
+                            self.play(Succession(*wave_groups), run_time=run_time, rate_func=rate_functions.ease_in_out_sine)
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        register_same_field()
+                        handled = True
+
+                    elif mode == "declare_rule":
+                        for dot in dots:
+                            dot.set_color(getattr(dot, "supervised_target_color", "#F2A65A"))
+                            dot.set_opacity(colored_opacity)
+                        if boundary_glow is not None:
+                            boundary_glow.set_stroke(opacity=glow_opacity)
+                        if boundary is not None:
+                            boundary.set_stroke(opacity=line_opacity)
+                        self.wait(max(0.01, run_time))
+                        current_time += run_time
+                        register_same_field()
+                        handled = True
+
+                    elif mode == "infer_rule":
+                        fade_time = min(0.5, run_time * 0.18)
+                        pause_time = min(0.5, max(0.0, run_time * 0.14))
+                        grow_time = max(0.1, run_time - fade_time - pause_time)
+                        fade_anims = []
+                        if boundary is not None:
+                            fade_anims.append(boundary.animate.set_stroke(opacity=0.0))
+                        if boundary_glow is not None:
+                            fade_anims.append(boundary_glow.animate.set_stroke(opacity=0.0))
+                        fade_anims.extend([dot.animate.set_opacity(dim_opacity) for dot in dots])
+                        if fade_anims:
+                            self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=fade_time)
+                        if pause_time > 0:
+                            self.wait(pause_time)
+
+                        if boundary is not None:
+                            center = boundary.point_from_proportion(0.5)
+                            left_target = boundary.get_start()
+                            right_target = boundary.get_end()
+                            boundary.put_start_and_end_on(center, center)
+                            boundary.set_stroke(opacity=line_opacity)
+                            grow_anims = [
+                                boundary.animate.put_start_and_end_on(left_target, right_target).set_stroke(opacity=line_opacity),
+                                *[dot.animate.set_opacity(colored_opacity) for dot in dots],
+                            ]
+                            if boundary_glow is not None:
+                                boundary_glow.put_start_and_end_on(center, center)
+                                boundary_glow.set_stroke(opacity=glow_opacity)
+                                grow_anims.append(
+                                    boundary_glow.animate.put_start_and_end_on(left_target, right_target).set_stroke(opacity=glow_opacity)
+                                )
+                            self.play(AnimationGroup(*grow_anims, lag_ratio=0.0), run_time=grow_time, rate_func=rate_functions.ease_in_out_sine)
+                        else:
+                            self.wait(grow_time)
+                        current_time += run_time
+                        register_same_field()
+                        handled = True
+
+                    elif mode == "curve_suggestion":
+                        if boundary is not None:
+                            start = boundary.get_start()
+                            end = boundary.get_end()
+                            center = boundary.point_from_proportion(0.5)
+                            bow = step.params.get("bow", 0.28)
+                            curved = VMobject(color=boundary.get_color())
+                            curved.set_points_smoothly([
+                                start,
+                                center + np.array([0.0, bow, 0.0]),
+                                end,
+                            ])
+                            curved.set_stroke(width=boundary.get_stroke_width(), opacity=boundary.get_stroke_opacity())
+                            self.play(Transform(boundary, curved), run_time=run_time * 0.38, rate_func=rate_functions.ease_in_out_sine)
+                            self.play(Transform(boundary, Line(start, end, color=boundary.get_color()).set_stroke(width=boundary.get_stroke_width(), opacity=boundary.get_stroke_opacity())), run_time=run_time * 0.32, rate_func=rate_functions.ease_in_out_sine)
+                            fade_anims = [boundary.animate.set_stroke(opacity=0.0)]
+                            if boundary_glow is not None:
+                                fade_anims.append(boundary_glow.animate.set_stroke(opacity=0.0))
+                            self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=run_time * 0.30)
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        register_same_field()
+                        handled = True
+
+                    elif mode == "hold":
+                        self.wait(run_time)
+                        current_time += run_time
+                        register_same_field()
+                        handled = True
+
+                    else:
+                        print(f"[mutate_supervised_field] WARNING: unknown mode={mode}. Skipping.")
+                        handled = True
+
+                elif step.action == "show_supervised_examples":
+                    source_id = step.params.get("source_id")
+                    field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+                    labels = step.params.get("labels")
+                    pairs = step.params.get("pairs")
+                    font_size = step.params.get("font_size", 28)
+                    color = step.params.get("color", "#F5F7FB")
+                    text_opacity = step.params.get("text_opacity", 0.92)
+
+                    if labels:
+                        overlays = VGroup()
+                        for item in labels:
+                            txt = Text(item.get("text", ""), font_size=item.get("font_size", font_size), color=item.get("color", color), weight=MEDIUM)
+                            txt.set_opacity(0.0)
+                            txt.move_to(vector_from_param(item.get("position", [0, 0, 0])))
+                            overlays.add(txt)
+                        self.add(overlays)
+                        self.play(AnimationGroup(*[txt.animate.set_opacity(text_opacity) for txt in overlays], lag_ratio=0.0), run_time=min(0.4, run_time * 0.18))
+                        hold_time = max(0.0, run_time - min(0.8, run_time * 0.36))
+                        if hold_time > 0:
+                            self.wait(hold_time)
+                        self.play(AnimationGroup(*[txt.animate.set_opacity(0.0) for txt in overlays], lag_ratio=0.0), run_time=min(0.4, run_time * 0.18))
+                        self.remove(overlays)
+                    elif pairs:
+                        fade_time = step.params.get("fade_time", 0.3)
+                        hold_time = step.params.get("hold_time", 2.0)
+                        for pair in pairs:
+                            txt = Text(pair, font_size=font_size, color=color, weight=MEDIUM)
+                            txt.set_opacity(0.0)
+                            txt.move_to(vector_from_param(step.params.get("position", [0.0, 0.08, 0.0])))
+                            self.add(txt)
+                            self.play(txt.animate.set_opacity(text_opacity), run_time=fade_time)
+                            self.wait(hold_time)
+                            self.play(txt.animate.set_opacity(0.0), run_time=fade_time)
+                            self.remove(txt)
+                    else:
+                        self.wait(run_time)
+                    current_time += run_time
+                    if field_obj is not None:
+                        object_registry[step.id] = field_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = field_obj
+                    handled = True
+
+                elif step.action == "show_supervised_resolution":
+                    source_id = step.params.get("source_id")
+                    field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+                    title = Text(
+                        step.params.get("text", "Supervised Learning"),
+                        font_size=step.params.get("font_size", 38),
+                        color=step.params.get("color", "#F5F7FB"),
+                        weight=MEDIUM,
+                    )
+                    title.set_opacity(0.0)
+                    title.move_to(vector_from_param(step.params.get("position", [0.0, -3.0, 0.0])))
+                    self.add(title)
+                    self.play(title.animate.set_opacity(step.params.get("opacity", 0.95)), run_time=run_time, rate_func=rate_functions.ease_out_sine)
+                    current_time += run_time
+                    if field_obj is not None:
+                        field_obj.add(title)
+                        object_registry[step.id] = field_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = field_obj
+                    else:
+                        register_object(step.id, step.zone, title)
+                    handled = True
+
+                elif step.action == "mutate_road_ahead_field":
+                    source_id = step.params.get("source_id")
+                    road_obj = object_registry.get(source_id)
+
+                    if road_obj is None:
+                        print(
+                            f"[mutate_road_ahead_field] WARNING: source_id={source_id} not found. Skipping."
+                        )
+                        handled = True
+                        continue
+
+                    mode = step.params.get("mode", "settle")
+                    lower_lines = getattr(road_obj, "road_lower_lines", VGroup())
+                    upper_ambient = getattr(road_obj, "road_upper_ambient", None)
+                    horizon_glow = getattr(road_obj, "road_horizon_glow", None)
+                    horizon_core = getattr(road_obj, "road_horizon_core", None)
+                    horizon_left = getattr(road_obj, "road_horizon_left", None)
+                    horizon_right = getattr(road_obj, "road_horizon_right", None)
+                    point = getattr(road_obj, "road_point", None)
+                    point_halo = getattr(road_obj, "road_point_halo", None)
+                    horizon_y = getattr(road_obj, "road_horizon_y", step.params.get("horizon_y", -0.18))
+                    horizon_half_width = step.params.get(
+                        "horizon_half_width",
+                        getattr(road_obj, "road_horizon_half_width", 5.5),
+                    )
+
+                    if mode == "settle":
+                        shift_down = step.params.get("shift_down", 0.26)
+                        target_opacity = step.params.get("target_opacity", 0.38)
+                        anims = []
+                        for index, line in enumerate(lower_lines):
+                            line_shift = shift_down * (0.78 + 0.08 * (index % 3))
+                            anims.append(line.animate.shift(DOWN * line_shift).set_stroke(opacity=target_opacity))
+                        if anims:
+                            self.play(
+                                AnimationGroup(*anims, lag_ratio=0.0),
+                                run_time=run_time,
+                                rate_func=rate_functions.ease_out_sine,
+                            )
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        object_registry[step.id] = road_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = road_obj
+                        handled = True
+
+                    elif mode == "emerge_horizon":
+                        core_opacity = step.params.get("core_opacity", 1.0)
+                        wing_opacity = step.params.get("wing_opacity", 0.92)
+                        glow_opacity = step.params.get("glow_opacity", 0.16)
+                        compress_shift = step.params.get("compress_shift", 0.18)
+                        anims = []
+                        if lower_lines:
+                            anims.extend([
+                                line.animate.shift(DOWN * compress_shift).set_stroke(opacity=step.params.get("lower_opacity", 0.30))
+                                for line in lower_lines
+                            ])
+                        if horizon_core is not None:
+                            anims.append(horizon_core.animate.set_stroke(opacity=core_opacity))
+                        if horizon_left is not None:
+                            anims.append(
+                                horizon_left.animate.put_start_and_end_on(
+                                    np.array([0.0, horizon_y, 0.0]),
+                                    np.array([-horizon_half_width, horizon_y, 0.0]),
+                                ).set_stroke(opacity=wing_opacity)
+                            )
+                        if horizon_right is not None:
+                            anims.append(
+                                horizon_right.animate.put_start_and_end_on(
+                                    np.array([0.0, horizon_y, 0.0]),
+                                    np.array([horizon_half_width, horizon_y, 0.0]),
+                                ).set_stroke(opacity=wing_opacity)
+                            )
+                        if horizon_glow is not None:
+                            anims.append(horizon_glow.animate.set_stroke(opacity=glow_opacity))
+                        if anims:
+                            self.play(
+                                AnimationGroup(*anims, lag_ratio=0.0),
+                                run_time=run_time,
+                                rate_func=rate_functions.ease_out_sine,
+                            )
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        object_registry[step.id] = road_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = road_obj
+                        handled = True
+
+                    elif mode == "warm_upper_field":
+                        if upper_ambient is not None:
+                            self.play(
+                                upper_ambient.animate.set_fill(
+                                    step.params.get("target_color", "#182135"),
+                                    opacity=step.params.get("target_opacity", 0.10),
+                                ),
+                                run_time=run_time,
+                                rate_func=linear,
+                            )
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        object_registry[step.id] = road_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = road_obj
+                        handled = True
+
+                    elif mode == "cross_point":
+                        if point is not None:
+                            start = _as_vector(step.params.get("start", [0.0, horizon_y - 0.46, 0.0]))
+                            cross = _as_vector(step.params.get("cross", [0.0, horizon_y + 0.02, 0.0]))
+                            rest = _as_vector(step.params.get("rest", [0.0, 1.02, 0.0]))
+                            cross_at = max(0.05, min(run_time - 0.05, step.params.get("cross_at", run_time * 0.40)))
+                            remaining = max(0.05, run_time - cross_at)
+                            point.move_to(start)
+                            point.set_opacity(step.params.get("point_opacity", 1.0))
+                            first_anims = [point.animate.move_to(cross)]
+                            if point_halo is not None:
+                                point_halo.move_to(start)
+                                point_halo.set_stroke(opacity=step.params.get("point_halo_opacity", 0.22))
+                                first_anims.append(point_halo.animate.move_to(cross))
+                            self.play(
+                                AnimationGroup(*first_anims, lag_ratio=0.0),
+                                run_time=cross_at,
+                                rate_func=linear,
+                            )
+                            response_anims = [point.animate.move_to(rest)]
+                            if point_halo is not None:
+                                response_anims.append(point_halo.animate.move_to(rest).set_stroke(opacity=step.params.get("rest_halo_opacity", 0.14)))
+                            if horizon_core is not None:
+                                response_anims.append(horizon_core.animate.set_stroke(opacity=step.params.get("line_response_opacity", 1.0), width=step.params.get("response_stroke_width", 2.5)))
+                            if horizon_left is not None:
+                                response_anims.append(horizon_left.animate.set_stroke(opacity=step.params.get("line_response_opacity", 1.0), width=step.params.get("response_stroke_width", 2.3)))
+                            if horizon_right is not None:
+                                response_anims.append(horizon_right.animate.set_stroke(opacity=step.params.get("line_response_opacity", 1.0), width=step.params.get("response_stroke_width", 2.3)))
+                            if horizon_glow is not None:
+                                response_anims.append(horizon_glow.animate.set_stroke(opacity=step.params.get("response_glow_opacity", 0.22)))
+                            self.play(
+                                AnimationGroup(*response_anims, lag_ratio=0.0),
+                                run_time=remaining,
+                                rate_func=rate_functions.ease_out_sine,
+                            )
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+                        object_registry[step.id] = road_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = road_obj
+                        handled = True
+
+                    elif mode == "final_hold":
+                        self.wait(run_time)
+                        current_time += run_time
+                        object_registry[step.id] = road_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = road_obj
+                        handled = True
+
+                    else:
+                        print(f"[mutate_road_ahead_field] WARNING: unknown mode={mode}. Skipping.")
+                        handled = True
 
                 elif step.action == "mutate_workflow_cycle":
                     # ── Mutate an existing cycle diagram in-place ─────────
@@ -632,10 +1076,10 @@ class JsonDrivenScene(MovingCameraScene):
                     mode = step.params.get("mode", "pulse_all")
 
                     if mode == "add_nodes":
-                        # ISSUE 3 FIX: Do NOT ReplacementTransform the whole diagram.
-                        # Build the full new object (correct positions for n+1 nodes),
-                        # then move existing nodes smoothly to new positions via animate,
-                        # and Create the new node + arrow on top.
+                        # Build the full new object (correct arc positions for n+1 nodes),
+                        # then move existing nodes to their new positions via animate.move_to,
+                        # and Create the new node + connecting arrow.
+                        # This preserves identity — existing nodes are never destroyed.
                         merged_params = dict(step.params)
                         new_obj = build_object(
                             {
@@ -645,19 +1089,27 @@ class JsonDrivenScene(MovingCameraScene):
                                 "zone": step.zone,
                             }
                         )
-                        new_node_list  = getattr(new_obj, "cycle_nodes",  [])
-                        new_arrows     = getattr(new_obj, "cycle_arrows", VGroup())
-                        old_labels     = getattr(cycle_obj, "cycle_labels", [])
-                        n_existing     = len(old_labels)
-                        arriving_nodes = new_node_list[n_existing:]
+                        new_node_list         = getattr(new_obj, "cycle_nodes",  [])
+                        new_arrows            = getattr(new_obj, "cycle_arrows", VGroup())
+                        old_labels            = getattr(cycle_obj, "cycle_labels", [])
+                        n_existing            = len(old_labels)
+                        arriving_nodes        = new_node_list[n_existing:]
                         new_connecting_arrows = list(new_arrows)[max(0, n_existing - 1):]
 
-                        # Phase 1 — slide existing nodes to their new (slightly shifted) positions
+                        # Phase 1 — reposition existing nodes to their new arc positions.
+                        # Also restore opacity of any noise-dimmed node (DATA cleanup beat).
                         old_nodes = getattr(cycle_obj, "cycle_nodes", [])
                         reposition_anims = []
                         for old_node, new_node in zip(old_nodes, new_node_list[:n_existing]):
                             target_pos = new_node.get_center()
-                            reposition_anims.append(old_node.animate.move_to(target_pos))
+                            # Always restore to full opacity — clears residual noise dimming
+                            reposition_anims.append(
+                                old_node.animate.move_to(target_pos).set_opacity(1.0)
+                            )
+                            # Fade out any attached noise specks
+                            noise_specks = getattr(old_node, "noise_specks", None)
+                            if noise_specks is not None:
+                                reposition_anims.append(noise_specks.animate.set_opacity(0.0))
                         old_arrows = getattr(cycle_obj, "cycle_arrows", VGroup())
                         for old_arr, new_arr in zip(list(old_arrows), list(new_arrows)[:max(0, n_existing - 1)]):
                             reposition_anims.append(
@@ -674,20 +1126,20 @@ class JsonDrivenScene(MovingCameraScene):
                             )
                             current_time += reposition_time
 
-                        # Phase 2 — Create the new node(s) and connecting arrow(s)
-                        arrive_time = run_time - reposition_time
+                        # Phase 2 — Create new node(s) and connecting arrow(s)
+                        arrive_time  = run_time - reposition_time
                         arrive_anims = []
                         for node in arriving_nodes:
                             ring_obj  = node[1] if len(node) > 1 else node
                             label_obj = node[2] if len(node) > 2 else None
-                            rest      = list(node)[3:] if len(node) > 3 else []
+                            extras    = list(node)[3:] if len(node) > 3 else []
                             arrive_anims.append(
                                 Succession(
                                     Create(ring_obj, run_time=arrive_time * 0.50),
                                     AnimationGroup(
                                         FadeIn(node[0]),
-                                        FadeIn(label_obj) if label_obj else Wait(0),
-                                        *[FadeIn(r) for r in rest],
+                                        FadeIn(label_obj) if label_obj is not None else Wait(0),
+                                        *[FadeIn(e) for e in extras],
                                         lag_ratio=0.0,
                                         run_time=arrive_time * 0.30,
                                     ),
@@ -702,10 +1154,7 @@ class JsonDrivenScene(MovingCameraScene):
                             )
                             current_time += max(0.20, arrive_time)
 
-                        # Swap the registry entry: new_obj holds the updated cycle attrs,
-                        # but the old node VGroups (now repositioned) are already on screen.
-                        # We carry forward new_obj as the authoritative object — it has the
-                        # correct cycle_nodes list for subsequent mutations.
+                        # Swap registry: new_obj is now the authoritative cycle object.
                         self.add(new_obj)
                         self.remove(cycle_obj)
                         forget_object(cycle_obj)
@@ -755,8 +1204,10 @@ class JsonDrivenScene(MovingCameraScene):
                         step_zone_map[step.id] = step.zone
                         handled = True
 
-                    elif mode == "noise_node":
-                        # Brief jitter on the named node — signals messy raw data.
+                    elif mode == "reveal_label":
+                        # Fade in the label text on the named node.
+                        # Used for Beat 2: the DATA circle already exists unlabeled;
+                        # this step makes the label appear "as if it was always there."
                         node_label  = step.params.get("node_label", "DATA")
                         node_labels = getattr(cycle_obj, "cycle_labels", [])
                         node_list   = getattr(cycle_obj, "cycle_nodes",  [])
@@ -767,14 +1218,18 @@ class JsonDrivenScene(MovingCameraScene):
                             target_node = None
 
                         if target_node is not None:
-                            orig_center = target_node.get_center().copy()
-                            self.play(target_node.animate.shift(RIGHT * 0.045 + UP  * 0.030), run_time=run_time * 0.18)
-                            self.play(target_node.animate.shift(LEFT  * 0.080 + DOWN * 0.050), run_time=run_time * 0.17)
-                            self.play(target_node.animate.shift(RIGHT * 0.055 + DOWN * 0.025), run_time=run_time * 0.15)
-                            self.play(target_node.animate.move_to(orig_center),                run_time=run_time * 0.20)
-                            # Slight opacity drop — leaves a "residual imperfection" feel
-                            self.play(target_node.animate.set_opacity(0.74),                   run_time=run_time * 0.30)
-                            current_time += run_time
+                            # node structure: [outer(0), ring(1), txt(2), ...]
+                            label_obj = target_node[2] if len(target_node) > 2 else None
+                            if label_obj is not None:
+                                # Gentle settle-in — not a pop
+                                self.play(
+                                    label_obj.animate.set_opacity(1.0),
+                                    run_time=run_time,
+                                )
+                                current_time += run_time
+                            else:
+                                self.wait(run_time)
+                                current_time += run_time
                         else:
                             self.wait(run_time)
                             current_time += run_time
@@ -783,11 +1238,13 @@ class JsonDrivenScene(MovingCameraScene):
                         step_zone_map[step.id] = step.zone
                         handled = True
 
-                    elif mode == "internal_node":
-                        # ISSUE 6 FIX: convergence animation inside a single named node.
-                        # Used for TRAINING beat — "something learning inside here."
-                        # Three faint dots orbit inward toward center, then fade.
-                        node_label  = step.params.get("node_label", "TRAINING")
+                    elif mode == "noise_node":
+                        # Internal noise specks appear inside the DATA node —
+                        # signals that raw data is imperfect.
+                        # AUDIT FIX: replaced whole-node jitter with internal speck animation.
+                        # Jitter felt cartoonish. Specks inside the node feel like
+                        # "the data has noise in it," not "the diagram is shaking."
+                        node_label  = step.params.get("node_label", "DATA")
                         node_labels = getattr(cycle_obj, "cycle_labels", [])
                         node_list   = getattr(cycle_obj, "cycle_nodes",  [])
                         try:
@@ -798,37 +1255,103 @@ class JsonDrivenScene(MovingCameraScene):
 
                         if target_node is not None:
                             center = target_node.get_center()
-                            node_radius_val = step.params.get("node_radius", 0.42)
-                            # Three small dots placed near the edge of the node
-                            angles = [PI * 0.25, PI * 0.85, PI * 1.55]
-                            inner_dots = VGroup(
+                            node_r = step.params.get("node_radius", 0.42)
+                            # Six small irregular specks scattered inside the node
+                            speck_offsets = [
+                                np.array([ 0.16,  0.10, 0]),
+                                np.array([-0.18,  0.05, 0]),
+                                np.array([ 0.05, -0.16, 0]),
+                                np.array([-0.08,  0.18, 0]),
+                                np.array([ 0.20, -0.06, 0]),
+                                np.array([-0.14, -0.12, 0]),
+                            ]
+                            specks = VGroup(
+                                *[
+                                    Dot(center + off, radius=0.026, color=MUTED).set_opacity(0.0)
+                                    for off in speck_offsets
+                                ]
+                            )
+                            self.add(specks)
+                            # Fade specks in with stagger — they appear like data noise
+                            self.play(
+                                AnimationGroup(
+                                    *[s.animate.set_opacity(0.52) for s in specks],
+                                    lag_ratio=0.10,
+                                ),
+                                run_time=run_time * 0.45,
+                            )
+                            # Hold briefly — data is messy
+                            self.wait(run_time * 0.20)
+                            # Dim slightly but leave residue — the imperfection persists
+                            self.play(
+                                AnimationGroup(
+                                    *[s.animate.set_opacity(0.22) for s in specks],
+                                    lag_ratio=0.0,
+                                ),
+                                run_time=run_time * 0.35,
+                            )
+                            current_time += run_time
+                            # Attach specks to the node so they travel with it
+                            target_node.add(specks)
+                            target_node.noise_specks = specks
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+
+                        object_registry[step.id] = cycle_obj
+                        step_zone_map[step.id] = step.zone
+                        handled = True
+
+                    elif mode == "internal_node":
+                        # Convergence animation inside a single named node.
+                        # Used for TRAINING beat — "something learning inside here."
+                        # Three faint dots converge toward center, then fade out.
+                        # AUDIT FIX: color changed from ACCENT to MUTED (dim white).
+                        # Brief says color restraint — only amber for evaluation warning.
+                        node_label  = step.params.get("node_label", "TRAINING")
+                        node_labels = getattr(cycle_obj, "cycle_labels", [])
+                        node_list   = getattr(cycle_obj, "cycle_nodes",  [])
+                        try:
+                            idx         = node_labels.index(node_label)
+                            target_node = node_list[idx]
+                        except (ValueError, IndexError):
+                            target_node = None
+
+                        if target_node is not None:
+                            center      = target_node.get_center()
+                            node_r_val  = step.params.get("node_radius", 0.42)
+                            angles      = [PI * 0.18, PI * 0.78, PI * 1.45]
+                            inner_dots  = VGroup(
                                 *[
                                     Dot(
                                         center + np.array([
-                                            np.cos(a) * node_radius_val * 0.62,
-                                            np.sin(a) * node_radius_val * 0.62,
+                                            np.cos(a) * node_r_val * 0.60,
+                                            np.sin(a) * node_r_val * 0.60,
                                             0,
                                         ]),
-                                        radius=0.032,
-                                        color=ACCENT,
+                                        radius=0.030,
+                                        color=MUTED,        # dim white — no color drama
                                     ).set_opacity(0.0)
                                     for a in angles
                                 ]
                             )
                             self.add(inner_dots)
-                            # Fade in
-                            self.play(inner_dots.animate.set_opacity(0.72), run_time=run_time * 0.22)
-                            # Converge toward center
+                            self.play(
+                                AnimationGroup(*[d.animate.set_opacity(0.65) for d in inner_dots], lag_ratio=0.14),
+                                run_time=run_time * 0.24,
+                            )
                             self.play(
                                 AnimationGroup(
-                                    *[d.animate.move_to(center + (d.get_center() - center) * 0.18)
+                                    *[d.animate.move_to(center + (d.get_center() - center) * 0.15)
                                       for d in inner_dots],
                                     lag_ratio=0.12,
                                 ),
-                                run_time=run_time * 0.46,
+                                run_time=run_time * 0.44,
                             )
-                            # Fade out as learning "settles"
-                            self.play(inner_dots.animate.set_opacity(0.0), run_time=run_time * 0.32)
+                            self.play(
+                                inner_dots.animate.set_opacity(0.0),
+                                run_time=run_time * 0.32,
+                            )
                             self.remove(inner_dots)
                             current_time += run_time
                         else:
