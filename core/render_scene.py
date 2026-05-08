@@ -845,16 +845,17 @@ class JsonDrivenScene(MovingCameraScene):
                             test_dot.move_to(axis_pos)
                             self.play(test_dot.animate.set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).set_opacity(1.0), run_time=min(0.25, vertical_time * 0.35))
                             if vertical_read is not None:
-                                vertical_read.put_start_and_end_on(axis_pos, axis_pos)
+                                vertical_read.put_start_and_end_on(axis_pos, intersection)
                                 vertical_read.set_stroke(opacity=read_opacity)
-                                self.play(vertical_read.animate.put_start_and_end_on(axis_pos, intersection), run_time=vertical_time, rate_func=rate_functions.ease_in_out_sine)
+                                self.play(Create(vertical_read), run_time=vertical_time, rate_func=rate_functions.ease_in_out_sine)
                             else:
                                 self.wait(vertical_time)
                             if horizontal_read is not None:
                                 y_axis_x = y_axis.get_start()[0] if y_axis is not None else -4.35
-                                horizontal_read.put_start_and_end_on(intersection, intersection)
+                                horizontal_end = np.array([y_axis_x, intersection[1], 0.0])
+                                horizontal_read.put_start_and_end_on(intersection, horizontal_end)
                                 horizontal_read.set_stroke(opacity=read_opacity)
-                                self.play(horizontal_read.animate.put_start_and_end_on(intersection, np.array([y_axis_x, intersection[1], 0.0])), run_time=horizontal_time, rate_func=rate_functions.ease_in_out_sine)
+                                self.play(Create(horizontal_read), run_time=horizontal_time, rate_func=rate_functions.ease_in_out_sine)
                             else:
                                 self.wait(horizontal_time)
                             self.play(test_dot.animate.move_to(intersection), run_time=move_time, rate_func=rate_functions.ease_in_out_sine)
