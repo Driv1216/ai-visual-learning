@@ -691,6 +691,13 @@ class JsonDrivenScene(MovingCameraScene):
                     line_opacity = step.params.get("line_opacity", 0.96)
                     glow_opacity = step.params.get("line_glow_opacity", 0.16)
 
+                    def dot_target_opacity(dot, fallback=colored_opacity):
+                        current_color = dot.get_color()
+                        neutral = getattr(field_obj, "supervised_neutral_color", neutral_color)
+                        if str(current_color).lower() == str(neutral).lower():
+                            return dot_opacity
+                        return fallback
+
                     def register_same_field():
                         object_registry[step.id] = field_obj
                         step_zone_map[step.id] = step.zone
@@ -744,7 +751,22 @@ class JsonDrivenScene(MovingCameraScene):
                             boundary_glow.set_stroke(opacity=glow_opacity)
                         if boundary is not None:
                             boundary.set_stroke(opacity=line_opacity)
-                        self.wait(max(0.01, run_time))
+                        snap_flash = step.params.get("snap_flash", False)
+                        flash_time = min(step.params.get("snap_duration", 0.16), max(0.01, run_time))
+                        if snap_flash and boundary is not None:
+                            flash_anims = [boundary.animate.set_stroke(opacity=min(1.0, line_opacity + 0.04))]
+                            if boundary_glow is not None:
+                                flash_anims.append(boundary_glow.animate.set_stroke(opacity=step.params.get("snap_glow_opacity", 0.34)))
+                            self.play(AnimationGroup(*flash_anims, lag_ratio=0.0), run_time=flash_time * 0.45)
+                            settle_anims = [boundary.animate.set_stroke(opacity=line_opacity)]
+                            if boundary_glow is not None:
+                                settle_anims.append(boundary_glow.animate.set_stroke(opacity=glow_opacity))
+                            self.play(AnimationGroup(*settle_anims, lag_ratio=0.0), run_time=flash_time * 0.55)
+                            remaining = max(0.0, run_time - flash_time)
+                            if remaining > 0:
+                                self.wait(remaining)
+                        else:
+                            self.wait(max(0.01, run_time))
                         current_time += run_time
                         register_same_field()
                         handled = True
@@ -774,6 +796,16 @@ class JsonDrivenScene(MovingCameraScene):
                                 boundary.animate.put_start_and_end_on(left_target, right_target).set_stroke(opacity=line_opacity),
                                 *[dot.animate.set_opacity(colored_opacity) for dot in dots],
                             ]
+                            if step.params.get("dot_response", False):
+                                response_distance = step.params.get("response_distance", 0.48)
+                                bright_opacity = step.params.get("response_opacity", 1.0)
+                                line_vec = right_target - left_target
+                                line_len = np.linalg.norm(line_vec[:2]) or 1.0
+                                for dot in dots:
+                                    dot_vec = dot.get_center() - left_target
+                                    distance = abs(line_vec[0] * dot_vec[1] - line_vec[1] * dot_vec[0]) / line_len
+                                    if distance <= response_distance:
+                                        grow_anims.append(dot.animate.set_opacity(bright_opacity))
                             if boundary_glow is not None:
                                 boundary_glow.put_start_and_end_on(center, center)
                                 boundary_glow.set_stroke(opacity=glow_opacity)
@@ -812,6 +844,18 @@ class JsonDrivenScene(MovingCameraScene):
                         register_same_field()
                         handled = True
 
+                    elif mode == "category_emphasis":
+                        warm_boost = step.params.get("warm_boost", 1.0)
+                        cool_boost = step.params.get("cool_boost", 1.0)
+                        settle_opacity = step.params.get("settle_opacity", colored_opacity)
+                        warm_anims = [dot.animate.set_opacity(warm_boost) for dot in dots if getattr(dot, "supervised_class", "warm") == "warm"]
+                        cool_anims = [dot.animate.set_opacity(cool_boost) for dot in dots if getattr(dot, "supervised_class", "warm") == "cool"]
+                        self.play(AnimationGroup(*(warm_anims + cool_anims), lag_ratio=0.0), run_time=run_time * 0.45, rate_func=rate_functions.ease_out_sine)
+                        self.play(AnimationGroup(*[dot.animate.set_opacity(settle_opacity) for dot in dots], lag_ratio=0.0), run_time=run_time * 0.55, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += run_time
+                        register_same_field()
+                        handled = True
+
                     elif mode == "hold":
                         self.wait(run_time)
                         current_time += run_time
@@ -827,11 +871,51 @@ class JsonDrivenScene(MovingCameraScene):
                     field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
                     labels = step.params.get("labels")
                     pairs = step.params.get("pairs")
+                    pair = step.params.get("pair")
+                    if pair and not pairs:
+                        pairs = [pair]
                     font_size = step.params.get("font_size", 28)
                     color = step.params.get("color", "#F5F7FB")
                     text_opacity = step.params.get("text_opacity", 0.92)
 
+                    dots = list(getattr(field_obj, "supervised_dots", VGroup())) if field_obj is not None else []
+                    dim_field = step.params.get("dim_field", False) and bool(dots)
+                    dim_opacity = step.params.get("dim_opacity", 0.38)
+                    restore_opacity = step.params.get("restore_opacity", getattr(field_obj, "supervised_colored_opacity", 0.96) if field_obj is not None else 0.96)
+                    dim_time = min(step.params.get("dim_time", 0.22), max(0.01, run_time * 0.15))
+                    haze = None
+
+                    def maybe_dim_field():
+                        nonlocal haze
+                        if not dim_field:
+                            return
+                        dim_anims = [dot.animate.set_opacity(dim_opacity) for dot in dots]
+                        if step.params.get("readability_haze", False):
+                            haze = RoundedRectangle(
+                                width=step.params.get("haze_width", 4.8),
+                                height=step.params.get("haze_height", 0.82),
+                                corner_radius=0.18,
+                                stroke_width=0,
+                                fill_color=step.params.get("haze_color", "#05070B"),
+                                fill_opacity=0.0,
+                            )
+                            haze.move_to(vector_from_param(step.params.get("haze_position", step.params.get("position", [0.0, 0.08, 0.0]))))
+                            self.add(haze)
+                            dim_anims.append(haze.animate.set_fill(opacity=step.params.get("haze_opacity", 0.26)))
+                        self.play(AnimationGroup(*dim_anims, lag_ratio=0.0), run_time=dim_time)
+
+                    def maybe_restore_field():
+                        if not dim_field:
+                            return
+                        restore_anims = [dot.animate.set_opacity(restore_opacity) for dot in dots]
+                        if haze is not None:
+                            restore_anims.append(haze.animate.set_fill(opacity=0.0))
+                        self.play(AnimationGroup(*restore_anims, lag_ratio=0.0), run_time=dim_time)
+                        if haze is not None:
+                            self.remove(haze)
+
                     if labels:
+                        maybe_dim_field()
                         overlays = VGroup()
                         for item in labels:
                             txt = Text(item.get("text", ""), font_size=item.get("font_size", font_size), color=item.get("color", color), weight=MEDIUM)
@@ -839,17 +923,23 @@ class JsonDrivenScene(MovingCameraScene):
                             txt.move_to(vector_from_param(item.get("position", [0, 0, 0])))
                             overlays.add(txt)
                         self.add(overlays)
-                        self.play(AnimationGroup(*[txt.animate.set_opacity(text_opacity) for txt in overlays], lag_ratio=0.0), run_time=min(0.4, run_time * 0.18))
-                        hold_time = max(0.0, run_time - min(0.8, run_time * 0.36))
+                        fade_time = min(0.4, run_time * 0.18)
+                        self.play(AnimationGroup(*[txt.animate.set_opacity(text_opacity) for txt in overlays], lag_ratio=0.0), run_time=fade_time)
+                        hold_time = max(0.0, run_time - (fade_time * 2.0) - (dim_time * 2.0 if dim_field else 0.0))
                         if hold_time > 0:
                             self.wait(hold_time)
-                        self.play(AnimationGroup(*[txt.animate.set_opacity(0.0) for txt in overlays], lag_ratio=0.0), run_time=min(0.4, run_time * 0.18))
+                        self.play(AnimationGroup(*[txt.animate.set_opacity(0.0) for txt in overlays], lag_ratio=0.0), run_time=fade_time)
                         self.remove(overlays)
+                        maybe_restore_field()
                     elif pairs:
                         fade_time = step.params.get("fade_time", 0.3)
-                        hold_time = step.params.get("hold_time", 2.0)
-                        for pair in pairs:
-                            txt = Text(pair, font_size=font_size, color=color, weight=MEDIUM)
+                        hold_time = step.params.get("hold_time")
+                        if hold_time is None:
+                            total_fades = len(pairs) * fade_time * 2.0
+                            hold_time = max(0.2, (run_time - total_fades - (dim_time * 2.0 if dim_field else 0.0)) / max(1, len(pairs)))
+                        maybe_dim_field()
+                        for pair_text in pairs:
+                            txt = Text(pair_text, font_size=font_size, color=color, weight=MEDIUM)
                             txt.set_opacity(0.0)
                             txt.move_to(vector_from_param(step.params.get("position", [0.0, 0.08, 0.0])))
                             self.add(txt)
@@ -857,6 +947,7 @@ class JsonDrivenScene(MovingCameraScene):
                             self.wait(hold_time)
                             self.play(txt.animate.set_opacity(0.0), run_time=fade_time)
                             self.remove(txt)
+                        maybe_restore_field()
                     else:
                         self.wait(run_time)
                     current_time += run_time

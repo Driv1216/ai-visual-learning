@@ -23,8 +23,16 @@
       "text": "We provide a machine with two things: Inputs and their corresponding Labels."
     },
     {
-      "id": "v3s1_04",
-      "text": "Student marks and whether they passed or failed. Email content — spam or not spam. House features and the price it sold for."
+      "id": "v3s1_04a",
+      "text": "Student marks and whether they passed or failed."
+    },
+    {
+      "id": "v3s1_04b",
+      "text": "Email content — spam or not spam."
+    },
+    {
+      "id": "v3s1_04c",
+      "text": "House features and the price it sold for."
     },
     {
       "id": "v3s1_05",
@@ -32,15 +40,27 @@
     },
     {
       "id": "v3s1_06",
-      "text": "Sometimes the rule is given directly. Like — if a data point is on the right side, classify it as Red. If it's on the left, classify it as Blue."
+      "text": "Sometimes the rule is given directly. Like — if a data point is on one side, classify it as orange. If it's on the other side, classify it as blue."
     },
     {
       "id": "v3s1_07",
       "text": "But in Supervised Learning… the model itself learns this rule. It observes hundreds of examples, and then… it infers the underlying pattern."
     },
     {
-      "id": "v3s1_08",
-      "text": "Sometimes the answer is a category — like spam. Other times it's a continuous number — like a house price. These two types lead us to Classification and Regression. Let's explore those next."
+      "id": "v3s1_08a",
+      "text": "Sometimes the answer is a category — like spam."
+    },
+    {
+      "id": "v3s1_08b",
+      "text": "Other times, it is a continuous number — like a house price."
+    },
+    {
+      "id": "v3s1_08c",
+      "text": "These two types lead us to Classification and Regression."
+    },
+    {
+      "id": "v3s1_08d",
+      "text": "Let's explore those next."
     }
   ],
   "visual_timeline": [
@@ -53,20 +73,22 @@
       "transition_out": "none",
       "persist": true,
       "replace": "full",
-      "duration": 1.5,
+      "duration": 1.6,
       "params": {
-        "neutral_color": "#6F7786",
-        "warm_color": "#F2A65A",
+        "neutral_color": "#748091",
+        "warm_color": "#F28A5B",
         "cool_color": "#6EA8FE",
-        "dot_radius": 0.055,
-        "dot_opacity": 0.62,
+        "dot_radius": 0.064,
+        "dot_opacity": 0.68,
         "colored_opacity": 0.96,
-        "dim_opacity": 0.55,
-        "field_scale": 0.92,
+        "dim_opacity": 0.46,
+        "field_scale": 1.0,
+        "line_start": [-3.75, -1.92, 0.0],
+        "line_end": [3.75, 2.05, 0.0],
         "line_color": "#EAF1FF",
         "line_glow_color": "#DCE9FF",
-        "line_stroke_width": 3.0,
-        "line_glow_width": 8.0
+        "line_stroke_width": 3.2,
+        "line_glow_width": 9.0
       },
       "offset": 0.0
     },
@@ -78,12 +100,12 @@
       "transition_in": "none",
       "transition_out": "none",
       "persist": true,
-      "duration": 1.1,
+      "duration": 1.0,
       "params": {
         "source_id": "v3s1_field_arrival",
         "mode": "hold"
       },
-      "offset": 1.55
+      "offset": 1.65
     },
     {
       "id": "v3s1_color_wave_in",
@@ -93,13 +115,13 @@
       "transition_in": "smooth",
       "transition_out": "none",
       "persist": true,
-      "duration": 1.85,
+      "duration": 1.95,
       "params": {
         "source_id": "v3s1_opening_stillness",
         "mode": "color_wave_in",
-        "wave_count": 7
+        "wave_count": 8
       },
-      "offset": 0.2
+      "offset": 0.15
     },
     {
       "id": "v3s1_input_label_words",
@@ -109,49 +131,113 @@
       "transition_in": "fade",
       "transition_out": "fade",
       "persist": false,
-      "duration": 2.3,
+      "duration": 2.5,
       "params": {
         "source_id": "v3s1_color_wave_in",
-        "font_size": 27,
-        "text_opacity": 0.84,
+        "font_size": 30,
+        "text_opacity": 0.94,
+        "dim_field": true,
+        "dim_opacity": 0.42,
+        "restore_opacity": 0.96,
+        "dim_time": 0.2,
         "labels": [
           {
             "text": "Input",
-            "position": [-2.55, 1.55, 0],
-            "color": "#F2A65A"
+            "position": [-2.45, 1.58, 0],
+            "color": "#F28A5B"
           },
           {
             "text": "Label",
-            "position": [2.35, -1.68, 0],
+            "position": [2.28, -1.48, 0],
             "color": "#6EA8FE"
           }
         ]
       },
-      "offset": 0.0
+      "offset": 0.35
     },
     {
-      "id": "v3s1_example_pairs",
-      "anchor": "v3s1_04",
+      "id": "v3s1_example_marks",
+      "anchor": "v3s1_04a",
       "action": "show_supervised_examples",
       "zone": "full",
       "transition_in": "fade",
       "transition_out": "fade",
       "persist": false,
-      "duration": 7.8,
+      "duration": 2.4,
       "params": {
         "source_id": "v3s1_input_label_words",
-        "font_size": 31,
-        "text_opacity": 0.93,
-        "position": [0.0, 0.08, 0.0],
-        "fade_time": 0.3,
-        "hold_time": 2.0,
-        "pairs": [
-          "marks → pass / fail",
-          "email → spam / not spam",
-          "house → price"
-        ]
+        "font_size": 34,
+        "text_opacity": 0.96,
+        "color": "#F5F7FB",
+        "position": [0.0, 0.12, 0.0],
+        "fade_time": 0.26,
+        "pair": "marks → pass / fail",
+        "dim_field": true,
+        "dim_opacity": 0.34,
+        "restore_opacity": 0.96,
+        "dim_time": 0.18,
+        "readability_haze": true,
+        "haze_width": 4.6,
+        "haze_height": 0.8,
+        "haze_opacity": 0.2
       },
-      "offset": 0.1
+      "offset": 0.0
+    },
+    {
+      "id": "v3s1_example_email",
+      "anchor": "v3s1_04b",
+      "action": "show_supervised_examples",
+      "zone": "full",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "duration": 2.25,
+      "params": {
+        "source_id": "v3s1_example_marks",
+        "font_size": 34,
+        "text_opacity": 0.96,
+        "color": "#F5F7FB",
+        "position": [0.0, 0.12, 0.0],
+        "fade_time": 0.26,
+        "pair": "email → spam / not spam",
+        "dim_field": true,
+        "dim_opacity": 0.34,
+        "restore_opacity": 0.96,
+        "dim_time": 0.18,
+        "readability_haze": true,
+        "haze_width": 5.35,
+        "haze_height": 0.8,
+        "haze_opacity": 0.2
+      },
+      "offset": 0.0
+    },
+    {
+      "id": "v3s1_example_house",
+      "anchor": "v3s1_04c",
+      "action": "show_supervised_examples",
+      "zone": "full",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "duration": 2.2,
+      "params": {
+        "source_id": "v3s1_example_email",
+        "font_size": 34,
+        "text_opacity": 0.96,
+        "color": "#F5F7FB",
+        "position": [0.0, 0.12, 0.0],
+        "fade_time": 0.26,
+        "pair": "house → price",
+        "dim_field": true,
+        "dim_opacity": 0.34,
+        "restore_opacity": 0.96,
+        "dim_time": 0.18,
+        "readability_haze": true,
+        "haze_width": 3.75,
+        "haze_height": 0.8,
+        "haze_opacity": 0.2
+      },
+      "offset": 0.0
     },
     {
       "id": "v3s1_color_wave_out",
@@ -161,11 +247,11 @@
       "transition_in": "smooth",
       "transition_out": "none",
       "persist": true,
-      "duration": 1.85,
+      "duration": 1.9,
       "params": {
-        "source_id": "v3s1_example_pairs",
+        "source_id": "v3s1_example_house",
         "mode": "color_wave_out",
-        "wave_count": 7
+        "wave_count": 8
       },
       "offset": 0.0
     },
@@ -177,12 +263,12 @@
       "transition_in": "none",
       "transition_out": "none",
       "persist": true,
-      "duration": 0.8,
+      "duration": 1.0,
       "params": {
         "source_id": "v3s1_color_wave_out",
         "mode": "hold"
       },
-      "offset": 1.9
+      "offset": 1.95
     },
     {
       "id": "v3s1_declared_rule",
@@ -192,12 +278,15 @@
       "transition_in": "none",
       "transition_out": "none",
       "persist": true,
-      "duration": 0.05,
+      "duration": 0.28,
       "params": {
         "source_id": "v3s1_question_hold",
         "mode": "declare_rule",
-        "line_opacity": 0.96,
-        "line_glow_opacity": 0.16
+        "line_opacity": 0.98,
+        "line_glow_opacity": 0.2,
+        "snap_flash": true,
+        "snap_duration": 0.22,
+        "snap_glow_opacity": 0.42
       },
       "offset": 0.0
     },
@@ -209,12 +298,12 @@
       "transition_in": "none",
       "transition_out": "none",
       "persist": true,
-      "duration": 1.2,
+      "duration": 3.1,
       "params": {
         "source_id": "v3s1_declared_rule",
         "mode": "hold"
       },
-      "offset": 0.1
+      "offset": 0.32
     },
     {
       "id": "v3s1_inferred_rule",
@@ -224,15 +313,18 @@
       "transition_in": "smooth",
       "transition_out": "none",
       "persist": true,
-      "duration": 3.3,
+      "duration": 3.75,
       "params": {
         "source_id": "v3s1_declared_hold",
         "mode": "infer_rule",
-        "line_opacity": 0.96,
-        "line_glow_opacity": 0.16,
-        "dim_opacity": 0.55
+        "line_opacity": 0.98,
+        "line_glow_opacity": 0.2,
+        "dim_opacity": 0.46,
+        "dot_response": true,
+        "response_distance": 0.42,
+        "response_opacity": 1.0
       },
-      "offset": 0.0
+      "offset": 0.7
     },
     {
       "id": "v3s1_inference_settles",
@@ -242,32 +334,71 @@
       "transition_in": "none",
       "transition_out": "none",
       "persist": true,
-      "duration": 0.7,
+      "duration": 0.8,
       "params": {
         "source_id": "v3s1_inferred_rule",
         "mode": "hold"
       },
-      "offset": 3.35
+      "offset": 4.55
+    },
+    {
+      "id": "v3s1_category_emphasis",
+      "anchor": "v3s1_08a",
+      "action": "mutate_supervised_field",
+      "zone": "full",
+      "transition_in": "smooth",
+      "transition_out": "none",
+      "persist": true,
+      "duration": 1.15,
+      "params": {
+        "source_id": "v3s1_inference_settles",
+        "mode": "category_emphasis",
+        "warm_boost": 1.0,
+        "cool_boost": 1.0,
+        "settle_opacity": 0.96
+      },
+      "offset": 0.05
     },
     {
       "id": "v3s1_line_curve_resolution",
-      "anchor": "v3s1_08",
+      "anchor": "v3s1_08b",
       "action": "mutate_supervised_field",
       "zone": "full",
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.35,
+      "duration": 1.7,
       "params": {
-        "source_id": "v3s1_inference_settles",
+        "source_id": "v3s1_category_emphasis",
         "mode": "curve_suggestion",
-        "bow": 0.28
+        "bow": 0.24
       },
-      "offset": 0.2
+      "offset": 0.05
+    },
+    {
+      "id": "v3s1_classification_regression_terms",
+      "anchor": "v3s1_08c",
+      "action": "show_supervised_examples",
+      "zone": "full",
+      "transition_in": "fade",
+      "transition_out": "fade",
+      "persist": false,
+      "duration": 2.25,
+      "params": {
+        "source_id": "v3s1_line_curve_resolution",
+        "font_size": 31,
+        "text_opacity": 0.9,
+        "color": "#F5F7FB",
+        "position": [0.0, -2.48, 0.0],
+        "fade_time": 0.28,
+        "pair": "Classification  ·  Regression",
+        "dim_field": false
+      },
+      "offset": 0.0
     },
     {
       "id": "v3s1_final_title",
-      "anchor": "v3s1_08",
+      "anchor": "v3s1_08d",
       "action": "show_supervised_resolution",
       "zone": "full",
       "transition_in": "fade",
@@ -275,34 +406,34 @@
       "persist": true,
       "duration": 1.0,
       "params": {
-        "source_id": "v3s1_line_curve_resolution",
+        "source_id": "v3s1_classification_regression_terms",
         "text": "Supervised Learning",
-        "font_size": 38,
+        "font_size": 39,
         "color": "#F5F7FB",
-        "opacity": 0.95,
+        "opacity": 0.96,
         "position": [0.0, -3.05, 0.0]
       },
-      "offset": 1.7
+      "offset": 0.0
     },
     {
       "id": "v3s1_final_rest",
-      "anchor": "v3s1_08",
+      "anchor": "v3s1_08d",
       "action": "mutate_supervised_field",
       "zone": "full",
       "transition_in": "none",
       "transition_out": "none",
       "persist": true,
-      "duration": 1.2,
+      "duration": 0.8,
       "params": {
         "source_id": "v3s1_final_title",
         "mode": "hold"
       },
-      "offset": 2.8
+      "offset": 1.05
     }
   ],
   "notes": {
     "tone": "calm, premium, concept-first introduction to supervised learning",
-    "pacing": "audio-driven with restrained motion; color and line behavior carry the meaning",
-    "animation_guidelines": "Use one persistent dot field. Dots never move or resize. Only color, temporary text, and one rule line change. No axes, gridlines, arrows, boxes, panels, or extra text."
+    "pacing": "audio-driven with split narration anchors for tighter sync; restrained motion remains the base, but readability and conceptual clarity take priority over strict beat-map minimalism",
+    "animation_guidelines": "Use one persistent dot field. Dots never move or resize after initial placement. Controlled deviations from the original brief are allowed: temporary dot dimming behind text, subtle readability haze, a sharper declared-rule snap, boundary-near dot response during inference, and minimal Classification/Regression terms near the close. Avoid axes, gridlines, arrows, hard boxes, split panels, and clutter."
   }
 }
