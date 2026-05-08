@@ -1,0 +1,239 @@
+{
+  "scene_id": "video03_scene02_classification_vs_regression",
+  "video_title": "Supervised Learning",
+  "scene_title": "Classification vs. Regression",
+  "order": 2,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "v3s2_01",
+      "text": "So, as we just saw, the world of supervised learning basically splits into two main paths."
+    },
+    {
+      "id": "v3s2_02",
+      "text": "When a new, white test point appears in the middle, the model has to answer it."
+    },
+    {
+      "id": "v3s2_03",
+      "text": "Imagine a graph with two distinct clusters: red dots on one side and blue dots on the other. The model draws a boundary line — a decision border."
+    },
+    {
+      "id": "v3s2_04",
+      "text": "As that test point moves slightly across the line, the model assigns it a color. It is essentially asking: which group does this belong to?"
+    },
+    {
+      "id": "v3s2_05",
+      "text": "Now, let's shift our focus to Regression. Here, we are not picking from a list of labels. We are predicting a continuous value."
+    },
+    {
+      "id": "v3s2_06",
+      "text": "Think of a scatter plot where the x-axis represents study hours and the y-axis represents marks. Instead of a boundary line, we see a trend line fitting through the dots."
+    },
+    {
+      "id": "v3s2_07",
+      "text": "When a new value for study hours appears, we follow a vertical line up to that trend line and read off the predicted score on the y-axis."
+    },
+    {
+      "id": "v3s2_08",
+      "text": "To put it simply, Classification asks, which class? Regression asks, what value? One is about grouping, the other is about measuring."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v3s2_field_arrival",
+      "anchor": "v3s2_01",
+      "offset": 0.15,
+      "duration": 1.25,
+      "action": "show_classification_regression_field",
+      "zone": "center",
+      "transition": "fade",
+      "params": {
+        "cluster_count": 4,
+        "dot_radius": 0.06,
+        "test_dot_radius": 0.086,
+        "dot_opacity": 0.68,
+        "colored_opacity": 0.94,
+        "neutral_color": "#788190",
+        "red_color": "#EF6A5B",
+        "blue_color": "#6EA8FE",
+        "white_color": "#F8FBFF",
+        "axis_color": "#8993A3",
+        "trend_color": "#F1D38A",
+        "boundary_color": "#EAF1FF",
+        "read_line_color": "#9AA5B5",
+        "field_scale": 1.0,
+        "axis_opacity": 0.50,
+        "tick_opacity": 0.42,
+        "boundary_opacity": 0.86,
+        "trend_opacity": 0.92,
+        "read_opacity": 0.64,
+        "test_point": [-0.16, 0.20, 0],
+        "test_classified_point": [0.58, 0.22, 0],
+        "test_axis_point": [1.25, -2.2, 0],
+        "test_intersection": [1.25, 0.88, 0]
+      }
+    },
+    {
+      "id": "v3s2_unresolved_hold",
+      "anchor": "v3s2_01",
+      "offset": 1.55,
+      "duration": 0.45,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "hold"
+      }
+    },
+    {
+      "id": "v3s2_test_point_drop",
+      "anchor": "v3s2_02",
+      "offset": 0.20,
+      "duration": 0.9,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "drop_test_point",
+        "drop_distance": 0.38,
+        "test_opacity": 1.0
+      }
+    },
+    {
+      "id": "v3s2_classification_color_wave",
+      "anchor": "v3s2_03",
+      "offset": 0.20,
+      "duration": 1.45,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "classification_color_wave",
+        "wave_count": 7,
+        "boundary_x": 0.0
+      }
+    },
+    {
+      "id": "v3s2_boundary_growth",
+      "anchor": "v3s2_03",
+      "offset": 1.95,
+      "duration": 0.85,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "draw_boundary",
+        "start_opacity": 0.16,
+        "boundary_opacity": 0.86
+      }
+    },
+    {
+      "id": "v3s2_claim_test_point",
+      "anchor": "v3s2_04",
+      "offset": 0.15,
+      "duration": 2.05,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "claim_test_point",
+        "target": [0.58, 0.22, 0],
+        "drift_time": 1.15,
+        "color_time": 0.62,
+        "target_color": "#6EA8FE"
+      }
+    },
+    {
+      "id": "v3s2_regression_reset",
+      "anchor": "v3s2_05",
+      "offset": 0.15,
+      "duration": 2.0,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "regression_reset",
+        "drain_time": 0.82,
+        "boundary_fade_time": 0.48,
+        "test_opacity": 0.78,
+        "test_hold_position": [1.25, -2.2, 0]
+      }
+    },
+    {
+      "id": "v3s2_trend_line_growth",
+      "anchor": "v3s2_06",
+      "offset": 0.35,
+      "duration": 1.8,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "draw_trend_line",
+        "trend_opacity": 0.92,
+        "tick_opacity": 0.42
+      }
+    },
+    {
+      "id": "v3s2_measurement_sequence",
+      "anchor": "v3s2_07",
+      "offset": 0.15,
+      "duration": 2.9,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "measure_value",
+        "axis_position": [1.25, -2.2, 0],
+        "intersection": [1.25, 0.88, 0],
+        "vertical_time": 0.75,
+        "horizontal_time": 0.62,
+        "move_time": 0.85,
+        "read_opacity": 0.66
+      }
+    },
+    {
+      "id": "v3s2_final_dual_frame",
+      "anchor": "v3s2_08",
+      "offset": 0.15,
+      "duration": 3.2,
+      "action": "mutate_classification_regression_field",
+      "zone": "center",
+      "params": {
+        "source_id": "v3s2_field_arrival",
+        "mode": "final_dual_frame",
+        "read_fade_time": 0.5,
+        "left_color_time": 1.2,
+        "boundary_time": 0.5,
+        "left_cutoff": 0.35,
+        "horizontal_final_opacity": 0.34,
+        "boundary_opacity": 0.80
+      }
+    }
+  ],
+  "notes": {
+    "tone": "Premium, restrained, geometric, and continuous. The scene should feel like one system being interpreted in two different ways.",
+    "pacing": "Eight clear beats with no dead time. Motions are sequential where meaning depends on sequence, especially the regression pivot and measurement read-lines.",
+    "animation_guidelines": "No on-screen explanatory text, no dot repositioning, no axes before regression, no trend line before Beat 6. The white dot stays present as the focal object, and the final frame resolves through geometry only.",
+    "source_brief": "/Users/drivyaanshyadav/Downloads/scene2.md",
+    "implementation_intent": "One persistent scatter population and one white test point explain classification and regression without text labels during the scene.",
+    "controlled_recommendations_applied": [
+      "No opening title is used.",
+      "The white dot remains present but quiet through the regression pivot and trend-line beat, preserving continuity.",
+      "The dot population never repositions; the diagonal correlation is built into the fixed coordinates.",
+      "The trend line is subtly curved so it reads as a fit rather than a divider.",
+      "The final frame contains no labels; left-side classification geometry and right-side regression geometry coexist."
+    ],
+    "visual_constraints": [
+      "No titles or labels during explanation beats.",
+      "No dot repositioning after initial creation.",
+      "Boundary disappears fully before regression axes and trend line dominate.",
+      "Trend line does not appear before Beat 6.",
+      "Final geometry carries the conclusion without text."
+    ]
+  }
+}

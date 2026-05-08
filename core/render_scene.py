@@ -388,6 +388,9 @@ class JsonDrivenScene(MovingCameraScene):
             "mutate_supervised_field",
             "show_supervised_examples",
             "show_supervised_resolution",
+            "show_supervised_types_showcase",
+            "show_classification_regression_field",
+            "mutate_classification_regression_field",
         }
 
         for idx, step in enumerate(visual_steps):
@@ -623,6 +626,293 @@ class JsonDrivenScene(MovingCameraScene):
                     register_object(step.id, step.zone, new_obj)
                     handled = True
 
+                elif step.action == "show_classification_regression_field":
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": dict(step.params),
+                            "zone": step.zone,
+                        }
+                    )
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+
+                    dots = list(getattr(new_obj, "cr_dots", VGroup()))
+                    for dot in dots:
+                        dot.set_opacity(0.0)
+                    self.add(new_obj)
+                    if outgoing_anims:
+                        self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=min(0.35, run_time * 0.25))
+                    if dots:
+                        cluster_count = step.params.get("cluster_count", 4)
+                        ordered = sorted(dots, key=lambda dot: (dot.get_center()[0] + dot.get_center()[1] * 0.85))
+                        cluster_anims = []
+                        for cluster_index in range(cluster_count):
+                            cluster_dots = ordered[
+                                cluster_index * len(ordered) // cluster_count:
+                                (cluster_index + 1) * len(ordered) // cluster_count
+                            ]
+                            if cluster_dots:
+                                cluster_anims.append(AnimationGroup(*[
+                                    dot.animate.set_opacity(getattr(new_obj, "cr_dot_opacity", 0.66))
+                                    for dot in cluster_dots
+                                ], lag_ratio=0.0))
+                        self.play(Succession(*cluster_anims), run_time=run_time, rate_func=rate_functions.ease_out_sine)
+                    else:
+                        self.wait(run_time)
+                    current_time += run_time
+                    register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "mutate_classification_regression_field":
+                    source_id = step.params.get("source_id")
+                    field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+
+                    if field_obj is None:
+                        print(
+                            f"[mutate_classification_regression_field] WARNING: source_id={source_id} not found. Skipping."
+                        )
+                        handled = True
+                        continue
+
+                    mode = step.params.get("mode", "drop_test_point")
+                    dots = list(getattr(field_obj, "cr_dots", VGroup()))
+                    test_dot = getattr(field_obj, "cr_test_dot", None)
+                    boundary = getattr(field_obj, "cr_boundary", None)
+                    x_axis = getattr(field_obj, "cr_x_axis", None)
+                    y_axis = getattr(field_obj, "cr_y_axis", None)
+                    ticks = getattr(field_obj, "cr_ticks", VGroup())
+                    trend_line = getattr(field_obj, "cr_trend_line", None)
+                    vertical_read = getattr(field_obj, "cr_vertical_read", None)
+                    horizontal_read = getattr(field_obj, "cr_horizontal_read", None)
+                    neutral_color = step.params.get("neutral_color", getattr(field_obj, "cr_neutral_color", "#7A8291"))
+                    dot_opacity = step.params.get("dot_opacity", getattr(field_obj, "cr_dot_opacity", 0.66))
+                    colored_opacity = step.params.get("colored_opacity", getattr(field_obj, "cr_colored_opacity", 0.94))
+                    axis_opacity = step.params.get("axis_opacity", getattr(field_obj, "cr_axis_opacity", 0.52))
+                    tick_opacity = step.params.get("tick_opacity", getattr(field_obj, "cr_tick_opacity", 0.45))
+                    boundary_opacity = step.params.get("boundary_opacity", getattr(field_obj, "cr_boundary_opacity", 0.84))
+                    trend_opacity = step.params.get("trend_opacity", getattr(field_obj, "cr_trend_opacity", 0.92))
+                    read_opacity = step.params.get("read_opacity", getattr(field_obj, "cr_read_opacity", 0.62))
+
+                    def register_cr_field():
+                        object_registry[step.id] = field_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = field_obj
+
+                    if mode == "drop_test_point":
+                        if test_dot is not None:
+                            final_pos = test_dot.get_center()
+                            drop = step.params.get("drop_distance", 0.38)
+                            test_dot.move_to(final_pos + UP * drop)
+                            test_dot.set_opacity(0.0)
+                            self.play(
+                                test_dot.animate.move_to(final_pos).set_opacity(step.params.get("test_opacity", 1.0)),
+                                run_time=run_time,
+                                rate_func=rate_functions.ease_out_sine,
+                            )
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    elif mode == "classification_color_wave":
+                        ordered = sorted(dots, key=lambda dot: abs(dot.get_center()[0] - step.params.get("boundary_x", 0.0)))
+                        wave_count = step.params.get("wave_count", 6)
+                        waves = []
+                        for wave_index in range(wave_count):
+                            wave_dots = ordered[
+                                wave_index * len(ordered) // wave_count:
+                                (wave_index + 1) * len(ordered) // wave_count
+                            ]
+                            if wave_dots:
+                                waves.append(AnimationGroup(*[
+                                    dot.animate.set_color(getattr(dot, "cr_target_color", "#6EA8FE")).set_opacity(colored_opacity)
+                                    for dot in wave_dots
+                                ], lag_ratio=0.0))
+                        if waves:
+                            self.play(Succession(*waves), run_time=run_time, rate_func=rate_functions.ease_in_out_sine)
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    elif mode == "draw_boundary":
+                        if boundary is not None:
+                            start = boundary.get_start()
+                            end = boundary.get_end()
+                            center = boundary.point_from_proportion(0.5)
+                            boundary.put_start_and_end_on(center, center)
+                            boundary.set_stroke(opacity=step.params.get("start_opacity", 0.18))
+                            self.play(
+                                boundary.animate.put_start_and_end_on(start, end).set_stroke(opacity=boundary_opacity),
+                                run_time=run_time,
+                                rate_func=rate_functions.ease_in_out_sine,
+                            )
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    elif mode == "claim_test_point":
+                        if test_dot is not None:
+                            target = vector_from_param(step.params.get("target", getattr(test_dot, "cr_class_position", test_dot.get_center())))
+                            drift_time = min(step.params.get("drift_time", run_time * 0.62), run_time)
+                            color_time = min(step.params.get("color_time", 0.6), max(0.05, run_time - drift_time))
+                            hold_time = max(0.0, run_time - drift_time - color_time)
+                            self.play(test_dot.animate.move_to(target), run_time=drift_time, rate_func=rate_functions.ease_in_out_sine)
+                            self.play(test_dot.animate.set_color(step.params.get("target_color", getattr(field_obj, "cr_blue_color", "#6EA8FE"))), run_time=color_time, rate_func=rate_functions.ease_in_out_sine)
+                            if hold_time > 0:
+                                self.wait(hold_time)
+                        else:
+                            self.wait(run_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    elif mode == "regression_reset":
+                        drain_time = min(step.params.get("drain_time", 0.8), run_time * 0.55)
+                        boundary_time = min(step.params.get("boundary_fade_time", 0.5), run_time * 0.35)
+                        axes_time = max(0.05, run_time - drain_time - boundary_time)
+                        drain_anims = [dot.animate.set_color(neutral_color).set_opacity(dot_opacity) for dot in dots]
+                        if test_dot is not None:
+                            axis_position = vector_from_param(step.params.get("test_hold_position", getattr(test_dot, "cr_axis_position", test_dot.get_center())))
+                            drain_anims.append(test_dot.animate.set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).move_to(axis_position).set_opacity(step.params.get("test_opacity", 0.78)))
+                        self.play(AnimationGroup(*drain_anims, lag_ratio=0.0), run_time=drain_time, rate_func=rate_functions.ease_in_out_sine)
+                        fade_anims = []
+                        if boundary is not None:
+                            fade_anims.append(boundary.animate.set_stroke(opacity=0.0))
+                        if fade_anims:
+                            self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=boundary_time, rate_func=rate_functions.ease_in_out_sine)
+                        if x_axis is not None and y_axis is not None:
+                            x_start, x_end = x_axis.get_start(), x_axis.get_end()
+                            y_start, y_end = y_axis.get_start(), y_axis.get_end()
+                            x_axis.put_start_and_end_on(x_start, x_start)
+                            y_axis.put_start_and_end_on(y_start, y_start)
+                            x_axis.set_stroke(opacity=axis_opacity)
+                            y_axis.set_stroke(opacity=axis_opacity)
+                            self.play(
+                                AnimationGroup(
+                                    x_axis.animate.put_start_and_end_on(x_start, x_end),
+                                    y_axis.animate.put_start_and_end_on(y_start, y_end),
+                                    lag_ratio=0.18,
+                                ),
+                                run_time=axes_time,
+                                rate_func=rate_functions.ease_in_out_sine,
+                            )
+                        else:
+                            self.wait(axes_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    elif mode == "draw_trend_line":
+                        if ticks:
+                            self.play(AnimationGroup(*[tick.animate.set_stroke(opacity=tick_opacity) for tick in ticks], lag_ratio=0.04), run_time=min(0.35, run_time * 0.25))
+                            trend_time = max(0.05, run_time - min(0.35, run_time * 0.25))
+                        else:
+                            trend_time = run_time
+                        if trend_line is not None:
+                            self.play(Create(trend_line), run_time=trend_time, rate_func=rate_functions.ease_in_out_sine)
+                            trend_line.set_stroke(opacity=trend_opacity)
+                        else:
+                            self.wait(trend_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    elif mode == "measure_value":
+                        if test_dot is None:
+                            self.wait(run_time)
+                        else:
+                            axis_pos = vector_from_param(step.params.get("axis_position", getattr(test_dot, "cr_axis_position", test_dot.get_center())))
+                            intersection = vector_from_param(step.params.get("intersection", getattr(test_dot, "cr_intersection", axis_pos + UP)))
+                            vertical_time = min(step.params.get("vertical_time", 0.7), run_time * 0.3)
+                            horizontal_time = min(step.params.get("horizontal_time", 0.6), run_time * 0.25)
+                            move_time = min(step.params.get("move_time", 0.8), run_time * 0.35)
+                            hold_time = max(0.0, run_time - vertical_time - horizontal_time - move_time)
+                            test_dot.move_to(axis_pos)
+                            self.play(test_dot.animate.set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).set_opacity(1.0), run_time=min(0.25, vertical_time * 0.35))
+                            if vertical_read is not None:
+                                vertical_read.put_start_and_end_on(axis_pos, axis_pos)
+                                vertical_read.set_stroke(opacity=read_opacity)
+                                self.play(vertical_read.animate.put_start_and_end_on(axis_pos, intersection), run_time=vertical_time, rate_func=rate_functions.ease_in_out_sine)
+                            else:
+                                self.wait(vertical_time)
+                            if horizontal_read is not None:
+                                y_axis_x = y_axis.get_start()[0] if y_axis is not None else -4.35
+                                horizontal_read.put_start_and_end_on(intersection, intersection)
+                                horizontal_read.set_stroke(opacity=read_opacity)
+                                self.play(horizontal_read.animate.put_start_and_end_on(intersection, np.array([y_axis_x, intersection[1], 0.0])), run_time=horizontal_time, rate_func=rate_functions.ease_in_out_sine)
+                            else:
+                                self.wait(horizontal_time)
+                            self.play(test_dot.animate.move_to(intersection), run_time=move_time, rate_func=rate_functions.ease_in_out_sine)
+                            if hold_time > 0:
+                                self.wait(hold_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    elif mode == "final_dual_frame":
+                        fade_time = min(step.params.get("read_fade_time", 0.5), run_time * 0.24)
+                        color_time = min(step.params.get("left_color_time", 1.2), run_time * 0.55)
+                        boundary_time = min(step.params.get("boundary_time", 0.45), max(0.05, run_time - fade_time - color_time))
+                        hold_time = max(0.0, run_time - fade_time - color_time - boundary_time)
+                        fades = []
+                        if vertical_read is not None:
+                            fades.append(vertical_read.animate.set_stroke(opacity=0.0))
+                        if horizontal_read is not None:
+                            fades.append(horizontal_read.animate.set_stroke(opacity=step.params.get("horizontal_final_opacity", 0.34)))
+                        if fades:
+                            self.play(AnimationGroup(*fades, lag_ratio=0.0), run_time=fade_time, rate_func=rate_functions.ease_in_out_sine)
+                        left_cutoff = step.params.get("left_cutoff", 0.35)
+                        left_dots = [dot for dot in dots if dot.get_center()[0] <= left_cutoff]
+                        if left_dots:
+                            ordered = sorted(left_dots, key=lambda dot: abs(dot.get_center()[0] - left_cutoff))
+                            self.play(LaggedStart(*[
+                                dot.animate.set_color(getattr(dot, "cr_target_color", "#F06A5A")).set_opacity(colored_opacity)
+                                for dot in ordered
+                            ], lag_ratio=0.05), run_time=color_time, rate_func=rate_functions.ease_in_out_sine)
+                        else:
+                            self.wait(color_time)
+                        if boundary is not None:
+                            full_start = boundary.get_start()
+                            full_end = boundary.get_end()
+                            mid = boundary.point_from_proportion(0.48)
+                            left_start = full_start
+                            left_end = mid
+                            boundary.put_start_and_end_on(left_end, left_end)
+                            boundary.set_stroke(opacity=step.params.get("boundary_start_opacity", 0.12))
+                            self.play(boundary.animate.put_start_and_end_on(left_start, left_end).set_stroke(opacity=boundary_opacity), run_time=boundary_time, rate_func=rate_functions.ease_in_out_sine)
+                        else:
+                            self.wait(boundary_time)
+                        if hold_time > 0:
+                            self.wait(hold_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    elif mode == "hold":
+                        self.wait(run_time)
+                        current_time += run_time
+                        register_cr_field()
+                        handled = True
+
+                    else:
+                        print(f"[mutate_classification_regression_field] WARNING: unknown mode={mode}. Skipping.")
+                        handled = True
+
                 elif step.action == "show_supervised_field":
                     merged_params = dict(step.params)
                     new_obj = build_object(
@@ -772,9 +1062,18 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
 
                     elif mode == "infer_rule":
-                        fade_time = min(0.5, run_time * 0.18)
-                        pause_time = min(0.5, max(0.0, run_time * 0.14))
-                        grow_time = max(0.1, run_time - fade_time - pause_time)
+                        fade_time = min(step.params.get("fade_out_time", 0.5), run_time * 0.28)
+                        pause_time = min(step.params.get("pause_time", 0.5), max(0.0, run_time - fade_time))
+                        settle_time = min(step.params.get("settle_time", 0.38), max(0.0, run_time - fade_time - pause_time))
+                        requested_grow_time = step.params.get("grow_time")
+                        if requested_grow_time is None:
+                            grow_time = max(0.1, run_time - fade_time - pause_time - settle_time)
+                        else:
+                            grow_time = min(requested_grow_time, max(0.1, run_time - fade_time - pause_time - settle_time))
+                        remainder = max(0.0, run_time - fade_time - pause_time - grow_time - settle_time)
+                        restore_dot_opacity = step.params.get("restore_dot_opacity", colored_opacity)
+                        final_line_opacity = step.params.get("final_line_opacity", line_opacity)
+                        final_glow_opacity = step.params.get("final_glow_opacity", glow_opacity)
                         fade_anims = []
                         if boundary is not None:
                             fade_anims.append(boundary.animate.set_stroke(opacity=0.0))
@@ -782,39 +1081,50 @@ class JsonDrivenScene(MovingCameraScene):
                             fade_anims.append(boundary_glow.animate.set_stroke(opacity=0.0))
                         fade_anims.extend([dot.animate.set_opacity(dim_opacity) for dot in dots])
                         if fade_anims:
-                            self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=fade_time)
+                            self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=fade_time, rate_func=rate_functions.ease_in_out_sine)
                         if pause_time > 0:
                             self.wait(pause_time)
 
+                        near_boundary_dots = []
                         if boundary is not None:
                             center = boundary.point_from_proportion(0.5)
                             left_target = boundary.get_start()
                             right_target = boundary.get_end()
                             boundary.put_start_and_end_on(center, center)
-                            boundary.set_stroke(opacity=line_opacity)
+                            boundary.set_stroke(opacity=step.params.get("grow_start_opacity", 0.62))
                             grow_anims = [
                                 boundary.animate.put_start_and_end_on(left_target, right_target).set_stroke(opacity=line_opacity),
-                                *[dot.animate.set_opacity(colored_opacity) for dot in dots],
+                                *[dot.animate.set_opacity(step.params.get("growth_dot_opacity", max(dim_opacity, restore_dot_opacity * 0.82))) for dot in dots],
                             ]
                             if step.params.get("dot_response", False):
                                 response_distance = step.params.get("response_distance", 0.48)
-                                bright_opacity = step.params.get("response_opacity", 1.0)
+                                response_opacity = step.params.get("response_opacity", 1.0)
                                 line_vec = right_target - left_target
                                 line_len = np.linalg.norm(line_vec[:2]) or 1.0
                                 for dot in dots:
                                     dot_vec = dot.get_center() - left_target
                                     distance = abs(line_vec[0] * dot_vec[1] - line_vec[1] * dot_vec[0]) / line_len
                                     if distance <= response_distance:
-                                        grow_anims.append(dot.animate.set_opacity(bright_opacity))
+                                        near_boundary_dots.append(dot)
+                                        grow_anims.append(dot.animate.set_opacity(response_opacity))
                             if boundary_glow is not None:
                                 boundary_glow.put_start_and_end_on(center, center)
-                                boundary_glow.set_stroke(opacity=glow_opacity)
+                                boundary_glow.set_stroke(opacity=step.params.get("grow_start_glow_opacity", 0.06))
                                 grow_anims.append(
                                     boundary_glow.animate.put_start_and_end_on(left_target, right_target).set_stroke(opacity=glow_opacity)
                                 )
                             self.play(AnimationGroup(*grow_anims, lag_ratio=0.0), run_time=grow_time, rate_func=rate_functions.ease_in_out_sine)
+                            settle_anims = [boundary.animate.set_stroke(opacity=final_line_opacity)]
+                            if boundary_glow is not None:
+                                settle_anims.append(boundary_glow.animate.set_stroke(opacity=final_glow_opacity))
+                            settle_anims.extend([dot.animate.set_opacity(restore_dot_opacity) for dot in dots])
+                            for dot in near_boundary_dots:
+                                settle_anims.append(dot.animate.set_opacity(step.params.get("response_settle_opacity", restore_dot_opacity)))
+                            self.play(AnimationGroup(*settle_anims, lag_ratio=0.0), run_time=settle_time, rate_func=rate_functions.ease_out_sine)
                         else:
-                            self.wait(grow_time)
+                            self.wait(grow_time + settle_time)
+                        if remainder > 0:
+                            self.wait(remainder)
                         current_time += run_time
                         register_same_field()
                         handled = True
@@ -955,6 +1265,111 @@ class JsonDrivenScene(MovingCameraScene):
                         object_registry[step.id] = field_obj
                         step_zone_map[step.id] = step.zone
                         active_objects[step.zone] = field_obj
+                    handled = True
+
+                elif step.action == "show_supervised_types_showcase":
+                    source_id = step.params.get("source_id")
+                    field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+
+                    field_fade_time = min(step.params.get("field_fade_time", 0.75), run_time * 0.35)
+                    showcase_in_time = min(step.params.get("showcase_in_time", 0.9), run_time * 0.45)
+                    hold_time = max(0.0, run_time - field_fade_time - showcase_in_time)
+
+                    if field_obj is not None:
+                        self.play(FadeOut(field_obj, scale=0.985), run_time=field_fade_time, rate_func=rate_functions.ease_in_out_sine)
+                        active_objects.pop(step.zone, None)
+
+                    title = Text(
+                        step.params.get("subtitle", "Two types of Supervised Learning"),
+                        font_size=step.params.get("subtitle_font_size", 27),
+                        color=step.params.get("subtitle_color", "#B9C4D6"),
+                        weight=MEDIUM,
+                    )
+                    title.set_opacity(0.0)
+                    title.move_to(vector_from_param(step.params.get("subtitle_position", [0.0, 2.25, 0.0])))
+
+                    def make_type_card(kind, side):
+                        cfg = step.params.get(kind, {})
+                        x = cfg.get("x", -2.45 if side == "left" else 2.45)
+                        accent = cfg.get("accent", "#F28A5B" if side == "left" else "#6EA8FE")
+                        card = VGroup()
+                        panel = RoundedRectangle(
+                            width=cfg.get("width", 3.75),
+                            height=cfg.get("height", 2.45),
+                            corner_radius=0.18,
+                            stroke_width=1.4,
+                            stroke_color=accent,
+                            fill_color=step.params.get("panel_fill", "#080B12"),
+                            fill_opacity=step.params.get("panel_opacity", 0.58),
+                        )
+                        panel.set_stroke(opacity=cfg.get("stroke_opacity", 0.44))
+                        heading = Text(
+                            cfg.get("title", "Classification" if side == "left" else "Regression"),
+                            font_size=cfg.get("title_font_size", 34),
+                            color=cfg.get("title_color", "#F5F7FB"),
+                            weight=BOLD,
+                        )
+                        heading.move_to(panel.get_center() + UP * 0.64)
+                        caption = Text(
+                            cfg.get("caption", "Predict a category" if side == "left" else "Predict a number"),
+                            font_size=cfg.get("caption_font_size", 19),
+                            color=cfg.get("caption_color", "#B9C4D6"),
+                            weight=MEDIUM,
+                        )
+                        caption.move_to(panel.get_center() + DOWN * 0.72)
+
+                        if side == "left":
+                            mini = VGroup(
+                                Dot([-0.36, 0.0, 0], radius=0.075, color="#F28A5B"),
+                                Dot([-0.12, 0.18, 0], radius=0.075, color="#F28A5B"),
+                                Dot([-0.02, -0.16, 0], radius=0.075, color="#F28A5B"),
+                                Dot([0.34, 0.05, 0], radius=0.075, color="#6EA8FE"),
+                                Dot([0.58, 0.22, 0], radius=0.075, color="#6EA8FE"),
+                                Dot([0.68, -0.12, 0], radius=0.075, color="#6EA8FE"),
+                            )
+                        else:
+                            curve = VMobject(color="#6EA8FE")
+                            curve.set_points_smoothly([
+                                np.array([-0.72, -0.18, 0.0]),
+                                np.array([-0.30, -0.02, 0.0]),
+                                np.array([0.12, 0.16, 0.0]),
+                                np.array([0.70, 0.28, 0.0]),
+                            ])
+                            curve.set_stroke(width=3.0, opacity=0.9)
+                            dots_line = VGroup(
+                                Dot([-0.64, -0.24, 0], radius=0.052, color="#B9C4D6"),
+                                Dot([-0.25, -0.02, 0], radius=0.052, color="#B9C4D6"),
+                                Dot([0.18, 0.08, 0], radius=0.052, color="#B9C4D6"),
+                                Dot([0.55, 0.33, 0], radius=0.052, color="#B9C4D6"),
+                            )
+                            mini = VGroup(curve, dots_line)
+                        mini.move_to(panel.get_center() + DOWN * 0.03)
+                        card.add(panel, heading, mini, caption)
+                        card.move_to(np.array([x, 0.12, 0.0]))
+                        card.set_opacity(0.0)
+                        return card
+
+                    classification = make_type_card("classification", "left")
+                    regression = make_type_card("regression", "right")
+                    connector = Line(classification.get_right() + RIGHT * 0.18, regression.get_left() + LEFT * 0.18, color=step.params.get("connector_color", "#40506A"), stroke_width=1.2)
+                    connector.set_stroke(opacity=0.0)
+                    showcase = VGroup(title, connector, classification, regression)
+                    self.add(showcase)
+                    self.play(
+                        AnimationGroup(
+                            title.animate.set_opacity(step.params.get("subtitle_opacity", 0.92)),
+                            connector.animate.set_stroke(opacity=step.params.get("connector_opacity", 0.32)),
+                            classification.animate.set_opacity(1.0).shift(UP * 0.04),
+                            regression.animate.set_opacity(1.0).shift(UP * 0.04),
+                            lag_ratio=0.12,
+                        ),
+                        run_time=showcase_in_time,
+                        rate_func=rate_functions.ease_out_sine,
+                    )
+                    if hold_time > 0:
+                        self.wait(hold_time)
+                    current_time += run_time
+                    register_object(step.id, step.zone, showcase)
                     handled = True
 
                 elif step.action == "show_supervised_resolution":

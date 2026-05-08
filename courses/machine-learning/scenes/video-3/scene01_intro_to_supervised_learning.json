@@ -313,18 +313,29 @@
       "transition_in": "smooth",
       "transition_out": "none",
       "persist": true,
-      "duration": 3.75,
+      "duration": 4.55,
       "params": {
         "source_id": "v3s1_declared_hold",
         "mode": "infer_rule",
-        "line_opacity": 0.98,
-        "line_glow_opacity": 0.2,
-        "dim_opacity": 0.46,
+        "fade_out_time": 0.5,
+        "pause_time": 0.5,
+        "grow_time": 3.0,
+        "settle_time": 0.45,
+        "line_opacity": 0.9,
+        "line_glow_opacity": 0.13,
+        "final_line_opacity": 0.99,
+        "final_glow_opacity": 0.22,
+        "grow_start_opacity": 0.5,
+        "grow_start_glow_opacity": 0.04,
+        "dim_opacity": 0.42,
+        "growth_dot_opacity": 0.78,
+        "restore_dot_opacity": 0.96,
         "dot_response": true,
-        "response_distance": 0.42,
-        "response_opacity": 1.0
+        "response_distance": 0.44,
+        "response_opacity": 1.0,
+        "response_settle_opacity": 0.96
       },
-      "offset": 0.7
+      "offset": 0.55
     },
     {
       "id": "v3s1_inference_settles",
@@ -339,7 +350,7 @@
         "source_id": "v3s1_inferred_rule",
         "mode": "hold"
       },
-      "offset": 4.55
+      "offset": 5.15
     },
     {
       "id": "v3s1_category_emphasis",
@@ -367,32 +378,46 @@
       "transition_in": "smooth",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.7,
+      "duration": 2.05,
       "params": {
         "source_id": "v3s1_category_emphasis",
         "mode": "curve_suggestion",
-        "bow": 0.24
+        "bow": 0.18
       },
       "offset": 0.05
     },
     {
-      "id": "v3s1_classification_regression_terms",
+      "id": "v3s1_supervised_types_showcase",
       "anchor": "v3s1_08c",
-      "action": "show_supervised_examples",
+      "action": "show_supervised_types_showcase",
       "zone": "full",
       "transition_in": "fade",
-      "transition_out": "fade",
-      "persist": false,
-      "duration": 2.25,
+      "transition_out": "none",
+      "persist": true,
+      "duration": 3.25,
       "params": {
         "source_id": "v3s1_line_curve_resolution",
-        "font_size": 31,
-        "text_opacity": 0.9,
-        "color": "#F5F7FB",
-        "position": [0.0, -2.48, 0.0],
-        "fade_time": 0.28,
-        "pair": "Classification  ·  Regression",
-        "dim_field": false
+        "field_fade_time": 0.8,
+        "showcase_in_time": 1.05,
+        "subtitle": "Two types of Supervised Learning",
+        "subtitle_font_size": 28,
+        "subtitle_position": [0.0, 2.35, 0.0],
+        "subtitle_opacity": 0.94,
+        "panel_fill": "#070A11",
+        "panel_opacity": 0.64,
+        "connector_opacity": 0.28,
+        "classification": {
+          "title": "Classification",
+          "caption": "predict a category",
+          "accent": "#F28A5B",
+          "x": -2.45
+        },
+        "regression": {
+          "title": "Regression",
+          "caption": "predict a number",
+          "accent": "#6EA8FE",
+          "x": 2.45
+        }
       },
       "offset": 0.0
     },
@@ -406,9 +431,9 @@
       "persist": true,
       "duration": 1.0,
       "params": {
-        "source_id": "v3s1_classification_regression_terms",
+        "source_id": "v3s1_supervised_types_showcase",
         "text": "Supervised Learning",
-        "font_size": 39,
+        "font_size": 40,
         "color": "#F5F7FB",
         "opacity": 0.96,
         "position": [0.0, -3.05, 0.0]
@@ -434,6 +459,6 @@
   "notes": {
     "tone": "calm, premium, concept-first introduction to supervised learning",
     "pacing": "audio-driven with split narration anchors for tighter sync; restrained motion remains the base, but readability and conceptual clarity take priority over strict beat-map minimalism",
-    "animation_guidelines": "Use one persistent dot field. Dots never move or resize after initial placement. Controlled deviations from the original brief are allowed: temporary dot dimming behind text, subtle readability haze, a sharper declared-rule snap, boundary-near dot response during inference, and minimal Classification/Regression terms near the close. Avoid axes, gridlines, arrows, hard boxes, split panels, and clutter."
+    "animation_guidelines": "Use one persistent dot field through the learning-rule sequence. Dots never move or resize while the field is active. Beat 7 must clearly stage declared-line fade, colored-dot dim, pause, slow center-out inferred-line growth, and final settle. For the Classification/Regression reveal, the dot field may dissolve away completely and give way to a premium two-type showcase. Avoid axes, gridlines, arrows, hard boxes, split-screen clutter, and cheap bottom labels."
   }
 }

@@ -55,7 +55,10 @@ AllowedAction = Literal[
     "show_supervised_field",
     "mutate_supervised_field",
     "show_supervised_examples",
+    "show_supervised_types_showcase",
     "show_supervised_resolution",
+    "show_classification_regression_field",
+    "mutate_classification_regression_field",
 ]
 
 AllowedZone = Literal[

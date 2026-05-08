@@ -2683,6 +2683,121 @@ def make_supervised_field(params, zone):
     field.supervised_line_end = line_end
     return field
 
+def make_classification_regression_field(params, zone):
+    neutral_color = params.get("neutral_color", "#7A8291")
+    red_color = params.get("red_color", "#F06A5A")
+    blue_color = params.get("blue_color", "#6EA8FE")
+    white_color = params.get("white_color", "#F8FBFF")
+    axis_color = params.get("axis_color", "#7D8796")
+    trend_color = params.get("trend_color", "#F1D38A")
+    boundary_color = params.get("boundary_color", "#EAF1FF")
+    read_line_color = params.get("read_line_color", "#8E98A8")
+    dot_radius = params.get("dot_radius", 0.058)
+    test_radius = params.get("test_dot_radius", 0.082)
+    dot_opacity = params.get("dot_opacity", 0.66)
+    field_scale = params.get("field_scale", 1.0)
+
+    default_points = [
+        [-4.05, -1.72, 0], [-3.72, -1.08, 0], [-3.36, -0.48, 0], [-3.10, 0.22, 0], [-2.82, 0.78, 0],
+        [-2.46, -1.38, 0], [-2.12, -0.78, 0], [-1.84, -0.12, 0], [-1.58, 0.54, 0], [-1.22, 1.08, 0],
+        [-0.92, -1.02, 0], [-0.58, -0.36, 0], [-0.24, 0.28, 0], [0.04, 0.92, 0], [0.42, 1.42, 0],
+        [0.72, -0.70, 0], [1.02, -0.04, 0], [1.36, 0.58, 0], [1.72, 1.10, 0], [2.02, 1.70, 0],
+        [2.38, -0.30, 0], [2.72, 0.34, 0], [3.02, 0.94, 0], [3.34, 1.46, 0], [3.68, 2.04, 0],
+        [-3.86, 0.88, 0], [-2.92, 1.46, 0], [-1.02, 0.10, 0], [1.86, 0.08, 0], [3.42, 0.52, 0],
+        [4.02, 1.36, 0],
+    ]
+    default_classes = [
+        "red", "red", "red", "red", "red",
+        "red", "red", "red", "red", "red",
+        "red", "red", "red", "blue", "blue",
+        "blue", "blue", "blue", "blue", "blue",
+        "blue", "blue", "blue", "blue", "blue",
+        "red", "red", "red", "blue", "blue",
+        "blue",
+    ]
+    points = params.get("points", default_points)
+    classes = params.get("classes", default_classes)
+
+    dots = VGroup()
+    for index, point in enumerate(points):
+        cls = classes[index] if index < len(classes) else ("red" if point[0] < 0 else "blue")
+        dot = Dot(_as_vector(point), radius=dot_radius, color=neutral_color)
+        dot.set_opacity(dot_opacity)
+        dot.cr_class = cls
+        dot.cr_neutral_color = neutral_color
+        dot.cr_target_color = red_color if cls == "red" else blue_color
+        dots.add(dot)
+
+    boundary_start = _as_vector(params.get("boundary_start", [-0.55, -2.35, 0]))
+    boundary_end = _as_vector(params.get("boundary_end", [0.72, 2.35, 0]))
+    boundary = Line(boundary_start, boundary_end, color=boundary_color, stroke_width=params.get("boundary_width", 3.0))
+    boundary.set_stroke(opacity=0.0)
+
+    origin = _as_vector(params.get("axis_origin", [-4.35, -2.2, 0]))
+    x_end = _as_vector(params.get("x_axis_end", [4.45, -2.2, 0]))
+    y_end = _as_vector(params.get("y_axis_end", [-4.35, 2.35, 0]))
+    x_axis = Line(origin, x_end, color=axis_color, stroke_width=params.get("axis_width", 2.0))
+    y_axis = Line(origin, y_end, color=axis_color, stroke_width=params.get("axis_width", 2.0))
+    x_axis.set_stroke(opacity=0.0)
+    y_axis.set_stroke(opacity=0.0)
+
+    ticks = VGroup()
+    for x in params.get("x_ticks", [-2.8, -1.2, 0.4, 2.0, 3.6]):
+        tick = Line([x, origin[1] - 0.07, 0], [x, origin[1] + 0.07, 0], color=axis_color, stroke_width=1.2)
+        tick.set_stroke(opacity=0.0)
+        ticks.add(tick)
+    for y in params.get("y_ticks", [-1.15, -0.1, 0.95, 2.0]):
+        tick = Line([origin[0] - 0.07, y, 0], [origin[0] + 0.07, y, 0], color=axis_color, stroke_width=1.2)
+        tick.set_stroke(opacity=0.0)
+        ticks.add(tick)
+
+    trend_points = [_as_vector(p) for p in params.get("trend_points", [[-4.0, -1.58, 0], [-2.0, -0.58, 0], [0.1, 0.33, 0], [2.1, 1.10, 0], [4.05, 1.88, 0]])]
+    trend_line = VMobject(color=trend_color)
+    trend_line.set_points_smoothly(trend_points)
+    trend_line.set_stroke(width=params.get("trend_width", 3.0), opacity=0.0)
+
+    test_start = _as_vector(params.get("test_point", [-0.18, 0.18, 0]))
+    test_dot = Dot(test_start, radius=test_radius, color=white_color)
+    test_dot.set_opacity(0.0)
+    test_dot.cr_white_color = white_color
+    test_dot.cr_blue_color = blue_color
+    test_dot.cr_class_position = _as_vector(params.get("test_classified_point", [0.52, 0.20, 0]))
+    test_dot.cr_axis_position = _as_vector(params.get("test_axis_point", [1.25, origin[1], 0]))
+    test_dot.cr_intersection = _as_vector(params.get("test_intersection", [1.25, 0.88, 0]))
+
+    vertical_read = DashedLine(test_dot.cr_axis_position, test_dot.cr_intersection, color=read_line_color, dash_length=0.09, stroke_width=1.6)
+    horizontal_read = DashedLine(test_dot.cr_intersection, [origin[0], test_dot.cr_intersection[1], 0], color=read_line_color, dash_length=0.09, stroke_width=1.6)
+    vertical_read.set_stroke(opacity=0.0)
+    horizontal_read.set_stroke(opacity=0.0)
+
+    field = VGroup(dots, boundary, x_axis, y_axis, ticks, trend_line, vertical_read, horizontal_read, test_dot)
+    field.scale(field_scale)
+    place_in_zone(field, zone)
+
+    field.cr_dots = dots
+    field.cr_boundary = boundary
+    field.cr_x_axis = x_axis
+    field.cr_y_axis = y_axis
+    field.cr_ticks = ticks
+    field.cr_trend_line = trend_line
+    field.cr_vertical_read = vertical_read
+    field.cr_horizontal_read = horizontal_read
+    field.cr_test_dot = test_dot
+    field.cr_params = dict(params)
+    field.cr_neutral_color = neutral_color
+    field.cr_red_color = red_color
+    field.cr_blue_color = blue_color
+    field.cr_white_color = white_color
+    field.cr_dot_opacity = dot_opacity
+    field.cr_colored_opacity = params.get("colored_opacity", 0.94)
+    field.cr_axis_opacity = params.get("axis_opacity", 0.52)
+    field.cr_tick_opacity = params.get("tick_opacity", 0.45)
+    field.cr_boundary_opacity = params.get("boundary_opacity", 0.84)
+    field.cr_trend_opacity = params.get("trend_opacity", 0.92)
+    field.cr_read_opacity = params.get("read_opacity", 0.62)
+    return field
+
+
 def transition_in_for(obj, transition_name: str):
     if transition_name in {"none", "smooth"}:
         return FadeIn(obj)
@@ -2824,6 +2939,9 @@ def build_object(step_dict):
 
     if action == "show_supervised_field":
         return make_supervised_field(params, zone)
+
+    if action == "show_classification_regression_field":
+        return make_classification_regression_field(params, zone)
 
     if action == "fade_out":
         return None
