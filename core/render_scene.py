@@ -841,6 +841,8 @@ class JsonDrivenScene(MovingCameraScene):
                             prediction_marker.set_opacity(0.0)
                         if fade_anims:
                             self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=boundary_time, rate_func=rate_functions.ease_in_out_sine)
+                        elif boundary_time > 0:
+                            self.wait(boundary_time)
                         if x_axis is not None and y_axis is not None:
                             x_start, x_end = x_axis.get_start(), x_axis.get_end()
                             y_start, y_end = y_axis.get_start(), y_axis.get_end()
@@ -883,20 +885,23 @@ class JsonDrivenScene(MovingCameraScene):
                                 trend_time = max(0.05, trend_time - label_time)
 
                             if reveal_style == "center_out":
-                                trend_points = getattr(cr_field, "cr_trend_points", None)
-                                trend_color_value = getattr(cr_field, "cr_trend_color", "#F5E4A0")
-                                trend_width_value = getattr(cr_field, "cr_trend_width", 4.0)
-                                if trend_points and len(trend_points) >= 2:
-                                    midpoint_index = len(trend_points) // 2
-                                    left_points = list(reversed(trend_points[: midpoint_index + 1]))
-                                    right_points = trend_points[midpoint_index:]
+                                trend_color_value = getattr(field_obj, "cr_trend_color", "#F5E4A0")
+                                trend_width_value = getattr(field_obj, "cr_trend_width", 4.0)
+                                sample_count = max(7, int(step.params.get("trend_reveal_samples", 17)))
+                                sampled_points = [
+                                    trend_line.point_from_proportion(i / (sample_count - 1))
+                                    for i in range(sample_count)
+                                ]
+                                if len(sampled_points) >= 2:
+                                    midpoint_index = len(sampled_points) // 2
+                                    left_points = list(reversed(sampled_points[: midpoint_index + 1]))
+                                    right_points = sampled_points[midpoint_index:]
                                     left_half = VMobject(color=trend_color_value)
                                     left_half.set_points_smoothly(left_points)
                                     left_half.set_stroke(width=trend_width_value, opacity=trend_opacity)
                                     right_half = VMobject(color=trend_color_value)
                                     right_half.set_points_smoothly(right_points)
                                     right_half.set_stroke(width=trend_width_value, opacity=trend_opacity)
-                                    self.add(left_half, right_half)
                                     trend_line.set_stroke(opacity=0.0)
                                     self.play(
                                         AnimationGroup(Create(left_half), Create(right_half), lag_ratio=0.0),
@@ -988,6 +993,8 @@ class JsonDrivenScene(MovingCameraScene):
                             fades.append(trend_label.animate.set_opacity(step.params.get("trend_label_final_opacity", 0.0)))
                         if fades:
                             self.play(AnimationGroup(*fades, lag_ratio=0.0), run_time=fade_time, rate_func=rate_functions.ease_in_out_sine)
+                        elif fade_time > 0:
+                            self.wait(fade_time)
                         left_cutoff = step.params.get("left_cutoff", 0.35)
                         left_dots = [dot for dot in dots if dot.get_center()[0] <= left_cutoff]
                         if left_dots:

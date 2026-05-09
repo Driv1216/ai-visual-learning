@@ -203,6 +203,7 @@
         "axis_label_opacity": 0.74,
         "trend_label_opacity": 0.78,
         "trend_reveal": "center_out",
+        "trend_reveal_samples": 17,
         "show_axis_labels": true,
         "show_trend_label": true
       }
