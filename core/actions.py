@@ -2689,13 +2689,16 @@ def make_classification_regression_field(params, zone):
     blue_color = params.get("blue_color", "#6EA8FE")
     white_color = params.get("white_color", "#F8FBFF")
     axis_color = params.get("axis_color", "#7D8796")
-    trend_color = params.get("trend_color", "#F1D38A")
+    trend_color = params.get("trend_color", "#F5E4A0")
     boundary_color = params.get("boundary_color", "#EAF1FF")
     read_line_color = params.get("read_line_color", "#8E98A8")
     dot_radius = params.get("dot_radius", 0.058)
-    test_radius = params.get("test_dot_radius", 0.082)
+    test_radius = params.get("test_dot_radius", 0.125)
     dot_opacity = params.get("dot_opacity", 0.66)
     field_scale = params.get("field_scale", 1.0)
+    label_color = params.get("label_color", axis_color)
+    label_font_size = params.get("axis_label_font_size", 24)
+    line_label_font_size = params.get("line_label_font_size", 22)
 
     default_points = [
         [-4.05, -1.72, 0], [-3.72, -1.08, 0], [-3.36, -0.48, 0], [-3.10, 0.22, 0], [-2.82, 0.78, 0],
@@ -2732,6 +2735,10 @@ def make_classification_regression_field(params, zone):
     boundary_end = _as_vector(params.get("boundary_end", [0.72, 2.35, 0]))
     boundary = Line(boundary_start, boundary_end, color=boundary_color, stroke_width=params.get("boundary_width", 3.0))
     boundary.set_stroke(opacity=0.0)
+    boundary_label_text = params.get("boundary_label", "decision boundary")
+    boundary_label = Text(boundary_label_text, font_size=line_label_font_size, color=boundary_color, weight=MEDIUM)
+    boundary_label.next_to(boundary_end, RIGHT, buff=0.16)
+    boundary_label.set_opacity(0.0)
 
     origin = _as_vector(params.get("axis_origin", [-4.35, -2.2, 0]))
     x_end = _as_vector(params.get("x_axis_end", [4.45, -2.2, 0]))
@@ -2740,6 +2747,12 @@ def make_classification_regression_field(params, zone):
     y_axis = Line(origin, y_end, color=axis_color, stroke_width=params.get("axis_width", 2.0))
     x_axis.set_stroke(opacity=0.0)
     y_axis.set_stroke(opacity=0.0)
+    x_label = Text(params.get("x_axis_label", "Hours"), font_size=label_font_size, color=label_color, weight=MEDIUM)
+    x_label.next_to(x_end, UP, buff=0.16)
+    y_label = Text(params.get("y_axis_label", "Marks"), font_size=label_font_size, color=label_color, weight=MEDIUM)
+    y_label.next_to(y_end, RIGHT, buff=0.16)
+    x_label.set_opacity(0.0)
+    y_label.set_opacity(0.0)
 
     ticks = VGroup()
     for x in params.get("x_ticks", [-2.8, -1.2, 0.4, 2.0, 3.6]):
@@ -2751,37 +2764,56 @@ def make_classification_regression_field(params, zone):
         tick.set_stroke(opacity=0.0)
         ticks.add(tick)
 
-    trend_points = [_as_vector(p) for p in params.get("trend_points", [[-4.0, -1.58, 0], [-2.0, -0.58, 0], [0.1, 0.33, 0], [2.1, 1.10, 0], [4.05, 1.88, 0]])]
+    trend_points = [_as_vector(p) for p in params.get("trend_points", [[-3.45, -1.30, 0], [-1.75, -0.52, 0], [0.05, 0.30, 0], [1.85, 1.03, 0], [3.45, 1.68, 0]])]
     trend_line = VMobject(color=trend_color)
     trend_line.set_points_smoothly(trend_points)
-    trend_line.set_stroke(width=params.get("trend_width", 3.0), opacity=0.0)
+    trend_line.set_stroke(width=params.get("trend_width", 3.9), opacity=0.0)
+    trend_label = Text(params.get("trend_label", "fit"), font_size=line_label_font_size, color=trend_color, weight=MEDIUM)
+    trend_label.next_to(trend_points[-1], RIGHT, buff=0.18)
+    trend_label.set_opacity(0.0)
 
-    test_start = _as_vector(params.get("test_point", [-0.18, 0.18, 0]))
+    test_start = _as_vector(params.get("test_point", [-0.02, 0.20, 0]))
     test_dot = Dot(test_start, radius=test_radius, color=white_color)
     test_dot.set_opacity(0.0)
+    test_glow = Circle(radius=params.get("test_glow_radius", test_radius * 2.15), color=white_color, stroke_width=params.get("test_glow_width", 2.0))
+    test_glow.move_to(test_start)
+    test_glow.set_stroke(opacity=0.0)
+    test_glow.set_fill(opacity=0.0)
+    test_dot.cr_glow = test_glow
     test_dot.cr_white_color = white_color
     test_dot.cr_blue_color = blue_color
-    test_dot.cr_class_position = _as_vector(params.get("test_classified_point", [0.52, 0.20, 0]))
+    test_dot.cr_class_position = _as_vector(params.get("test_classified_point", [0.48, 0.22, 0]))
     test_dot.cr_axis_position = _as_vector(params.get("test_axis_point", [1.25, origin[1], 0]))
     test_dot.cr_intersection = _as_vector(params.get("test_intersection", [1.25, 0.88, 0]))
 
-    vertical_read = DashedLine(test_dot.cr_axis_position, test_dot.cr_intersection, color=read_line_color, dash_length=0.09, stroke_width=1.6)
-    horizontal_read = DashedLine(test_dot.cr_intersection, [origin[0], test_dot.cr_intersection[1], 0], color=read_line_color, dash_length=0.09, stroke_width=1.6)
+    vertical_read = DashedLine(test_dot.cr_axis_position, test_dot.cr_intersection, color=read_line_color, dash_length=0.09, stroke_width=params.get("read_line_width", 1.7))
+    horizontal_read = DashedLine(test_dot.cr_intersection, [origin[0], test_dot.cr_intersection[1], 0], color=read_line_color, dash_length=0.09, stroke_width=params.get("read_line_width", 1.7))
     vertical_read.set_stroke(opacity=0.0)
     horizontal_read.set_stroke(opacity=0.0)
+    prediction_marker = Dot([origin[0], test_dot.cr_intersection[1], 0], radius=params.get("prediction_marker_radius", 0.055), color=read_line_color)
+    prediction_marker.set_opacity(0.0)
 
-    field = VGroup(dots, boundary, x_axis, y_axis, ticks, trend_line, vertical_read, horizontal_read, test_dot)
+    field = VGroup(dots, boundary, boundary_label, x_axis, y_axis, x_label, y_label, ticks, trend_line, trend_label, vertical_read, horizontal_read, prediction_marker, test_glow, test_dot)
     field.scale(field_scale)
     place_in_zone(field, zone)
 
     field.cr_dots = dots
     field.cr_boundary = boundary
+    field.cr_boundary_label = boundary_label
     field.cr_x_axis = x_axis
     field.cr_y_axis = y_axis
+    field.cr_x_label = x_label
+    field.cr_y_label = y_label
     field.cr_ticks = ticks
     field.cr_trend_line = trend_line
+    field.cr_trend_points = trend_points
+    field.cr_trend_color = trend_color
+    field.cr_trend_width = params.get("trend_width", 3.9)
+    field.cr_trend_label = trend_label
     field.cr_vertical_read = vertical_read
     field.cr_horizontal_read = horizontal_read
+    field.cr_prediction_marker = prediction_marker
+    field.cr_test_glow = test_glow
     field.cr_test_dot = test_dot
     field.cr_params = dict(params)
     field.cr_neutral_color = neutral_color
@@ -2792,6 +2824,11 @@ def make_classification_regression_field(params, zone):
     field.cr_colored_opacity = params.get("colored_opacity", 0.94)
     field.cr_axis_opacity = params.get("axis_opacity", 0.52)
     field.cr_tick_opacity = params.get("tick_opacity", 0.45)
+    field.cr_axis_label_opacity = params.get("axis_label_opacity", 0.68)
+    field.cr_boundary_label_opacity = params.get("boundary_label_opacity", 0.64)
+    field.cr_trend_label_opacity = params.get("trend_label_opacity", 0.76)
+    field.cr_test_glow_opacity = params.get("test_glow_opacity", 0.22)
+    field.cr_prediction_marker_opacity = params.get("prediction_marker_opacity", 0.86)
     field.cr_boundary_opacity = params.get("boundary_opacity", 0.84)
     field.cr_trend_opacity = params.get("trend_opacity", 0.92)
     field.cr_read_opacity = params.get("read_opacity", 0.62)

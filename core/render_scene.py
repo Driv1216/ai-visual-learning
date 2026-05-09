@@ -694,11 +694,22 @@ class JsonDrivenScene(MovingCameraScene):
                     trend_line = getattr(field_obj, "cr_trend_line", None)
                     vertical_read = getattr(field_obj, "cr_vertical_read", None)
                     horizontal_read = getattr(field_obj, "cr_horizontal_read", None)
+                    boundary_label = getattr(field_obj, "cr_boundary_label", None)
+                    x_label = getattr(field_obj, "cr_x_label", None)
+                    y_label = getattr(field_obj, "cr_y_label", None)
+                    trend_label = getattr(field_obj, "cr_trend_label", None)
+                    prediction_marker = getattr(field_obj, "cr_prediction_marker", None)
+                    test_glow = getattr(field_obj, "cr_test_glow", None)
                     neutral_color = step.params.get("neutral_color", getattr(field_obj, "cr_neutral_color", "#7A8291"))
                     dot_opacity = step.params.get("dot_opacity", getattr(field_obj, "cr_dot_opacity", 0.66))
                     colored_opacity = step.params.get("colored_opacity", getattr(field_obj, "cr_colored_opacity", 0.94))
                     axis_opacity = step.params.get("axis_opacity", getattr(field_obj, "cr_axis_opacity", 0.52))
                     tick_opacity = step.params.get("tick_opacity", getattr(field_obj, "cr_tick_opacity", 0.45))
+                    axis_label_opacity = step.params.get("axis_label_opacity", getattr(field_obj, "cr_axis_label_opacity", 0.68))
+                    boundary_label_opacity = step.params.get("boundary_label_opacity", getattr(field_obj, "cr_boundary_label_opacity", 0.64))
+                    trend_label_opacity = step.params.get("trend_label_opacity", getattr(field_obj, "cr_trend_label_opacity", 0.76))
+                    test_glow_opacity = step.params.get("test_glow_opacity", getattr(field_obj, "cr_test_glow_opacity", 0.22))
+                    prediction_marker_opacity = step.params.get("prediction_marker_opacity", getattr(field_obj, "cr_prediction_marker_opacity", 0.86))
                     boundary_opacity = step.params.get("boundary_opacity", getattr(field_obj, "cr_boundary_opacity", 0.84))
                     trend_opacity = step.params.get("trend_opacity", getattr(field_obj, "cr_trend_opacity", 0.92))
                     read_opacity = step.params.get("read_opacity", getattr(field_obj, "cr_read_opacity", 0.62))
@@ -714,8 +725,16 @@ class JsonDrivenScene(MovingCameraScene):
                             drop = step.params.get("drop_distance", 0.38)
                             test_dot.move_to(final_pos + UP * drop)
                             test_dot.set_opacity(0.0)
+                            if test_glow is not None:
+                                test_glow.move_to(test_dot.get_center())
+                                test_glow.set_stroke(opacity=0.0)
+                            drop_anims = [
+                                test_dot.animate.move_to(final_pos).set_opacity(step.params.get("test_opacity", 1.0))
+                            ]
+                            if test_glow is not None:
+                                drop_anims.append(test_glow.animate.move_to(final_pos).set_stroke(opacity=test_glow_opacity))
                             self.play(
-                                test_dot.animate.move_to(final_pos).set_opacity(step.params.get("test_opacity", 1.0)),
+                                AnimationGroup(*drop_anims, lag_ratio=0.0),
                                 run_time=run_time,
                                 rate_func=rate_functions.ease_out_sine,
                             )
@@ -726,7 +745,13 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
 
                     elif mode == "classification_color_wave":
-                        ordered = sorted(dots, key=lambda dot: abs(dot.get_center()[0] - step.params.get("boundary_x", 0.0)))
+                        boundary_x = step.params.get("boundary_x", 0.0)
+                        wave_direction = step.params.get("wave_direction", "toward_boundary")
+                        ordered = sorted(
+                            dots,
+                            key=lambda dot: abs(dot.get_center()[0] - boundary_x),
+                            reverse=(wave_direction == "toward_boundary"),
+                        )
                         wave_count = step.params.get("wave_count", 6)
                         waves = []
                         for wave_index in range(wave_count):
@@ -754,8 +779,14 @@ class JsonDrivenScene(MovingCameraScene):
                             center = boundary.point_from_proportion(0.5)
                             boundary.put_start_and_end_on(center, center)
                             boundary.set_stroke(opacity=step.params.get("start_opacity", 0.18))
+                            boundary_anims = [
+                                boundary.animate.put_start_and_end_on(start, end).set_stroke(opacity=boundary_opacity)
+                            ]
+                            if boundary_label is not None and step.params.get("show_boundary_label", True):
+                                boundary_label.set_opacity(0.0)
+                                boundary_anims.append(boundary_label.animate.set_opacity(boundary_label_opacity))
                             self.play(
-                                boundary.animate.put_start_and_end_on(start, end).set_stroke(opacity=boundary_opacity),
+                                AnimationGroup(*boundary_anims, lag_ratio=0.22),
                                 run_time=run_time,
                                 rate_func=rate_functions.ease_in_out_sine,
                             )
@@ -771,8 +802,14 @@ class JsonDrivenScene(MovingCameraScene):
                             drift_time = min(step.params.get("drift_time", run_time * 0.62), run_time)
                             color_time = min(step.params.get("color_time", 0.6), max(0.05, run_time - drift_time))
                             hold_time = max(0.0, run_time - drift_time - color_time)
-                            self.play(test_dot.animate.move_to(target), run_time=drift_time, rate_func=rate_functions.ease_in_out_sine)
-                            self.play(test_dot.animate.set_color(step.params.get("target_color", getattr(field_obj, "cr_blue_color", "#6EA8FE"))), run_time=color_time, rate_func=rate_functions.ease_in_out_sine)
+                            drift_anims = [test_dot.animate.move_to(target)]
+                            if test_glow is not None:
+                                drift_anims.append(test_glow.animate.move_to(target).set_stroke(opacity=test_glow_opacity))
+                            self.play(AnimationGroup(*drift_anims, lag_ratio=0.0), run_time=drift_time, rate_func=rate_functions.ease_in_out_sine)
+                            color_anims = [test_dot.animate.set_color(step.params.get("target_color", getattr(field_obj, "cr_blue_color", "#6EA8FE")))]
+                            if test_glow is not None:
+                                color_anims.append(test_glow.animate.set_color(step.params.get("target_color", getattr(field_obj, "cr_blue_color", "#6EA8FE"))).set_stroke(opacity=step.params.get("claimed_glow_opacity", test_glow_opacity * 0.75)))
+                            self.play(AnimationGroup(*color_anims, lag_ratio=0.0), run_time=color_time, rate_func=rate_functions.ease_in_out_sine)
                             if hold_time > 0:
                                 self.wait(hold_time)
                         else:
@@ -788,11 +825,20 @@ class JsonDrivenScene(MovingCameraScene):
                         drain_anims = [dot.animate.set_color(neutral_color).set_opacity(dot_opacity) for dot in dots]
                         if test_dot is not None:
                             axis_position = vector_from_param(step.params.get("test_hold_position", getattr(test_dot, "cr_axis_position", test_dot.get_center())))
-                            drain_anims.append(test_dot.animate.set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).move_to(axis_position).set_opacity(step.params.get("test_opacity", 0.78)))
+                            drain_anims.append(test_dot.animate.set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).move_to(axis_position).set_opacity(step.params.get("test_opacity", 0.0)))
+                        if test_glow is not None:
+                            glow_target = vector_from_param(step.params.get("test_hold_position", getattr(test_dot, "cr_axis_position", test_glow.get_center()))) if test_dot is not None else test_glow.get_center()
+                            drain_anims.append(test_glow.animate.move_to(glow_target).set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).set_stroke(opacity=step.params.get("test_glow_reset_opacity", 0.0)))
                         self.play(AnimationGroup(*drain_anims, lag_ratio=0.0), run_time=drain_time, rate_func=rate_functions.ease_in_out_sine)
                         fade_anims = []
                         if boundary is not None:
                             fade_anims.append(boundary.animate.set_stroke(opacity=0.0))
+                        if boundary_label is not None:
+                            fade_anims.append(boundary_label.animate.set_opacity(0.0))
+                        if trend_label is not None:
+                            trend_label.set_opacity(0.0)
+                        if prediction_marker is not None:
+                            prediction_marker.set_opacity(0.0)
                         if fade_anims:
                             self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=boundary_time, rate_func=rate_functions.ease_in_out_sine)
                         if x_axis is not None and y_axis is not None:
@@ -818,16 +864,58 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
 
                     elif mode == "draw_trend_line":
+                        intro_anims = []
                         if ticks:
-                            self.play(AnimationGroup(*[tick.animate.set_stroke(opacity=tick_opacity) for tick in ticks], lag_ratio=0.04), run_time=min(0.35, run_time * 0.25))
-                            trend_time = max(0.05, run_time - min(0.35, run_time * 0.25))
-                        else:
-                            trend_time = run_time
+                            intro_anims.extend([tick.animate.set_stroke(opacity=tick_opacity) for tick in ticks])
+                        if x_label is not None and step.params.get("show_axis_labels", True):
+                            intro_anims.append(x_label.animate.set_opacity(axis_label_opacity))
+                        if y_label is not None and step.params.get("show_axis_labels", True):
+                            intro_anims.append(y_label.animate.set_opacity(axis_label_opacity))
+                        intro_time = min(0.45, run_time * 0.28) if intro_anims else 0.0
+                        if intro_anims:
+                            self.play(AnimationGroup(*intro_anims, lag_ratio=0.05), run_time=intro_time, rate_func=rate_functions.ease_in_out_sine)
+                        label_time = 0.0
                         if trend_line is not None:
-                            self.play(Create(trend_line), run_time=trend_time, rate_func=rate_functions.ease_in_out_sine)
-                            trend_line.set_stroke(opacity=trend_opacity)
+                            reveal_style = step.params.get("trend_reveal", "center_out")
+                            trend_time = max(0.05, run_time - intro_time)
+                            if trend_label is not None and step.params.get("show_trend_label", True):
+                                label_time = min(0.35, trend_time * 0.25)
+                                trend_time = max(0.05, trend_time - label_time)
+
+                            if reveal_style == "center_out":
+                                trend_points = getattr(cr_field, "cr_trend_points", None)
+                                trend_color_value = getattr(cr_field, "cr_trend_color", "#F5E4A0")
+                                trend_width_value = getattr(cr_field, "cr_trend_width", 4.0)
+                                if trend_points and len(trend_points) >= 2:
+                                    midpoint_index = len(trend_points) // 2
+                                    left_points = list(reversed(trend_points[: midpoint_index + 1]))
+                                    right_points = trend_points[midpoint_index:]
+                                    left_half = VMobject(color=trend_color_value)
+                                    left_half.set_points_smoothly(left_points)
+                                    left_half.set_stroke(width=trend_width_value, opacity=trend_opacity)
+                                    right_half = VMobject(color=trend_color_value)
+                                    right_half.set_points_smoothly(right_points)
+                                    right_half.set_stroke(width=trend_width_value, opacity=trend_opacity)
+                                    self.add(left_half, right_half)
+                                    trend_line.set_stroke(opacity=0.0)
+                                    self.play(
+                                        AnimationGroup(Create(left_half), Create(right_half), lag_ratio=0.0),
+                                        run_time=trend_time,
+                                        rate_func=rate_functions.ease_in_out_sine,
+                                    )
+                                    trend_line.set_stroke(opacity=trend_opacity)
+                                    self.remove(left_half, right_half)
+                                else:
+                                    self.play(Create(trend_line), run_time=trend_time, rate_func=rate_functions.ease_in_out_sine)
+                                    trend_line.set_stroke(opacity=trend_opacity)
+                            else:
+                                self.play(Create(trend_line), run_time=trend_time, rate_func=rate_functions.ease_in_out_sine)
+                                trend_line.set_stroke(opacity=trend_opacity)
+
+                            if trend_label is not None and step.params.get("show_trend_label", True):
+                                self.play(trend_label.animate.set_opacity(trend_label_opacity), run_time=label_time, rate_func=rate_functions.ease_in_out_sine)
                         else:
-                            self.wait(trend_time)
+                            self.wait(max(0.05, run_time - intro_time))
                         current_time += run_time
                         register_cr_field()
                         handled = True
@@ -843,7 +931,16 @@ class JsonDrivenScene(MovingCameraScene):
                             move_time = min(step.params.get("move_time", 0.8), run_time * 0.35)
                             hold_time = max(0.0, run_time - vertical_time - horizontal_time - move_time)
                             test_dot.move_to(axis_pos)
-                            self.play(test_dot.animate.set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).set_opacity(1.0), run_time=min(0.25, vertical_time * 0.35))
+                            test_dot.set_opacity(0.0)
+                            if test_glow is not None:
+                                test_glow.move_to(axis_pos)
+                                test_glow.set_stroke(opacity=0.0)
+                            reentry_anims = [
+                                test_dot.animate.set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).set_opacity(1.0)
+                            ]
+                            if test_glow is not None:
+                                reentry_anims.append(test_glow.animate.set_color(getattr(field_obj, "cr_white_color", "#F8FBFF")).set_stroke(opacity=test_glow_opacity))
+                            self.play(AnimationGroup(*reentry_anims, lag_ratio=0.0), run_time=min(0.28, vertical_time * 0.35))
                             if vertical_read is not None:
                                 vertical_read.put_start_and_end_on(axis_pos, intersection)
                                 vertical_read.set_stroke(opacity=read_opacity)
@@ -858,7 +955,15 @@ class JsonDrivenScene(MovingCameraScene):
                                 self.play(Create(horizontal_read), run_time=horizontal_time, rate_func=rate_functions.ease_in_out_sine)
                             else:
                                 self.wait(horizontal_time)
-                            self.play(test_dot.animate.move_to(intersection), run_time=move_time, rate_func=rate_functions.ease_in_out_sine)
+                            dot_move_anims = [test_dot.animate.move_to(intersection)]
+                            if test_glow is not None:
+                                dot_move_anims.append(test_glow.animate.move_to(intersection).set_stroke(opacity=test_glow_opacity))
+                            self.play(AnimationGroup(*dot_move_anims, lag_ratio=0.0), run_time=move_time, rate_func=rate_functions.ease_in_out_sine)
+                            if prediction_marker is not None and step.params.get("show_prediction_marker", True):
+                                marker_pos = np.array([y_axis.get_start()[0], intersection[1], 0.0]) if y_axis is not None else np.array([-4.35, intersection[1], 0.0])
+                                prediction_marker.move_to(marker_pos)
+                                self.play(prediction_marker.animate.set_opacity(prediction_marker_opacity), run_time=min(0.28, max(0.05, hold_time * 0.45 + 0.08)), rate_func=rate_functions.ease_in_out_sine)
+                                hold_time = max(0.0, hold_time - min(0.28, max(0.05, hold_time * 0.45 + 0.08)))
                             if hold_time > 0:
                                 self.wait(hold_time)
                         current_time += run_time
@@ -868,13 +973,19 @@ class JsonDrivenScene(MovingCameraScene):
                     elif mode == "final_dual_frame":
                         fade_time = min(step.params.get("read_fade_time", 0.5), run_time * 0.24)
                         color_time = min(step.params.get("left_color_time", 1.2), run_time * 0.55)
-                        boundary_time = min(step.params.get("boundary_time", 0.45), max(0.05, run_time - fade_time - color_time))
-                        hold_time = max(0.0, run_time - fade_time - color_time - boundary_time)
+                        boundary_fade_time = min(step.params.get("boundary_fade_time", 0.35), run_time * 0.2)
+                        hold_time = max(0.0, run_time - fade_time - color_time - boundary_fade_time)
                         fades = []
                         if vertical_read is not None:
                             fades.append(vertical_read.animate.set_stroke(opacity=0.0))
                         if horizontal_read is not None:
-                            fades.append(horizontal_read.animate.set_stroke(opacity=step.params.get("horizontal_final_opacity", 0.34)))
+                            fades.append(horizontal_read.animate.set_stroke(opacity=step.params.get("horizontal_final_opacity", 0.18)))
+                        if boundary is not None:
+                            fades.append(boundary.animate.set_stroke(opacity=0.0))
+                        if boundary_label is not None:
+                            fades.append(boundary_label.animate.set_opacity(0.0))
+                        if trend_label is not None and step.params.get("fade_trend_label", True):
+                            fades.append(trend_label.animate.set_opacity(step.params.get("trend_label_final_opacity", 0.0)))
                         if fades:
                             self.play(AnimationGroup(*fades, lag_ratio=0.0), run_time=fade_time, rate_func=rate_functions.ease_in_out_sine)
                         left_cutoff = step.params.get("left_cutoff", 0.35)
@@ -887,17 +998,10 @@ class JsonDrivenScene(MovingCameraScene):
                             ], lag_ratio=0.05), run_time=color_time, rate_func=rate_functions.ease_in_out_sine)
                         else:
                             self.wait(color_time)
-                        if boundary is not None:
-                            full_start = boundary.get_start()
-                            full_end = boundary.get_end()
-                            mid = boundary.point_from_proportion(0.48)
-                            left_start = full_start
-                            left_end = mid
-                            boundary.put_start_and_end_on(left_end, left_end)
-                            boundary.set_stroke(opacity=step.params.get("boundary_start_opacity", 0.12))
-                            self.play(boundary.animate.put_start_and_end_on(left_start, left_end).set_stroke(opacity=boundary_opacity), run_time=boundary_time, rate_func=rate_functions.ease_in_out_sine)
-                        else:
-                            self.wait(boundary_time)
+                        if prediction_marker is not None and step.params.get("keep_prediction_marker", True):
+                            prediction_marker.set_opacity(prediction_marker_opacity)
+                        if boundary_fade_time > 0:
+                            self.wait(boundary_fade_time)
                         if hold_time > 0:
                             self.wait(hold_time)
                         current_time += run_time

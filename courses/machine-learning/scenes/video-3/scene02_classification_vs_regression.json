@@ -55,25 +55,42 @@
       "params": {
         "cluster_count": 4,
         "dot_radius": 0.06,
-        "test_dot_radius": 0.086,
+        "test_dot_radius": 0.128,
+        "test_glow_radius": 0.27,
+        "test_glow_width": 2.2,
+        "test_glow_opacity": 0.24,
         "dot_opacity": 0.68,
-        "colored_opacity": 0.94,
+        "colored_opacity": 0.96,
         "neutral_color": "#788190",
         "red_color": "#EF6A5B",
         "blue_color": "#6EA8FE",
         "white_color": "#F8FBFF",
-        "axis_color": "#8993A3",
-        "trend_color": "#F1D38A",
+        "axis_color": "#99A5B8",
+        "label_color": "#AEB8C8",
+        "trend_color": "#F5E4A0",
         "boundary_color": "#EAF1FF",
-        "read_line_color": "#9AA5B5",
+        "read_line_color": "#B1BDCE",
         "field_scale": 1.0,
-        "axis_opacity": 0.50,
-        "tick_opacity": 0.42,
-        "boundary_opacity": 0.86,
-        "trend_opacity": 0.92,
-        "read_opacity": 0.64,
-        "test_point": [-0.16, 0.20, 0],
-        "test_classified_point": [0.58, 0.22, 0],
+        "axis_opacity": 0.62,
+        "tick_opacity": 0.50,
+        "axis_label_opacity": 0.74,
+        "axis_label_font_size": 24,
+        "x_axis_label": "Hours",
+        "y_axis_label": "Marks",
+        "boundary_label": "decision boundary",
+        "boundary_label_opacity": 0.66,
+        "trend_label": "fit",
+        "trend_label_opacity": 0.78,
+        "line_label_font_size": 22,
+        "boundary_opacity": 0.88,
+        "trend_opacity": 0.96,
+        "trend_width": 4.0,
+        "read_opacity": 0.72,
+        "read_line_width": 1.65,
+        "prediction_marker_opacity": 0.9,
+        "prediction_marker_radius": 0.06,
+        "test_point": [-0.04, 0.20, 0],
+        "test_classified_point": [0.48, 0.22, 0],
         "test_axis_point": [1.25, -2.2, 0],
         "test_intersection": [1.25, 0.88, 0]
       }
@@ -101,7 +118,8 @@
         "source_id": "v3s2_field_arrival",
         "mode": "drop_test_point",
         "drop_distance": 0.38,
-        "test_opacity": 1.0
+        "test_opacity": 1.0,
+        "test_glow_opacity": 0.24
       }
     },
     {
@@ -115,6 +133,7 @@
         "source_id": "v3s2_field_arrival",
         "mode": "classification_color_wave",
         "wave_count": 7,
+        "wave_direction": "toward_boundary",
         "boundary_x": 0.0
       }
     },
@@ -129,7 +148,9 @@
         "source_id": "v3s2_field_arrival",
         "mode": "draw_boundary",
         "start_opacity": 0.16,
-        "boundary_opacity": 0.86
+        "boundary_opacity": 0.88,
+        "show_boundary_label": true,
+        "boundary_label_opacity": 0.66
       }
     },
     {
@@ -142,10 +163,12 @@
       "params": {
         "source_id": "v3s2_field_arrival",
         "mode": "claim_test_point",
-        "target": [0.58, 0.22, 0],
+        "target": [0.48, 0.22, 0],
         "drift_time": 1.15,
         "color_time": 0.62,
-        "target_color": "#6EA8FE"
+        "target_color": "#6EA8FE",
+        "test_glow_opacity": 0.22,
+        "claimed_glow_opacity": 0.16
       }
     },
     {
@@ -160,7 +183,8 @@
         "mode": "regression_reset",
         "drain_time": 0.82,
         "boundary_fade_time": 0.48,
-        "test_opacity": 0.78,
+        "test_opacity": 0.0,
+        "test_glow_reset_opacity": 0.0,
         "test_hold_position": [1.25, -2.2, 0]
       }
     },
@@ -174,8 +198,13 @@
       "params": {
         "source_id": "v3s2_field_arrival",
         "mode": "draw_trend_line",
-        "trend_opacity": 0.92,
-        "tick_opacity": 0.42
+        "trend_opacity": 0.96,
+        "tick_opacity": 0.50,
+        "axis_label_opacity": 0.74,
+        "trend_label_opacity": 0.78,
+        "trend_reveal": "center_out",
+        "show_axis_labels": true,
+        "show_trend_label": true
       }
     },
     {
@@ -193,7 +222,10 @@
         "vertical_time": 0.75,
         "horizontal_time": 0.62,
         "move_time": 0.85,
-        "read_opacity": 0.66
+        "read_opacity": 0.72,
+        "test_glow_opacity": 0.25,
+        "show_prediction_marker": true,
+        "prediction_marker_opacity": 0.9
       }
     },
     {
@@ -208,32 +240,42 @@
         "mode": "final_dual_frame",
         "read_fade_time": 0.5,
         "left_color_time": 1.2,
-        "boundary_time": 0.5,
+        "boundary_fade_time": 0.35,
         "left_cutoff": 0.35,
-        "horizontal_final_opacity": 0.34,
-        "boundary_opacity": 0.80
+        "horizontal_final_opacity": 0.18,
+        "fade_trend_label": true,
+        "trend_label_final_opacity": 0.0,
+        "keep_prediction_marker": true,
+        "prediction_marker_opacity": 0.9
       }
     }
   ],
   "notes": {
     "tone": "Premium, restrained, geometric, and continuous. The scene should feel like one system being interpreted in two different ways.",
     "pacing": "Eight clear beats with no dead time. Motions are sequential where meaning depends on sequence, especially the regression pivot and measurement read-lines.",
-    "animation_guidelines": "No on-screen explanatory text, no dot repositioning, no axes before regression, no trend line before Beat 6. The white dot stays present as the focal object, and the final frame resolves through geometry only.",
+    "animation_guidelines": "The scene remains one continuous system, but it now allows minimal embedded graph labels and line labels because the render audit showed that pure geometry was too abstract. The white dot is the focal object; axes and labels appear only when regression begins.",
     "source_brief": "/Users/drivyaanshyadav/Downloads/scene2.md",
-    "implementation_intent": "One persistent scatter population and one white test point explain classification and regression without text labels during the scene.",
+    "implementation_intent": "One persistent scatter population and one white test point explain classification and regression with controlled readability aids: axis labels, a small decision-boundary label, a small fit label, stronger test-point emphasis, and a prediction marker.",
     "controlled_recommendations_applied": [
       "No opening title is used.",
-      "The white dot remains present but quiet through the regression pivot and trend-line beat, preserving continuity.",
+      "The white test point is larger and has a subtle glow ring so it reads as the protagonist.",
+      "The classification wave colors the outer camps first and the boundary region last, improving beginner readability.",
+      "A small decision-boundary label is allowed because the anonymous white line was unclear in render review.",
+      "Axis labels Hours and Marks are allowed as graph structure, not slide-style explanation.",
+      "A small fit label identifies the regression trend line during the graph explanation.",
+      "The test dot clears during regression reset and reappears cleanly on the x-axis for measurement.",
+      "A small prediction marker appears on the y-axis when the predicted score is read.",
       "The dot population never repositions; the diagonal correlation is built into the fixed coordinates.",
-      "The trend line is subtly curved so it reads as a fit rather than a divider.",
-      "The final frame contains no labels; left-side classification geometry and right-side regression geometry coexist."
+      "The trend line is subtly curved and visually stronger so it reads as a fit rather than a divider.",
+      "The final frame removes the broken-looking partial boundary and keeps classification memory through colored dots only."
     ],
     "visual_constraints": [
-      "No titles or labels during explanation beats.",
+      "No large titles or explanatory paragraphs during explanation beats.",
+      "Minimal labels are permitted only when they are embedded in the geometry and improve comprehension.",
       "No dot repositioning after initial creation.",
-      "Boundary disappears fully before regression axes and trend line dominate.",
+      "Boundary and boundary label disappear fully before regression dominates.",
       "Trend line does not appear before Beat 6.",
-      "Final geometry carries the conclusion without text."
+      "Final frame prioritizes the regression trend line, prediction marker, axes, and left-side colored classification memory."
     ]
   }
 }
