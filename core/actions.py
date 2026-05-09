@@ -2871,17 +2871,21 @@ def transition_out_for(obj, transition_name: str):
 
 
 def make_linear_regression_fit(params, zone):
-    """Build the stateful visual system for Video 3 Scene 3 linear regression.
+    """Build the redesigned stateful visual system for Video 3 Scene 3.
 
-    The renderer owns the timing choreography; this object owns deterministic
-    geometry, colors, trackers, and updater-friendly factories.
+    The renderer owns timing. This builder owns deterministic geometry,
+    clipped line rendering, semantic colors, labels, captions, and trackers.
     """
-    point_color = params.get("point_color", "#E8E0D0")
-    point_bright_color = params.get("point_bright_color", "#F5F0E8")
-    axis_color = params.get("axis_color", "#6B7280")
-    line_color = params.get("line_color", "#A8D8EA")
-    residual_color = params.get("residual_color", "#E8A0A0")
+    point_color = params.get("point_color", "#F5E6C8")
+    point_bright_color = params.get("point_bright_color", "#FFF3D8")
+    axis_color = params.get("axis_color", "#7C8798")
+    wrong_line_color = params.get("wrong_line_color", "#F4A261")
+    search_line_color = params.get("line_color", "#5BC0EB")
+    final_line_color = params.get("final_line_color", "#38BDF8")
+    residual_color = params.get("residual_color", "#FF6B8A")
     residual_final_color = params.get("residual_final_color", "#B98995")
+    label_color = params.get("label_color", "#F8FAFC")
+    caption_color = params.get("caption_color", "#CBD5E1")
 
     plot_width = float(params.get("plot_width", 8.2))
     plot_height = float(params.get("plot_height", 4.8))
@@ -2905,21 +2909,64 @@ def make_linear_regression_fit(params, zone):
         y = y_min + (point[1] - origin[1]) / plot_height * (y_max - y_min)
         return x, y
 
-    point_radius = float(params.get("point_radius", 0.11))
+    def interpolate_hex(c1, c2, alpha):
+        color_1 = ManimColor(c1).to_rgb()
+        color_2 = ManimColor(c2).to_rgb()
+        rgb = tuple((1 - alpha) * color_1[i] + alpha * color_2[i] for i in range(3))
+        return ManimColor(rgb)
+
+    point_radius = float(params.get("point_radius", 0.13))
     dots = VGroup(*[
         Dot(c2p(x, y), radius=point_radius, color=point_color, fill_opacity=1.0)
+        .set_stroke(color="#FFFFFF", width=0.8, opacity=0.18)
         for x, y in raw_points
     ])
 
-    x_axis = Line(c2p(x_min, y_min), c2p(x_max, y_min), color=axis_color, stroke_width=float(params.get("axis_width", 1.5)))
-    y_axis = Line(c2p(x_min, y_min), c2p(x_min, y_max), color=axis_color, stroke_width=float(params.get("axis_width", 1.5)))
-    axes = VGroup(x_axis, y_axis)
+    axis_width = float(params.get("axis_width", 1.7))
+    x_axis = Line(c2p(x_min, y_min), c2p(x_max, y_min), color=axis_color, stroke_width=axis_width)
+    y_axis = Line(c2p(x_min, y_min), c2p(x_min, y_max), color=axis_color, stroke_width=axis_width)
+    x_tip = Triangle(color=axis_color, fill_opacity=0.85, stroke_width=0).scale(0.075).rotate(-90 * DEGREES).move_to(c2p(x_max, y_min))
+    y_tip = Triangle(color=axis_color, fill_opacity=0.85, stroke_width=0).scale(0.075).move_to(c2p(x_min, y_max))
+    origin_dot = Dot(c2p(x_min, y_min), radius=0.035, color=axis_color, fill_opacity=0.85)
+    tick_marks = VGroup()
+    for tx in (2.5, 5.0, 7.5):
+        tick_marks.add(Line(c2p(tx, y_min), c2p(tx, y_min) + UP * 0.07, color=axis_color, stroke_width=1.0).set_opacity(0.55))
+    for ty in (2.5, 5.0, 7.5):
+        tick_marks.add(Line(c2p(x_min, ty), c2p(x_min, ty) + RIGHT * 0.07, color=axis_color, stroke_width=1.0).set_opacity(0.55))
+    axes = VGroup(x_axis, y_axis, x_tip, y_tip, origin_dot, tick_marks)
 
-    slope_tracker = ValueTracker(float(params.get("initial_slope", 1.22)))
-    intercept_tracker = ValueTracker(float(params.get("initial_intercept", 0.5)))
+    title = Text(params.get("title_text", "Linear Regression"), font_size=38, weight=BOLD, color=label_color)
+    title.to_corner(UL, buff=0.45)
+    subtitle = Text(params.get("subtitle_text", "Finding the best-fit line"), font_size=21, color=caption_color)
+    subtitle.next_to(title, DOWN, aligned_edge=LEFT, buff=0.12)
+    x_label = Text(params.get("x_label_text", "Hours studied"), font_size=20, color=label_color)
+    x_label.next_to(x_axis, DOWN, buff=0.25)
+    y_label = Text(params.get("y_label_text", "Marks achieved"), font_size=20, color=label_color).rotate(90 * DEGREES)
+    y_label.next_to(y_axis, LEFT, buff=0.26)
+    data_caption = Text(params.get("data_caption_text", "Each dot = one student"), font_size=20, color=caption_color)
+    data_caption.move_to(c2p(7.15, 1.05))
+    trend_caption = Text(params.get("trend_caption_text", "Upward trend"), font_size=22, color=point_bright_color)
+    trend_caption.move_to(c2p(7.15, 8.35))
+    guess_label = Text(params.get("guess_label_text", "Rough guess"), font_size=22, color=wrong_line_color)
+    guess_label.move_to(c2p(7.0, 8.9))
+    adjust_label = Text(params.get("adjust_label_text", "Adjusting slope + intercept"), font_size=21, color=search_line_color)
+    adjust_label.move_to(c2p(5.7, 8.65))
+    residual_label = Text(params.get("residual_label_text", "Residual = error"), font_size=22, color=residual_color)
+    residual_label.move_to(c2p(6.55, 1.35))
+    best_fit_label = Text(params.get("best_fit_label_text", "Best-fit line"), font_size=22, color=final_line_color)
+    best_fit_label.move_to(c2p(7.45, 7.2))
+    formula_teaser = Text(params.get("formula_text", "y = mx + b"), font_size=30, color=label_color)
+    formula_teaser.to_corner(UR, buff=0.55)
+    formula_caption = Text(params.get("formula_caption_text", "Next: the equation behind the line"), font_size=17, color=caption_color)
+    formula_caption.next_to(formula_teaser, DOWN, buff=0.12)
+    labels = VGroup(title, subtitle, x_label, y_label, data_caption, trend_caption, guess_label, adjust_label, residual_label, best_fit_label, formula_teaser, formula_caption)
+
+    slope_tracker = ValueTracker(float(params.get("initial_slope", 1.05)))
+    intercept_tracker = ValueTracker(float(params.get("initial_intercept", 0.65)))
     line_progress = ValueTracker(0.0)
-    line_opacity = ValueTracker(1.0)
-    line_width = ValueTracker(float(params.get("line_width", 2.5)))
+    line_opacity = ValueTracker(0.0)
+    line_width = ValueTracker(float(params.get("line_width", 2.8)))
+    line_color_mix = ValueTracker(0.0)  # 0=wrong amber, .5=search cyan, 1=final blue
 
     residual_progress = [ValueTracker(0.0) for _ in raw_points]
     residual_opacity = [ValueTracker(0.0) for _ in raw_points]
@@ -2928,73 +2975,116 @@ def make_linear_regression_fit(params, zone):
     def model_y(x):
         return slope_tracker.get_value() * x + intercept_tracker.get_value()
 
-    def line_endpoints():
-        start = c2p(x_min, model_y(x_min))
-        end = c2p(x_max, model_y(x_max))
+    def clipped_line_points():
+        m = slope_tracker.get_value()
+        b = intercept_tracker.get_value()
+        candidates = []
+        for x in (x_min, x_max):
+            y = m * x + b
+            if y_min <= y <= y_max:
+                candidates.append((x, y))
+        if abs(m) > 1e-8:
+            for y in (y_min, y_max):
+                x = (y - b) / m
+                if x_min <= x <= x_max:
+                    candidates.append((x, y))
+        unique = []
+        for item in candidates:
+            if not any(abs(item[0] - other[0]) < 1e-6 and abs(item[1] - other[1]) < 1e-6 for other in unique):
+                unique.append(item)
+        if len(unique) < 2:
+            unique = [(x_min, max(y_min, min(y_max, model_y(x_min)))), (x_max, max(y_min, min(y_max, model_y(x_max))))]
+        unique.sort(key=lambda item: item[0])
+        start = c2p(*unique[0])
+        end = c2p(*unique[-1])
         progress = max(0.0, min(1.0, line_progress.get_value()))
         current_end = start + (end - start) * progress
         return start, current_end
 
+    def current_line_color():
+        mix = max(0.0, min(1.0, line_color_mix.get_value()))
+        if mix <= 0.5:
+            return interpolate_hex(wrong_line_color, search_line_color, mix / 0.5)
+        return interpolate_hex(search_line_color, final_line_color, (mix - 0.5) / 0.5)
+
     def make_live_line():
-        start, end = line_endpoints()
-        line = Line(start, end, color=line_color, stroke_width=line_width.get_value())
+        start, end = clipped_line_points()
+        line = Line(start, end, color=current_line_color(), stroke_width=line_width.get_value())
         line.set_opacity(line_opacity.get_value())
         return line
 
     live_line = always_redraw(make_live_line)
 
-    def interpolate_hex(c1, c2, alpha):
-        color_1 = ManimColor(c1).to_rgb()
-        color_2 = ManimColor(c2).to_rgb()
-        rgb = tuple((1 - alpha) * color_1[i] + alpha * color_2[i] for i in range(3))
-        return ManimColor(rgb)
-
     residuals = VGroup()
     for index, (x, y) in enumerate(raw_points):
         def make_residual(i=index, px=x, py=y):
             start = c2p(px, py)
-            target = c2p(px, model_y(px))
+            target_y = max(y_min, min(y_max, model_y(px)))
+            target = c2p(px, target_y)
             progress = max(0.0, min(1.0, residual_progress[i].get_value()))
             end = start + (target - start) * progress
             color = interpolate_hex(residual_color, residual_final_color, residual_desaturation.get_value())
             dash = DashedLine(
                 start,
                 end,
-                dash_length=float(params.get("residual_dash_length", 0.075)),
+                dash_length=float(params.get("residual_dash_length", 0.09)),
                 dashed_ratio=float(params.get("residual_dashed_ratio", 0.58)),
                 color=color,
-                stroke_width=float(params.get("residual_width", 1.0)),
+                stroke_width=float(params.get("residual_width", 1.25)),
             )
             dash.set_opacity(residual_opacity[i].get_value())
             return dash
         residuals.add(always_redraw(make_residual))
 
+    trend_line = Line(c2p(1.0, 2.05), c2p(8.8, 7.35), color=point_bright_color, stroke_width=8)
+    trend_line.set_opacity(0.0)
+
     if params.get("use_vignette", True):
         vignette = Ellipse(
-            width=float(params.get("vignette_width", 9.4)),
-            height=float(params.get("vignette_height", 5.8)),
+            width=float(params.get("vignette_width", 9.8)),
+            height=float(params.get("vignette_height", 6.0)),
             color=params.get("vignette_color", "#172238"),
             fill_color=params.get("vignette_color", "#172238"),
-            fill_opacity=float(params.get("vignette_opacity", 0.11)),
+            fill_opacity=float(params.get("vignette_opacity", 0.13)),
             stroke_width=0,
         )
         vignette.move_to(c2p(5.0, 5.0))
     else:
         vignette = VGroup()
 
-    field = VGroup(vignette, axes, dots, live_line, residuals)
+    field = VGroup(vignette, axes, trend_line, dots, live_line, residuals, labels)
     field.lr_vignette = vignette
     field.lr_axes = axes
     field.lr_x_axis = x_axis
     field.lr_y_axis = y_axis
+    field.lr_x_tip = x_tip
+    field.lr_y_tip = y_tip
+    field.lr_origin_dot = origin_dot
+    field.lr_tick_marks = tick_marks
     field.lr_dots = dots
+    field.lr_point_order = sorted(list(dots), key=lambda d: (d.get_center()[0], d.get_center()[1]))
     field.lr_live_line = live_line
     field.lr_residuals = residuals
+    field.lr_trend_line = trend_line
+    field.lr_title = title
+    field.lr_subtitle = subtitle
+    field.lr_x_label = x_label
+    field.lr_y_label = y_label
+    field.lr_data_caption = data_caption
+    field.lr_trend_caption = trend_caption
+    field.lr_guess_label = guess_label
+    field.lr_adjust_label = adjust_label
+    field.lr_residual_label = residual_label
+    field.lr_best_fit_label = best_fit_label
+    field.lr_formula_teaser = formula_teaser
+    field.lr_formula_caption = formula_caption
+    field.lr_all_labels = labels
     field.lr_slope = slope_tracker
     field.lr_intercept = intercept_tracker
     field.lr_line_progress = line_progress
     field.lr_line_opacity = line_opacity
     field.lr_line_width = line_width
+    field.lr_line_color_mix = line_color_mix
     field.lr_residual_progress = residual_progress
     field.lr_residual_opacity = residual_opacity
     field.lr_residual_desaturation = residual_desaturation

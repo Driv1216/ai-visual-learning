@@ -55,14 +55,30 @@
       "persist": true,
       "replace": null,
       "params": {
-        "point_color": "#E8E0D0",
-        "point_bright_color": "#F5F0E8",
-        "axis_color": "#6B7280",
-        "line_color": "#A8D8EA",
-        "residual_color": "#E8A0A0",
+        "title_text": "Linear Regression",
+        "subtitle_text": "Finding the best-fit line",
+        "x_label_text": "Hours studied",
+        "y_label_text": "Marks achieved",
+        "data_caption_text": "Each dot = one student",
+        "trend_caption_text": "Upward trend",
+        "guess_label_text": "Rough guess",
+        "adjust_label_text": "Adjusting slope + intercept",
+        "residual_label_text": "Residual = error",
+        "best_fit_label_text": "Best-fit line",
+        "formula_text": "y = mx + b",
+        "formula_caption_text": "Next: the equation behind the line",
+        "point_color": "#F5E6C8",
+        "point_bright_color": "#FFF3D8",
+        "axis_color": "#7C8798",
+        "wrong_line_color": "#F4A261",
+        "line_color": "#5BC0EB",
+        "final_line_color": "#38BDF8",
+        "residual_color": "#FF6B8A",
         "residual_final_color": "#B98995",
+        "label_color": "#F8FAFC",
+        "caption_color": "#CBD5E1",
         "vignette_color": "#172238",
-        "vignette_opacity": 0.11,
+        "vignette_opacity": 0.13,
         "use_vignette": true,
         "origin": [-4.15, -2.25, 0.0],
         "plot_width": 8.2,
@@ -83,25 +99,25 @@
           [8.0, 7.4],
           [8.7, 7.1]
         ],
-        "point_radius": 0.11,
-        "point_pulse_scale": 1.45,
-        "point_lag_ratio": 0.12,
-        "axis_width": 1.5,
-        "line_width": 2.5,
-        "final_line_width": 3.0,
-        "residual_width": 1.0,
-        "residual_dash_length": 0.075,
+        "point_radius": 0.13,
+        "point_pulse_scale": 1.32,
+        "point_lag_ratio": 0.1,
+        "axis_width": 1.7,
+        "line_width": 2.8,
+        "final_line_width": 3.25,
+        "residual_width": 1.25,
+        "residual_dash_length": 0.09,
         "residual_dashed_ratio": 0.58,
-        "initial_slope": 1.22,
-        "initial_intercept": 0.5,
-        "overshoot_slope": 0.58,
-        "overshoot_intercept": 1.65,
+        "initial_slope": 1.05,
+        "initial_intercept": 0.65,
+        "overshoot_slope": 0.56,
+        "overshoot_intercept": 1.75,
         "near_slope": 0.78,
         "near_intercept": 0.95,
         "final_slope": 0.68,
         "final_intercept": 1.35,
-        "beat1_duration": 3.5,
-        "beat1_hold": 0.5
+        "title_duration": 0.75,
+        "beat1_hold": 0.35
       }
     },
     {
@@ -117,7 +133,7 @@
       "params": {
         "source_id": "v3s3_beat1",
         "beat": 2,
-        "beat2_duration": 0.8
+        "beat2_duration": 3.2
       }
     },
     {
@@ -149,8 +165,8 @@
       "params": {
         "source_id": "v3s3_beat1",
         "beat": 4,
-        "beat4_draw_duration": 0.6,
-        "beat4_hold": 0.5
+        "beat4_draw_duration": 0.75,
+        "beat4_hold": 0.35
       }
     },
     {
@@ -166,9 +182,15 @@
       "params": {
         "source_id": "v3s3_beat1",
         "beat": 5,
-        "beat5_duration": 4.5,
-        "beat5_overshoot_duration": 2.15,
-        "beat5_return_duration": 2.35
+        "beat5_duration": 4.25,
+        "search_line_width": 3.0,
+        "waypoints": [
+          {"slope": 0.96, "intercept": 0.82, "duration": 0.75, "mix": 0.25},
+          {"slope": 0.78, "intercept": 1.05, "duration": 0.85, "mix": 0.45},
+          {"slope": 0.56, "intercept": 1.75, "duration": 0.9, "mix": 0.55},
+          {"slope": 0.82, "intercept": 0.9, "duration": 0.75, "mix": 0.62},
+          {"slope": 0.78, "intercept": 0.95, "duration": 0.7, "mix": 0.68}
+        ]
       }
     },
     {
@@ -184,10 +206,10 @@
       "params": {
         "source_id": "v3s3_beat1",
         "beat": 6,
-        "beat6_lock_duration": 0.5,
-        "beat6_residual_duration": 1.5,
-        "residual_lag_ratio": 0.09,
-        "post_residual_micro_pause": 0.38
+        "beat6_lock_duration": 0.45,
+        "single_residual_duration": 0.45,
+        "beat6_residual_duration": 1.35,
+        "residual_lag_ratio": 0.08
       }
     },
     {
@@ -203,9 +225,9 @@
       "params": {
         "source_id": "v3s3_beat1",
         "beat": 7,
-        "beat7_duration": 3.0,
-        "beat7_hold": 0.5,
-        "final_line_width": 3.0
+        "beat7_duration": 3.2,
+        "beat7_hold": 0.4,
+        "final_line_width": 3.25
       }
     },
     {
@@ -223,14 +245,14 @@
         "beat": 8,
         "beat8_duration": 1.5,
         "final_residual_opacity": 0.15,
-        "final_residual_desaturation": 1.0
+        "final_residual_desaturation": 0.75
       }
     }
   ],
   "notes": {
-    "tone": "Quiet, geometric, premium, and intuition-first. The line should feel like the only learner inside a fixed data world.",
-    "pacing": "Eight separate visual steps, each anchored to its own narration segment. Beat 1 creates the field and runs the point-arrival sequence. Beats 2-8 are mutate steps that run their choreography when their narration segment begins.",
-    "animation_guidelines": "No title, no axis labels, no ticks, no grid, no legend, and no formula. Dots use fill_opacity=1.0 and are hidden via set_fill(opacity=0) in the renderer. Initial line intercept is 0.5 (inside the visible plot). point_radius is 0.11 for readable dot size.",
-    "rendering_note": "Do not run ffmpeg if Manim fails. During visual refinement, render with --flush_cache --disable_caching on the render device."
+    "tone": "Clean labeled explainer: the viewer should understand the graph even with audio muted.",
+    "pacing": "Narration script is unchanged. Visuals add immediate title, graph labels, line labels, residual explanation, and formula teaser so long narration segments do not feel blank or random.",
+    "animation_guidelines": "Use minimal educational labels: title, axis labels, data caption, trend cue, rough guess, residual = error, best-fit line, and y = mx + b teaser. Avoid dense paragraphs, legends, grid-heavy chart styling, or unrelated panels.",
+    "rendering_note": "Delete stale generated timestamps/audio for this scene before rendering. Do not run ffmpeg if Manim fails. During visual refinement, render with --flush_cache --disable_caching on the render device."
   }
 }
