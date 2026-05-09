@@ -45,10 +45,10 @@
   ],
   "visual_timeline": [
     {
-      "id": "v3s3_linear_regression_fit",
+      "id": "v3s3_linear_regression_init",
       "anchor": "v3s3_01",
       "offset": 0.0,
-      "duration": 22.08,
+      "duration": 4.1,
       "action": "show_linear_regression_fit",
       "zone": "full",
       "transition_in": "none",
@@ -56,9 +56,11 @@
       "persist": true,
       "replace": "full",
       "params": {
+        "target_id": "v3s3_linear_regression_field",
         "point_color": "#E8E0D0",
         "point_bright_color": "#F5F0E8",
         "axis_color": "#6B7280",
+        "axis_anchor_color": "#7C8492",
         "line_color": "#A8D8EA",
         "residual_color": "#E8A0A0",
         "residual_final_color": "#B98995",
@@ -88,6 +90,8 @@
         "point_pulse_scale": 1.45,
         "point_lag_ratio": 0.12,
         "axis_width": 1.5,
+        "axis_anchor_radius": 0.035,
+        "axis_cap_radius": 0.026,
         "line_width": 2.5,
         "final_line_width": 3.0,
         "residual_width": 1.0,
@@ -99,35 +103,135 @@
         "overshoot_intercept": 1.65,
         "near_slope": 0.78,
         "near_intercept": 0.95,
+        "lock_slope": 0.74,
+        "lock_intercept": 1.08,
+        "final_slope": 0.68,
+        "final_intercept": 1.35
+      }
+    },
+    {
+      "id": "v3s3_axes",
+      "anchor": "v3s3_02",
+      "offset": 0.0,
+      "duration": 0.9,
+      "action": "mutate_linear_regression_fit",
+      "zone": "full",
+      "persist": true,
+      "params": {
+        "source_id": "v3s3_linear_regression_field",
+        "phase": "draw_axes",
+        "axis_anchor_opacity": 0.38
+      }
+    },
+    {
+      "id": "v3s3_pattern_brighten",
+      "anchor": "v3s3_03",
+      "offset": 0.0,
+      "duration": 1.6,
+      "action": "mutate_linear_regression_fit",
+      "zone": "full",
+      "persist": true,
+      "params": {
+        "source_id": "v3s3_linear_regression_field",
+        "phase": "brighten_points",
+        "trend_sweep": true,
+        "trend_sweep_lag_ratio": 0.035
+      }
+    },
+    {
+      "id": "v3s3_wrong_line",
+      "anchor": "v3s3_04",
+      "offset": 0.0,
+      "duration": 1.15,
+      "action": "mutate_linear_regression_fit",
+      "zone": "full",
+      "persist": true,
+      "params": {
+        "source_id": "v3s3_linear_regression_field",
+        "phase": "draw_wrong_line",
+        "draw_duration": 0.6
+      }
+    },
+    {
+      "id": "v3s3_line_search",
+      "anchor": "v3s3_05",
+      "offset": 0.0,
+      "duration": 4.5,
+      "action": "mutate_linear_regression_fit",
+      "zone": "full",
+      "persist": true,
+      "params": {
+        "source_id": "v3s3_linear_regression_field",
+        "phase": "search_line",
+        "waypoints": [
+          {"slope": 1.05, "intercept": -0.25, "width": 2.65, "duration": 0.75},
+          {"slope": 0.82, "intercept": 0.75, "width": 2.75, "duration": 1.1},
+          {"slope": 0.58, "intercept": 1.65, "width": 2.68, "duration": 1.0},
+          {"slope": 0.84, "intercept": 0.82, "width": 2.6, "duration": 0.85},
+          {"slope": 0.78, "intercept": 0.95, "width": 2.5, "duration": 0.8}
+        ]
+      }
+    },
+    {
+      "id": "v3s3_residual_reveal",
+      "anchor": "v3s3_06",
+      "offset": 0.0,
+      "duration": 2.05,
+      "action": "mutate_linear_regression_fit",
+      "zone": "full",
+      "persist": true,
+      "params": {
+        "source_id": "v3s3_linear_regression_field",
+        "phase": "lock_and_show_residuals",
+        "lock_duration": 0.55,
+        "lock_slope": 0.74,
+        "lock_intercept": 1.08,
+        "lock_line_width": 2.55,
+        "residual_lag_ratio": 0.09,
+        "active_residual_opacity": 1.0
+      }
+    },
+    {
+      "id": "v3s3_converge_fit",
+      "anchor": "v3s3_07",
+      "offset": 0.0,
+      "duration": 3.45,
+      "action": "mutate_linear_regression_fit",
+      "zone": "full",
+      "persist": true,
+      "params": {
+        "source_id": "v3s3_linear_regression_field",
+        "phase": "converge_fit",
         "final_slope": 0.68,
         "final_intercept": 1.35,
-        "beat1_duration": 3.5,
-        "beat1_hold": 0.35,
-        "beat2_duration": 0.8,
-        "beat3_duration": 1.5,
-        "beat4_draw_duration": 0.6,
-        "beat4_hold": 0.5,
-        "beat5_duration": 4.5,
-        "beat5_overshoot_duration": 2.15,
-        "beat5_return_duration": 2.35,
-        "beat6_lock_duration": 0.5,
-        "beat6_residual_duration": 1.5,
-        "residual_lag_ratio": 0.09,
-        "post_residual_micro_pause": 0.38,
-        "beat7_duration": 3.0,
-        "beat7_hold": 0.5,
-        "beat8_duration": 1.5,
+        "final_line_width": 3.0,
+        "residual_opacity_hierarchy": true,
+        "active_residual_opacity": 1.0
+      }
+    },
+    {
+      "id": "v3s3_final_exhale",
+      "anchor": "v3s3_08",
+      "offset": 0.0,
+      "duration": 1.5,
+      "action": "mutate_linear_regression_fit",
+      "zone": "full",
+      "persist": true,
+      "params": {
+        "source_id": "v3s3_linear_regression_field",
+        "phase": "dim_residuals",
         "final_residual_opacity": 0.15,
-        "final_residual_desaturation": 1.0
+        "final_residual_desaturation": 1.0,
+        "final_line_width": 3.0
       }
     }
   ],
   "notes": {
     "tone": "Quiet, geometric, premium, and intuition-first. The line should feel like the only learner inside a fixed data world.",
-    "pacing": "One continuous scene-level action follows the eight beats internally: points, axes, brightening, wrong line, exploratory search, residual reveal, coupled convergence, and final residual dimming.",
-    "animation_guidelines": "No title, no axis labels, no ticks, no grid, no legend, and no formula. Recommended improvements applied: subtle background vignette, authored line pull/overshoot, slight final line emphasis, micro-pause after residual cascade, and final residual desaturation.",
+    "pacing": "Visuals are now narration-anchored: one initializer plus per-beat mutations synced to v3s3_01 through v3s3_08.",
+    "animation_guidelines": "No title, no axis labels, no tick labels, no grid, no legend, and no formula. Improvements applied: persistent state, trend-sweep brightening, subtle axis anchors, multi-keyframe search, visible lock, residual opacity hierarchy, final residual desaturation.",
     "source_brief": "/Users/drivyaanshyadav/Downloads/scene3.md",
-    "implementation_intent": "The visual system is deterministic and stateful: fixed points, minimal axes, one tracker-driven line, and live updater residuals. Residuals do not appear until the line has fully locked in Beat 6, then update live during Beat 7 and fade only to faint traces in Beat 8.",
+    "audit_source": "/Users/drivyaanshyadav/Downloads/scene 3 prblms.md",
     "rendering_note": "Do not run ffmpeg if Manim fails. During visual refinement, render with --flush_cache --disable_caching on the render device."
   }
 }
