@@ -15,6 +15,7 @@ from actions import (
     build_object,
     make_manual_rule_force_indicator,
     make_links,
+    make_linear_regression_fit,
     place_in_zone,
     transition_in_for,
     transition_out_for,
@@ -391,6 +392,7 @@ class JsonDrivenScene(MovingCameraScene):
             "show_supervised_types_showcase",
             "show_classification_regression_field",
             "mutate_classification_regression_field",
+            "show_linear_regression_fit",
         }
 
         for idx, step in enumerate(visual_steps):
@@ -624,6 +626,184 @@ class JsonDrivenScene(MovingCameraScene):
                         current_time += run_time
 
                     register_object(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "show_linear_regression_fit":
+                    params = dict(step.params)
+                    field_obj = make_linear_regression_fit(params, step.zone)
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+
+                    if outgoing_anims:
+                        self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=min(0.35, max(0.05, run_time * 0.12)))
+                        current_time += min(0.35, max(0.05, run_time * 0.12))
+
+                    vignette = getattr(field_obj, "lr_vignette", VGroup())
+                    axes = getattr(field_obj, "lr_axes", VGroup())
+                    x_axis = getattr(field_obj, "lr_x_axis", None)
+                    y_axis = getattr(field_obj, "lr_y_axis", None)
+                    dots = list(getattr(field_obj, "lr_dots", VGroup()))
+                    live_line = getattr(field_obj, "lr_live_line", None)
+                    residuals = list(getattr(field_obj, "lr_residuals", VGroup()))
+                    slope = getattr(field_obj, "lr_slope", None)
+                    intercept = getattr(field_obj, "lr_intercept", None)
+                    line_progress = getattr(field_obj, "lr_line_progress", None)
+                    line_width = getattr(field_obj, "lr_line_width", None)
+                    residual_progress = getattr(field_obj, "lr_residual_progress", [])
+                    residual_opacity = getattr(field_obj, "lr_residual_opacity", [])
+                    residual_desaturation = getattr(field_obj, "lr_residual_desaturation", None)
+
+                    if len(vignette) != 0:
+                        vignette.set_opacity(params.get("vignette_opacity", 0.11))
+                        self.add(vignette)
+                    if x_axis is not None and y_axis is not None:
+                        x_start, x_end = x_axis.get_start(), x_axis.get_end()
+                        y_start, y_end = y_axis.get_start(), y_axis.get_end()
+                        x_axis.put_start_and_end_on(x_start, x_start)
+                        y_axis.put_start_and_end_on(y_start, y_start)
+                    if live_line is not None:
+                        self.add(live_line)
+                    for residual in residuals:
+                        self.add(residual)
+                    for dot in dots:
+                        dot.set_opacity(0.0)
+                    self.add(*dots)
+
+                    # Beat 1 — data arrives before structure.
+                    pulse_scale = params.get("point_pulse_scale", 1.45)
+                    dot_anims = []
+                    for dot in dots:
+                        dot.scale(0.72)
+                        dot_anims.append(
+                            Succession(
+                                dot.animate.set_opacity(1.0).scale(pulse_scale),
+                                dot.animate.scale(1.0 / pulse_scale),
+                            )
+                        )
+                    if dot_anims:
+                        self.play(LaggedStart(*dot_anims, lag_ratio=params.get("point_lag_ratio", 0.12)), run_time=params.get("beat1_duration", 3.5), rate_func=rate_functions.ease_out_sine)
+                        current_time += params.get("beat1_duration", 3.5)
+                    self.wait(params.get("beat1_hold", 0.35))
+                    current_time += params.get("beat1_hold", 0.35)
+
+                    # Beat 2 — axes grow from the origin around fixed data.
+                    if x_axis is not None and y_axis is not None:
+                        self.add(axes)
+                        self.play(
+                            AnimationGroup(
+                                x_axis.animate.put_start_and_end_on(x_start, x_end),
+                                y_axis.animate.put_start_and_end_on(y_start, y_end),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=params.get("beat2_duration", 0.8),
+                            rate_func=linear,
+                        )
+                    else:
+                        self.wait(params.get("beat2_duration", 0.8))
+                    current_time += params.get("beat2_duration", 0.8)
+
+                    # Beat 3 — subtle whole-cloud luminosity shift.
+                    self.play(
+                        AnimationGroup(*[
+                            dot.animate.set_color(getattr(field_obj, "lr_point_bright_color", "#F5F0E8")).set_opacity(1.0)
+                            for dot in dots
+                        ], lag_ratio=0.0),
+                        run_time=params.get("beat3_duration", 1.5),
+                        rate_func=rate_functions.ease_in_out_sine,
+                    )
+                    current_time += params.get("beat3_duration", 1.5)
+
+                    # Beat 4 — wrong line draws confidently.
+                    if line_progress is not None:
+                        self.play(line_progress.animate.set_value(1.0), run_time=params.get("beat4_draw_duration", 0.6), rate_func=linear)
+                    else:
+                        self.wait(params.get("beat4_draw_duration", 0.6))
+                    current_time += params.get("beat4_draw_duration", 0.6)
+                    self.wait(params.get("beat4_hold", 0.5))
+                    current_time += params.get("beat4_hold", 0.5)
+
+                    # Beat 5 — exploratory search with authored pull/overshoot.
+                    if slope is not None and intercept is not None:
+                        self.play(
+                            AnimationGroup(
+                                slope.animate.set_value(getattr(field_obj, "lr_overshoot_slope", 0.58)),
+                                intercept.animate.set_value(getattr(field_obj, "lr_overshoot_intercept", 1.65)),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=params.get("beat5_overshoot_duration", 2.15),
+                            rate_func=rate_functions.ease_in_out_sine,
+                        )
+                        self.play(
+                            AnimationGroup(
+                                slope.animate.set_value(getattr(field_obj, "lr_near_slope", 0.78)),
+                                intercept.animate.set_value(getattr(field_obj, "lr_near_intercept", 0.95)),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=params.get("beat5_return_duration", 2.35),
+                            rate_func=rate_functions.ease_out_sine,
+                        )
+                    else:
+                        self.wait(params.get("beat5_duration", 4.5))
+                    current_time += params.get("beat5_duration", 4.5)
+
+                    # Beat 6A — complete line lock before residuals enter.
+                    self.wait(params.get("beat6_lock_duration", 0.5))
+                    current_time += params.get("beat6_lock_duration", 0.5)
+
+                    # Beat 6B — residuals cascade left-to-right.
+                    residual_anims = []
+                    for progress_tracker, opacity_tracker in zip(residual_progress, residual_opacity):
+                        residual_anims.append(
+                            AnimationGroup(
+                                progress_tracker.animate.set_value(1.0),
+                                opacity_tracker.animate.set_value(1.0),
+                                lag_ratio=0.0,
+                            )
+                        )
+                    if residual_anims:
+                        self.play(LaggedStart(*residual_anims, lag_ratio=params.get("residual_lag_ratio", 0.09)), run_time=params.get("beat6_residual_duration", 1.5), rate_func=rate_functions.ease_out_sine)
+                    else:
+                        self.wait(params.get("beat6_residual_duration", 1.5))
+                    current_time += params.get("beat6_residual_duration", 1.5)
+                    self.wait(params.get("post_residual_micro_pause", 0.38))
+                    current_time += params.get("post_residual_micro_pause", 0.38)
+
+                    # Beat 7 — coupled convergence, live residual updates, final line emphasis.
+                    convergence_anims = []
+                    if slope is not None and intercept is not None:
+                        convergence_anims.extend([
+                            slope.animate.set_value(getattr(field_obj, "lr_final_slope", 0.68)),
+                            intercept.animate.set_value(getattr(field_obj, "lr_final_intercept", 1.35)),
+                        ])
+                    if line_width is not None:
+                        convergence_anims.append(line_width.animate.set_value(params.get("final_line_width", 3.0)))
+                    if convergence_anims:
+                        self.play(AnimationGroup(*convergence_anims, lag_ratio=0.0), run_time=params.get("beat7_duration", 3.0), rate_func=rate_functions.ease_out_cubic)
+                    else:
+                        self.wait(params.get("beat7_duration", 3.0))
+                    current_time += params.get("beat7_duration", 3.0)
+                    self.wait(params.get("beat7_hold", 0.5))
+                    current_time += params.get("beat7_hold", 0.5)
+
+                    # Beat 8 — residual traces dim and desaturate, never disappear.
+                    fade_anims = [tracker.animate.set_value(params.get("final_residual_opacity", 0.15)) for tracker in residual_opacity]
+                    if residual_desaturation is not None:
+                        fade_anims.append(residual_desaturation.animate.set_value(params.get("final_residual_desaturation", 1.0)))
+                    if fade_anims:
+                        self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=params.get("beat8_duration", 1.5), rate_func=rate_functions.ease_in_out_sine)
+                    else:
+                        self.wait(params.get("beat8_duration", 1.5))
+                    current_time += params.get("beat8_duration", 1.5)
+
+                    register_object(step.id, step.zone, field_obj)
                     handled = True
 
                 elif step.action == "show_classification_regression_field":

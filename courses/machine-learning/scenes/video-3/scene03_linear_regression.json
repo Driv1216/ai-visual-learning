@@ -1,0 +1,133 @@
+{
+  "scene_id": "video03_scene03_linear_regression",
+  "video_title": "Supervised Learning",
+  "scene_title": "Linear Regression",
+  "order": 3,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "v3s3_01",
+      "text": "Now that we understand the big picture, let's zoom in on our first major algorithm: Linear Regression. At its heart, linear regression is actually… well, it's quite intuitive. Its goal is simple: it tries to fit a single straight line that best represents the relationship between an input and an output."
+    },
+    {
+      "id": "v3s3_02",
+      "text": "Imagine we're looking at a group of students. On the horizontal axis, we have the number of hours they studied, and on the vertical axis, we have the marks they achieved. As these points appear one by one… you can see a pattern emerging."
+    },
+    {
+      "id": "v3s3_03",
+      "text": "It's a bit noisy, right? Not every student who studies ten hours gets the exact same grade, but there's a clear upward trend. Basically… as study hours increase, marks tend to increase too. This is the relationship we want to capture."
+    },
+    {
+      "id": "v3s3_04",
+      "text": "Now, how do we find the 'perfect' line to describe this? The model starts with a rough guess. You might see a line appear that's way too steep, or maybe one that's sitting too low."
+    },
+    {
+      "id": "v3s3_05",
+      "text": "But then… something interesting happens. The model begins to adjust. It shifts and rotates that line, slowly searching for the position that best captures the overall flow of the data. That movement you see? That's the model being optimized in real-time."
+    },
+    {
+      "id": "v3s3_06",
+      "text": "But how does it know when it's getting closer? This is where Residuals come in. You'll see vertical dashed lines connecting each data point to our moving line. These are the residuals. Simply put… a residual is the model's error at that specific point. It's the gap between the actual mark a student got and the mark our line predicted."
+    },
+    {
+      "id": "v3s3_07",
+      "text": "The model's mission is to minimize these errors across all the points. It keeps tweaking until the line settles into the 'best fit' position. It's not trying to hit every single dot… but it is trying to capture the overall trend."
+    },
+    {
+      "id": "v3s3_08",
+      "text": "Now that our line is stable, we have a powerful tool for prediction. But to really understand how the machine 'sees' this line… we need to look at the math. Let's check out that formula appearing in the corner."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v3s3_linear_regression_fit",
+      "anchor": "v3s3_01",
+      "offset": 0.0,
+      "duration": 22.08,
+      "action": "show_linear_regression_fit",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": "full",
+      "params": {
+        "point_color": "#E8E0D0",
+        "point_bright_color": "#F5F0E8",
+        "axis_color": "#6B7280",
+        "line_color": "#A8D8EA",
+        "residual_color": "#E8A0A0",
+        "residual_final_color": "#B98995",
+        "vignette_color": "#172238",
+        "vignette_opacity": 0.11,
+        "use_vignette": true,
+        "origin": [-4.15, -2.25, 0.0],
+        "plot_width": 8.2,
+        "plot_height": 4.8,
+        "x_range": [0.0, 10.0],
+        "y_range": [0.0, 10.0],
+        "points": [
+          [1.0, 2.0],
+          [1.6, 2.7],
+          [2.3, 3.1],
+          [3.0, 3.0],
+          [3.8, 4.4],
+          [4.5, 4.1],
+          [5.2, 5.2],
+          [5.9, 5.0],
+          [6.6, 6.4],
+          [7.2, 6.2],
+          [8.0, 7.4],
+          [8.7, 7.1]
+        ],
+        "point_radius": 0.08,
+        "point_pulse_scale": 1.45,
+        "point_lag_ratio": 0.12,
+        "axis_width": 1.5,
+        "line_width": 2.5,
+        "final_line_width": 3.0,
+        "residual_width": 1.0,
+        "residual_dash_length": 0.075,
+        "residual_dashed_ratio": 0.58,
+        "initial_slope": 1.22,
+        "initial_intercept": -1.0,
+        "overshoot_slope": 0.58,
+        "overshoot_intercept": 1.65,
+        "near_slope": 0.78,
+        "near_intercept": 0.95,
+        "final_slope": 0.68,
+        "final_intercept": 1.35,
+        "beat1_duration": 3.5,
+        "beat1_hold": 0.35,
+        "beat2_duration": 0.8,
+        "beat3_duration": 1.5,
+        "beat4_draw_duration": 0.6,
+        "beat4_hold": 0.5,
+        "beat5_duration": 4.5,
+        "beat5_overshoot_duration": 2.15,
+        "beat5_return_duration": 2.35,
+        "beat6_lock_duration": 0.5,
+        "beat6_residual_duration": 1.5,
+        "residual_lag_ratio": 0.09,
+        "post_residual_micro_pause": 0.38,
+        "beat7_duration": 3.0,
+        "beat7_hold": 0.5,
+        "beat8_duration": 1.5,
+        "final_residual_opacity": 0.15,
+        "final_residual_desaturation": 1.0
+      }
+    }
+  ],
+  "notes": {
+    "tone": "Quiet, geometric, premium, and intuition-first. The line should feel like the only learner inside a fixed data world.",
+    "pacing": "One continuous scene-level action follows the eight beats internally: points, axes, brightening, wrong line, exploratory search, residual reveal, coupled convergence, and final residual dimming.",
+    "animation_guidelines": "No title, no axis labels, no ticks, no grid, no legend, and no formula. Recommended improvements applied: subtle background vignette, authored line pull/overshoot, slight final line emphasis, micro-pause after residual cascade, and final residual desaturation.",
+    "source_brief": "/Users/drivyaanshyadav/Downloads/scene3.md",
+    "implementation_intent": "The visual system is deterministic and stateful: fixed points, minimal axes, one tracker-driven line, and live updater residuals. Residuals do not appear until the line has fully locked in Beat 6, then update live during Beat 7 and fade only to faint traces in Beat 8.",
+    "rendering_note": "Do not run ffmpeg if Manim fails. During visual refinement, render with --flush_cache --disable_caching on the render device."
+  }
+}

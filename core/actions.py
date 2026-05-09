@@ -2870,6 +2870,148 @@ def transition_out_for(obj, transition_name: str):
     return FadeOut(obj)
 
 
+def make_linear_regression_fit(params, zone):
+    """Build the stateful visual system for Video 3 Scene 3 linear regression.
+
+    The renderer owns the timing choreography; this object owns deterministic
+    geometry, colors, trackers, and updater-friendly factories.
+    """
+    point_color = params.get("point_color", "#E8E0D0")
+    point_bright_color = params.get("point_bright_color", "#F5F0E8")
+    axis_color = params.get("axis_color", "#6B7280")
+    line_color = params.get("line_color", "#A8D8EA")
+    residual_color = params.get("residual_color", "#E8A0A0")
+    residual_final_color = params.get("residual_final_color", "#B98995")
+
+    plot_width = float(params.get("plot_width", 8.2))
+    plot_height = float(params.get("plot_height", 4.8))
+    origin = _as_vector(params.get("origin", [-4.15, -2.25, 0.0]))
+    x_min, x_max = params.get("x_range", [0.0, 10.0])
+    y_min, y_max = params.get("y_range", [0.0, 10.0])
+
+    raw_points = params.get("points", [
+        [1.0, 2.0], [1.6, 2.7], [2.3, 3.1], [3.0, 3.0],
+        [3.8, 4.4], [4.5, 4.1], [5.2, 5.2], [5.9, 5.0],
+        [6.6, 6.4], [7.2, 6.2], [8.0, 7.4], [8.7, 7.1],
+    ])
+
+    def c2p(x, y):
+        px = origin[0] + (float(x) - x_min) / (x_max - x_min) * plot_width
+        py = origin[1] + (float(y) - y_min) / (y_max - y_min) * plot_height
+        return np.array([px, py, 0.0])
+
+    def p2c(point):
+        x = x_min + (point[0] - origin[0]) / plot_width * (x_max - x_min)
+        y = y_min + (point[1] - origin[1]) / plot_height * (y_max - y_min)
+        return x, y
+
+    point_radius = float(params.get("point_radius", 0.08))
+    dots = VGroup(*[
+        Dot(c2p(x, y), radius=point_radius, color=point_color, fill_opacity=0.0)
+        for x, y in raw_points
+    ])
+
+    x_axis = Line(c2p(x_min, y_min), c2p(x_max, y_min), color=axis_color, stroke_width=float(params.get("axis_width", 1.5)))
+    y_axis = Line(c2p(x_min, y_min), c2p(x_min, y_max), color=axis_color, stroke_width=float(params.get("axis_width", 1.5)))
+    axes = VGroup(x_axis, y_axis)
+
+    slope_tracker = ValueTracker(float(params.get("initial_slope", 1.22)))
+    intercept_tracker = ValueTracker(float(params.get("initial_intercept", -1.0)))
+    line_progress = ValueTracker(0.0)
+    line_opacity = ValueTracker(1.0)
+    line_width = ValueTracker(float(params.get("line_width", 2.5)))
+
+    residual_progress = [ValueTracker(0.0) for _ in raw_points]
+    residual_opacity = [ValueTracker(0.0) for _ in raw_points]
+    residual_desaturation = ValueTracker(0.0)
+
+    def model_y(x):
+        return slope_tracker.get_value() * x + intercept_tracker.get_value()
+
+    def line_endpoints():
+        start = c2p(x_min, model_y(x_min))
+        end = c2p(x_max, model_y(x_max))
+        progress = max(0.0, min(1.0, line_progress.get_value()))
+        current_end = start + (end - start) * progress
+        return start, current_end
+
+    def make_live_line():
+        start, end = line_endpoints()
+        line = Line(start, end, color=line_color, stroke_width=line_width.get_value())
+        line.set_opacity(line_opacity.get_value())
+        return line
+
+    live_line = always_redraw(make_live_line)
+
+    def interpolate_hex(c1, c2, alpha):
+        color_1 = ManimColor(c1).to_rgb()
+        color_2 = ManimColor(c2).to_rgb()
+        rgb = tuple((1 - alpha) * color_1[i] + alpha * color_2[i] for i in range(3))
+        return ManimColor(rgb)
+
+    residuals = VGroup()
+    for index, (x, y) in enumerate(raw_points):
+        def make_residual(i=index, px=x, py=y):
+            start = c2p(px, py)
+            target = c2p(px, model_y(px))
+            progress = max(0.0, min(1.0, residual_progress[i].get_value()))
+            end = start + (target - start) * progress
+            color = interpolate_hex(residual_color, residual_final_color, residual_desaturation.get_value())
+            dash = DashedLine(
+                start,
+                end,
+                dash_length=float(params.get("residual_dash_length", 0.075)),
+                dashed_ratio=float(params.get("residual_dashed_ratio", 0.58)),
+                color=color,
+                stroke_width=float(params.get("residual_width", 1.0)),
+            )
+            dash.set_opacity(residual_opacity[i].get_value())
+            return dash
+        residuals.add(always_redraw(make_residual))
+
+    if params.get("use_vignette", True):
+        vignette = Ellipse(
+            width=float(params.get("vignette_width", 9.4)),
+            height=float(params.get("vignette_height", 5.8)),
+            color=params.get("vignette_color", "#172238"),
+            fill_color=params.get("vignette_color", "#172238"),
+            fill_opacity=float(params.get("vignette_opacity", 0.11)),
+            stroke_width=0,
+        )
+        vignette.move_to(c2p(5.0, 5.0))
+    else:
+        vignette = VGroup()
+
+    field = VGroup(vignette, axes, dots, live_line, residuals)
+    field.lr_vignette = vignette
+    field.lr_axes = axes
+    field.lr_x_axis = x_axis
+    field.lr_y_axis = y_axis
+    field.lr_dots = dots
+    field.lr_live_line = live_line
+    field.lr_residuals = residuals
+    field.lr_slope = slope_tracker
+    field.lr_intercept = intercept_tracker
+    field.lr_line_progress = line_progress
+    field.lr_line_opacity = line_opacity
+    field.lr_line_width = line_width
+    field.lr_residual_progress = residual_progress
+    field.lr_residual_opacity = residual_opacity
+    field.lr_residual_desaturation = residual_desaturation
+    field.lr_point_color = point_color
+    field.lr_point_bright_color = point_bright_color
+    field.lr_final_slope = float(params.get("final_slope", 0.68))
+    field.lr_final_intercept = float(params.get("final_intercept", 1.35))
+    field.lr_near_slope = float(params.get("near_slope", 0.78))
+    field.lr_near_intercept = float(params.get("near_intercept", 0.95))
+    field.lr_overshoot_slope = float(params.get("overshoot_slope", 0.58))
+    field.lr_overshoot_intercept = float(params.get("overshoot_intercept", 1.65))
+    field.lr_c2p = c2p
+    field.lr_p2c = p2c
+    field.lr_raw_points = raw_points
+    field.lr_params = params
+    return field
+
 def build_object(step_dict):
     action = step_dict["action"]
     params = step_dict.get("params", {})
@@ -2979,6 +3121,9 @@ def build_object(step_dict):
 
     if action == "show_classification_regression_field":
         return make_classification_regression_field(params, zone)
+
+    if action == "show_linear_regression_fit":
+        return make_linear_regression_fit(params, zone)
 
     if action == "fade_out":
         return None
