@@ -2905,37 +2905,18 @@ def make_linear_regression_fit(params, zone):
         y = y_min + (point[1] - origin[1]) / plot_height * (y_max - y_min)
         return x, y
 
-    point_radius = float(params.get("point_radius", 0.08))
+    point_radius = float(params.get("point_radius", 0.11))
     dots = VGroup(*[
-        Dot(c2p(x, y), radius=point_radius, color=point_color, fill_opacity=1.0, stroke_width=0)
+        Dot(c2p(x, y), radius=point_radius, color=point_color, fill_opacity=1.0)
         for x, y in raw_points
     ])
-    for dot in dots:
-        dot.set_fill(point_color, opacity=0.0)
-        dot.set_stroke(opacity=0.0)
-        dot.set_opacity(0.0)
-
-    arrival_indices = sorted(
-        range(len(raw_points)),
-        key=lambda i: (float(raw_points[i][0]), float(raw_points[i][1])),
-    )
-    ordered_dots = [dots[i] for i in arrival_indices]
 
     x_axis = Line(c2p(x_min, y_min), c2p(x_max, y_min), color=axis_color, stroke_width=float(params.get("axis_width", 1.5)))
     y_axis = Line(c2p(x_min, y_min), c2p(x_min, y_max), color=axis_color, stroke_width=float(params.get("axis_width", 1.5)))
     axes = VGroup(x_axis, y_axis)
 
-    axis_anchor_color = params.get("axis_anchor_color", axis_color)
-    origin_anchor = Dot(c2p(x_min, y_min), radius=float(params.get("axis_anchor_radius", 0.035)), color=axis_anchor_color)
-    origin_anchor.set_opacity(0.0)
-    x_axis_cap = Dot(c2p(x_max, y_min), radius=float(params.get("axis_cap_radius", 0.026)), color=axis_anchor_color)
-    y_axis_cap = Dot(c2p(x_min, y_max), radius=float(params.get("axis_cap_radius", 0.026)), color=axis_anchor_color)
-    x_axis_cap.set_opacity(0.0)
-    y_axis_cap.set_opacity(0.0)
-    axis_anchors = VGroup(origin_anchor, x_axis_cap, y_axis_cap)
-
     slope_tracker = ValueTracker(float(params.get("initial_slope", 1.22)))
-    intercept_tracker = ValueTracker(float(params.get("initial_intercept", -1.0)))
+    intercept_tracker = ValueTracker(float(params.get("initial_intercept", 0.5)))
     line_progress = ValueTracker(0.0)
     line_opacity = ValueTracker(1.0)
     line_width = ValueTracker(float(params.get("line_width", 2.5)))
@@ -3001,19 +2982,12 @@ def make_linear_regression_fit(params, zone):
     else:
         vignette = VGroup()
 
-    field = VGroup(vignette, axes, axis_anchors, dots, live_line, residuals)
+    field = VGroup(vignette, axes, dots, live_line, residuals)
     field.lr_vignette = vignette
     field.lr_axes = axes
-    field.lr_axis_anchors = axis_anchors
-    field.lr_x_axis_start = x_axis.get_start()
-    field.lr_x_axis_end = x_axis.get_end()
-    field.lr_y_axis_start = y_axis.get_start()
-    field.lr_y_axis_end = y_axis.get_end()
     field.lr_x_axis = x_axis
     field.lr_y_axis = y_axis
     field.lr_dots = dots
-    field.lr_ordered_dots = ordered_dots
-    field.lr_arrival_indices = arrival_indices
     field.lr_live_line = live_line
     field.lr_residuals = residuals
     field.lr_slope = slope_tracker
@@ -3032,8 +3006,6 @@ def make_linear_regression_fit(params, zone):
     field.lr_near_intercept = float(params.get("near_intercept", 0.95))
     field.lr_overshoot_slope = float(params.get("overshoot_slope", 0.58))
     field.lr_overshoot_intercept = float(params.get("overshoot_intercept", 1.65))
-    field.lr_lock_slope = float(params.get("lock_slope", params.get("near_slope", 0.78)))
-    field.lr_lock_intercept = float(params.get("lock_intercept", params.get("near_intercept", 0.95)))
     field.lr_c2p = c2p
     field.lr_p2c = p2c
     field.lr_raw_points = raw_points
