@@ -17,6 +17,7 @@ from actions import (
     make_links,
     make_linear_regression_fit,
     make_linear_formula_system,
+    make_error_minimization_system,
     place_in_zone,
     transition_in_for,
     transition_out_for,
@@ -397,6 +398,8 @@ class JsonDrivenScene(MovingCameraScene):
             "mutate_linear_regression_fit",
             "show_linear_formula_system",
             "mutate_linear_formula_system",
+            "show_error_minimization_system",
+            "mutate_error_minimization_system",
         }
 
         for idx, step in enumerate(visual_steps):
@@ -977,6 +980,298 @@ class JsonDrivenScene(MovingCameraScene):
 
                     else:
                         print(f"[mutate_linear_regression_fit] Unknown beat={beat}. Skipping.")
+                        handled = True
+
+                elif step.action == "show_error_minimization_system":
+                    # ── Video 3 Scene 5 Beat 1: open directly in the error-minimization graph world.
+                    params = dict(step.params)
+                    field_obj = make_error_minimization_system(params, step.zone)
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+                    if outgoing_anims:
+                        out_rt = min(0.35, max(0.05, run_time * 0.12))
+                        self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=out_rt)
+                        current_time += out_rt
+
+                    self.add(field_obj)
+                    line_opacity = getattr(field_obj, "em_line_opacity", None)
+                    focus_pulse = getattr(field_obj, "em_focus_pulse", None)
+                    focus_ring_opacity = getattr(field_obj, "em_focus_ring_opacity", None)
+                    intro = []
+                    if line_opacity is not None:
+                        intro.append(line_opacity.animate.set_value(1.0))
+                    if intro:
+                        self.play(AnimationGroup(*intro, lag_ratio=0.0), run_time=run_time * 0.28, rate_func=rate_functions.ease_out_sine)
+                        current_time += run_time * 0.28
+                    if focus_pulse is not None and focus_ring_opacity is not None:
+                        self.play(
+                            AnimationGroup(
+                                focus_ring_opacity.animate.set_value(1.0),
+                                focus_pulse.animate.set_value(1.0),
+                                lag_ratio=0.0,
+                            ),
+                            run_time=run_time * 0.36,
+                            rate_func=rate_functions.ease_out_cubic,
+                        )
+                        current_time += run_time * 0.36
+                        self.play(focus_ring_opacity.animate.set_value(0.0), run_time=run_time * 0.12, rate_func=rate_functions.ease_in_sine)
+                        current_time += run_time * 0.12
+                        focus_pulse.set_value(0.0)
+                    hold_rt = max(0.0, run_time * 0.24)
+                    if hold_rt > 0:
+                        self.wait(hold_rt)
+                        current_time += hold_rt
+                    register_object(step.id, step.zone, field_obj)
+                    handled = True
+
+                elif step.action == "mutate_error_minimization_system":
+                    # ── Video 3 Scene 5 Beats 2-12: mutate one persistent graph/cost system.
+                    source_id = step.params.get("source_id")
+                    field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+                    if field_obj is None:
+                        raise RuntimeError(f"mutate_error_minimization_system could not find source_id={source_id!r}")
+
+                    beat = int(step.params.get("beat", 2))
+                    params = dict(step.params)
+                    segment_duration = duration_map[step.anchor]
+
+                    def capped(name, default, floor=0.15, reserve=0.2):
+                        requested = float(params.get(name, default))
+                        available = max(floor, segment_duration - float(step.offset) - reserve)
+                        return max(floor, min(requested, available))
+
+                    focus_bar_progress = getattr(field_obj, "em_focus_bar_progress", None)
+                    focus_bar_opacity = getattr(field_obj, "em_focus_bar_opacity", None)
+                    focus_pulse = getattr(field_obj, "em_focus_pulse", None)
+                    focus_ring_opacity = getattr(field_obj, "em_focus_ring_opacity", None)
+                    sign_emphasis_opacity = getattr(field_obj, "em_sign_emphasis_opacity", None)
+                    error_label = getattr(field_obj, "em_error_label", None)
+                    y_labels = getattr(field_obj, "em_y_labels", None)
+                    all_bar_progress = getattr(field_obj, "em_all_bar_progress", None)
+                    all_bar_opacity = getattr(field_obj, "em_all_bar_opacity", None)
+                    square_progress = getattr(field_obj, "em_square_progress", None)
+                    square_opacity = getattr(field_obj, "em_square_opacity", None)
+                    square_stroke_opacity = getattr(field_obj, "em_square_stroke_opacity", None)
+                    square_fill_reveal = getattr(field_obj, "em_square_fill_reveal", None)
+                    large_square_pulse = getattr(field_obj, "em_large_square_pulse", None)
+                    formula = getattr(field_obj, "em_mse_formula", None)
+                    vocab = getattr(field_obj, "em_vocab_group", None)
+                    cost_group = getattr(field_obj, "em_cost_group", None)
+                    cost_value = getattr(field_obj, "em_cost_value", None)
+                    slope = getattr(field_obj, "em_slope", None)
+                    intercept = getattr(field_obj, "em_intercept", None)
+                    line_width = getattr(field_obj, "em_line_width", None)
+                    overfit_hint_opacity = getattr(field_obj, "em_overfit_hint_opacity", None)
+                    cost_steps = list(getattr(field_obj, "em_cost_steps", [18.7, 11.4, 6.8, 2.1, 1.4, 1.6]))
+
+                    def _register_em():
+                        object_registry[step.id] = field_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = field_obj
+
+                    def set_opacity(obj, value):
+                        return obj.animate.set_opacity(value) if obj is not None else None
+
+                    if beat == 2:
+                        rt = capped("beat2_duration", 2.2, floor=0.7)
+                        anims = []
+                        if focus_bar_opacity is not None:
+                            anims.append(focus_bar_opacity.animate.set_value(1.0))
+                        if focus_bar_progress is not None:
+                            anims.append(focus_bar_progress.animate.set_value(1.0))
+                        self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=rt * 0.62, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.62
+                        if error_label is not None:
+                            self.play(error_label.animate.set_opacity(1.0), run_time=rt * 0.22, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.22
+                        self.wait(rt * 0.16)
+                        current_time += rt * 0.16
+                        _register_em(); handled = True
+
+                    elif beat == 3:
+                        rt = capped("beat3_duration", 2.1, floor=0.7)
+                        anims = []
+                        if y_labels is not None:
+                            anims.append(y_labels.animate.set_opacity(1.0))
+                        if error_label is not None:
+                            anims.append(error_label.animate.set_opacity(0.35))
+                        self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=rt * 0.70, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.70
+                        self.wait(rt * 0.30)
+                        current_time += rt * 0.30
+                        _register_em(); handled = True
+
+                    elif beat == 4:
+                        rt = capped("beat4_duration", 2.2, floor=0.7)
+                        anims = []
+                        if all_bar_opacity is not None:
+                            anims.append(all_bar_opacity.animate.set_value(1.0))
+                        if all_bar_progress is not None:
+                            anims.append(all_bar_progress.animate.set_value(1.0))
+                        if y_labels is not None:
+                            anims.append(y_labels.animate.set_opacity(0.0))
+                        if error_label is not None:
+                            anims.append(error_label.animate.set_opacity(0.0))
+                        if focus_bar_opacity is not None:
+                            anims.append(focus_bar_opacity.animate.set_value(0.0))
+                        self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=rt * 0.78, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.78
+                        self.wait(rt * 0.22)
+                        current_time += rt * 0.22
+                        _register_em(); handled = True
+
+                    elif beat == 5:
+                        rt = capped("beat5_duration", 1.7, floor=0.5)
+                        if sign_emphasis_opacity is not None:
+                            self.play(sign_emphasis_opacity.animate.set_value(1.0), run_time=rt * 0.28, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.28
+                            self.wait(rt * 0.38)
+                            current_time += rt * 0.38
+                            self.play(sign_emphasis_opacity.animate.set_value(0.0), run_time=rt * 0.22, rate_func=rate_functions.ease_in_out_sine)
+                            current_time += rt * 0.22
+                            self.wait(rt * 0.12)
+                            current_time += rt * 0.12
+                        else:
+                            self.wait(rt)
+                            current_time += rt
+                        _register_em(); handled = True
+
+                    elif beat == 6:
+                        rt = capped("beat6_duration", 2.7, floor=0.9)
+                        prep = []
+                        if all_bar_opacity is not None:
+                            prep.append(all_bar_opacity.animate.set_value(1.0))
+                        if square_opacity is not None:
+                            prep.append(square_opacity.animate.set_value(1.0))
+                        if square_stroke_opacity is not None:
+                            prep.append(square_stroke_opacity.animate.set_value(0.28))
+                        if prep:
+                            self.play(AnimationGroup(*prep, lag_ratio=0.0), run_time=rt * 0.18, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.18
+                        grow = []
+                        if square_progress is not None:
+                            grow.append(square_progress.animate.set_value(1.0))
+                        if square_stroke_opacity is not None:
+                            grow.append(square_stroke_opacity.animate.set_value(1.0))
+                        self.play(AnimationGroup(*grow, lag_ratio=0.0), run_time=rt * 0.46, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.46
+                        if square_fill_reveal is not None:
+                            self.play(square_fill_reveal.animate.set_value(1.0), run_time=rt * 0.18, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.18
+                        self.wait(rt * 0.18)
+                        current_time += rt * 0.18
+                        _register_em(); handled = True
+
+                    elif beat == 7:
+                        rt = capped("beat7_duration", 1.8, floor=0.6)
+                        if large_square_pulse is not None:
+                            self.play(large_square_pulse.animate.set_value(1.0), run_time=rt * 0.42, rate_func=rate_functions.ease_out_cubic)
+                            self.play(large_square_pulse.animate.set_value(0.0), run_time=rt * 0.34, rate_func=rate_functions.ease_in_out_sine)
+                            current_time += rt * 0.76
+                        self.wait(rt * 0.24)
+                        current_time += rt * 0.24
+                        _register_em(); handled = True
+
+                    elif beat == 8:
+                        rt = capped("beat8_duration", 2.4, floor=0.8)
+                        intro = []
+                        if formula is not None:
+                            intro.append(formula.animate.set_opacity(1.0))
+                        if vocab is not None:
+                            intro.append(vocab.animate.set_opacity(1.0))
+                        self.play(AnimationGroup(*intro, lag_ratio=0.18), run_time=rt * 0.48, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.48
+                        self.wait(rt * 0.26)
+                        current_time += rt * 0.26
+                        outro = []
+                        if formula is not None:
+                            outro.append(formula.animate.set_opacity(0.0))
+                        if vocab is not None:
+                            outro.append(vocab.animate.set_opacity(0.0))
+                        self.play(AnimationGroup(*outro, lag_ratio=0.0), run_time=rt * 0.26, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.26
+                        _register_em(); handled = True
+
+                    elif beat == 9:
+                        rt = capped("beat9_duration", 1.6, floor=0.5)
+                        anims = []
+                        if cost_group is not None:
+                            anims.append(cost_group.animate.set_opacity(1.0))
+                        if cost_value is not None and cost_steps:
+                            cost_value.set_value(float(cost_steps[0]))
+                        self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=rt * 0.58, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.58
+                        self.wait(rt * 0.42)
+                        current_time += rt * 0.42
+                        _register_em(); handled = True
+
+                    elif beat == 10:
+                        rt = capped("beat10_duration", 4.0, floor=1.2)
+                        states = [
+                            (getattr(field_obj, "em_step1_slope", 0.55), getattr(field_obj, "em_step1_intercept", 1.25), cost_steps[1] if len(cost_steps) > 1 else 11.4),
+                            (getattr(field_obj, "em_step2_slope", 0.64), getattr(field_obj, "em_step2_intercept", 1.02), cost_steps[2] if len(cost_steps) > 2 else 6.8),
+                            (getattr(field_obj, "em_final_slope", 0.72), getattr(field_obj, "em_final_intercept", 0.82), cost_steps[3] if len(cost_steps) > 3 else 2.1),
+                        ]
+                        per = rt / max(1, len(states))
+                        for m, b, c in states:
+                            move = []
+                            if slope is not None:
+                                move.append(slope.animate.set_value(float(m)))
+                            if intercept is not None:
+                                move.append(intercept.animate.set_value(float(b)))
+                            self.play(AnimationGroup(*move, lag_ratio=0.0), run_time=per * 0.58, rate_func=rate_functions.ease_in_out_sine)
+                            current_time += per * 0.58
+                            if cost_value is not None:
+                                self.play(cost_value.animate.set_value(float(c)), run_time=per * 0.28, rate_func=rate_functions.ease_out_sine)
+                                current_time += per * 0.28
+                            self.wait(per * 0.14)
+                            current_time += per * 0.14
+                        _register_em(); handled = True
+
+                    elif beat == 11:
+                        rt = capped("beat11_duration", 2.6, floor=0.8)
+                        anims = []
+                        if slope is not None:
+                            anims.append(slope.animate.set_value(getattr(field_obj, "em_final_slope", 0.72)))
+                        if intercept is not None:
+                            anims.append(intercept.animate.set_value(getattr(field_obj, "em_final_intercept", 0.82)))
+                        if cost_value is not None:
+                            anims.append(cost_value.animate.set_value(float(cost_steps[4] if len(cost_steps) > 4 else 1.4)))
+                        if line_width is not None:
+                            anims.append(line_width.animate.set_value(float(params.get("final_line_width", 3.35))))
+                        self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=rt * 0.68, rate_func=rate_functions.ease_out_cubic)
+                        current_time += rt * 0.68
+                        self.wait(rt * 0.32)
+                        current_time += rt * 0.32
+                        _register_em(); handled = True
+
+                    elif beat == 12:
+                        rt = capped("beat12_duration", 2.2, floor=0.8)
+                        anims = []
+                        if slope is not None:
+                            anims.append(slope.animate.set_value(getattr(field_obj, "em_overfit_slope", 0.82)))
+                        if intercept is not None:
+                            anims.append(intercept.animate.set_value(getattr(field_obj, "em_overfit_intercept", 0.45)))
+                        if cost_value is not None:
+                            anims.append(cost_value.animate.set_value(float(cost_steps[5] if len(cost_steps) > 5 else 1.6)))
+                        if overfit_hint_opacity is not None:
+                            anims.append(overfit_hint_opacity.animate.set_value(1.0))
+                        self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=rt * 0.62, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.62
+                        self.wait(rt * 0.38)
+                        current_time += rt * 0.38
+                        _register_em(); handled = True
+
+                    else:
+                        print(f"[mutate_error_minimization_system] Unknown beat={beat}. Skipping.")
                         handled = True
 
                 elif step.action == "show_linear_formula_system":

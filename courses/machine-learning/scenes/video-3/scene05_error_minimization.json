@@ -1,0 +1,316 @@
+{
+  "scene_id": "video03_scene05_error_minimization",
+  "video_title": "Supervised Learning",
+  "scene_title": "Error Minimization",
+  "order": 5,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s5_01",
+      "text": "The model doesn't just want any line… it wants the best line."
+    },
+    {
+      "id": "s5_02",
+      "text": "You'll see a vertical gap between that point and our line. This distance is the Error."
+    },
+    {
+      "id": "s5_03",
+      "text": "Mathematically, it's just the actual value minus the predicted value."
+    },
+    {
+      "id": "s5_04",
+      "text": "We need to look at all the points. These residuals appear for every single student."
+    },
+    {
+      "id": "s5_05",
+      "text": "Some errors are positive, some negative. If we added them up, they'd cancel out."
+    },
+    {
+      "id": "s5_06",
+      "text": "So we square them. Imagine each error bar expanding into a square."
+    },
+    {
+      "id": "s5_07",
+      "text": "Larger mistakes count much, much more. A small miss is fine, but a huge miss is penalized heavily."
+    },
+    {
+      "id": "s5_08",
+      "text": "Mean Squared Error. We take all those squared errors, add them up, and find the average. Loss. Cost."
+    },
+    {
+      "id": "s5_09",
+      "text": "Watch that Cost indicator in the corner. As the model tweaks the weight and bias…"
+    },
+    {
+      "id": "s5_10",
+      "text": "The line shifts into a better position… that cost number starts to shrink."
+    },
+    {
+      "id": "s5_11",
+      "text": "Once the cost stops shrinking and the line becomes stable, we've found our best fit."
+    },
+    {
+      "id": "s5_12",
+      "text": "But sometimes, being too accurate on our current data can actually be a problem."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v3s5_beat1_error_system",
+      "anchor": "s5_01",
+      "offset": 0.0,
+      "action": "show_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.2,
+      "params": {
+        "axis_color": "#7C8798",
+        "point_color": "#E5E7EB",
+        "focus_color": "#FFFFFF",
+        "line_color": "#4A9EFF",
+        "residual_color": "#FF6B6B",
+        "square_color": "#FF6B6B",
+        "label_color": "#F8FAFC",
+        "muted_label_color": "#CBD5E1",
+        "cost_color": "#4A9EFF",
+        "warning_color": "#FFD166",
+        "origin": [-4.3, -2.55, 0.0],
+        "plot_width": 8.6,
+        "plot_height": 5.15,
+        "x_range": [0.0, 10.0],
+        "y_range": [0.0, 10.0],
+        "points": [
+          [1.0, 2.0],
+          [1.7, 3.0],
+          [2.4, 2.7],
+          [3.2, 4.5],
+          [4.0, 4.0],
+          [4.9, 5.7],
+          [5.8, 5.4],
+          [6.7, 6.9],
+          [7.6, 6.8],
+          [8.6, 8.2]
+        ],
+        "focus_index": 7,
+        "largest_square_index": 7,
+        "initial_slope": 0.46,
+        "initial_intercept": 1.55,
+        "step1_slope": 0.55,
+        "step1_intercept": 1.25,
+        "step2_slope": 0.64,
+        "step2_intercept": 1.02,
+        "final_slope": 0.72,
+        "final_intercept": 0.82,
+        "overfit_slope": 0.82,
+        "overfit_intercept": 0.45,
+        "line_width": 3.15,
+        "final_line_width": 3.35,
+        "square_fill_opacity": 0.13,
+        "square_stroke_opacity": 0.62,
+        "initial_cost": 18.7,
+        "cost_steps": [18.7, 11.4, 6.8, 2.1, 1.4, 1.6]
+      }
+    },
+    {
+      "id": "v3s5_beat2_single_error",
+      "anchor": "s5_02",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.2,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 2,
+        "beat2_duration": 2.2
+      }
+    },
+    {
+      "id": "v3s5_beat3_error_formula",
+      "anchor": "s5_03",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.1,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 3,
+        "beat3_duration": 2.1
+      }
+    },
+    {
+      "id": "v3s5_beat4_all_residuals",
+      "anchor": "s5_04",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.2,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 4,
+        "beat4_duration": 2.2
+      }
+    },
+    {
+      "id": "v3s5_beat5_sign_hold",
+      "anchor": "s5_05",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 1.7,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 5,
+        "beat5_duration": 1.7
+      }
+    },
+    {
+      "id": "v3s5_beat6_squares",
+      "anchor": "s5_06",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.7,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 6,
+        "beat6_duration": 2.7
+      }
+    },
+    {
+      "id": "v3s5_beat7_large_error",
+      "anchor": "s5_07",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 1.8,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 7,
+        "beat7_duration": 1.8
+      }
+    },
+    {
+      "id": "v3s5_beat8_mse_formula",
+      "anchor": "s5_08",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.4,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 8,
+        "beat8_duration": 2.4
+      }
+    },
+    {
+      "id": "v3s5_beat9_cost_indicator",
+      "anchor": "s5_09",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 1.6,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 9,
+        "beat9_duration": 1.6
+      }
+    },
+    {
+      "id": "v3s5_beat10_optimize",
+      "anchor": "s5_10",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 4.0,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 10,
+        "beat10_duration": 4.0
+      }
+    },
+    {
+      "id": "v3s5_beat11_converge",
+      "anchor": "s5_11",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.6,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 11,
+        "beat11_duration": 2.6,
+        "final_line_width": 3.35
+      }
+    },
+    {
+      "id": "v3s5_beat12_overfit_hint",
+      "anchor": "s5_12",
+      "offset": 0.0,
+      "action": "mutate_error_minimization_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.2,
+      "params": {
+        "source_id": "v3s5_beat1_error_system",
+        "beat": 12,
+        "beat12_duration": 2.2
+      }
+    }
+  ],
+  "notes": {
+    "tone": "Direct continuation of Scene 4: no title card, no formula reset, and no slide behavior. The graph/data system is already the world of the scene.",
+    "pacing": "Twelve exact narration beats move from one error to all residuals, then squares, cost, optimization, convergence, and a subtle overfit hint. Beat 6 and Beat 10 should breathe most after audio timing is available.",
+    "animation_guidelines": "Use one persistent graph system. Scatter, line, residual bars/squares, and cost indicator should persist. Bars become axis-aligned squares for clarity; cost drops after geometry changes; final overfit hint stays subtle with one visible consequence. Narration text is exact from the provided scene5.md brief and must not be rewritten."
+  }
+}

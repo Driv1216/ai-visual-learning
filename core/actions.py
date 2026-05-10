@@ -3140,6 +3140,283 @@ def make_linear_formula_system(params, zone):
     return field
 
 
+def make_error_minimization_system(params, zone):
+    """Build the stateful visual system for Video 3 Scene 5.
+
+    Scene 5 explains error minimization with one persistent graph: data points,
+    a live regression line, residual bars, squared-error areas, and a cost
+    indicator. Renderer beat logic owns timing and mutation.
+    """
+    axis_color = params.get("axis_color", "#7C8798")
+    point_color = params.get("point_color", "#E5E7EB")
+    focus_color = params.get("focus_color", "#FFFFFF")
+    line_color = params.get("line_color", "#4A9EFF")
+    residual_color = params.get("residual_color", "#FF6B6B")
+    square_color = params.get("square_color", "#FF6B6B")
+    label_color = params.get("label_color", "#F8FAFC")
+    muted_label_color = params.get("muted_label_color", "#CBD5E1")
+    cost_color = params.get("cost_color", "#4A9EFF")
+    warning_color = params.get("warning_color", "#FFD166")
+
+    plot_width = float(params.get("plot_width", 8.6))
+    plot_height = float(params.get("plot_height", 5.15))
+    origin = _as_vector(params.get("origin", [-4.3, -2.55, 0.0]))
+    x_min, x_max = params.get("x_range", [0.0, 10.0])
+    y_min, y_max = params.get("y_range", [0.0, 10.0])
+
+    raw_points = params.get("points", [
+        [1.0, 2.0], [1.7, 3.0], [2.4, 2.7], [3.2, 4.5],
+        [4.0, 4.0], [4.9, 5.7], [5.8, 5.4], [6.7, 6.9],
+        [7.6, 6.8], [8.6, 8.2],
+    ])
+    focus_index = int(params.get("focus_index", 7))
+    focus_index = max(0, min(len(raw_points) - 1, focus_index))
+    largest_index = int(params.get("largest_square_index", 2))
+    largest_index = max(0, min(len(raw_points) - 1, largest_index))
+
+    def c2p(x, y):
+        px = origin[0] + (float(x) - x_min) / (x_max - x_min) * plot_width
+        py = origin[1] + (float(y) - y_min) / (y_max - y_min) * plot_height
+        return np.array([px, py, 0.0])
+
+    def clamp_y(y):
+        return max(y_min, min(y_max, float(y)))
+
+    slope_tracker = ValueTracker(float(params.get("initial_slope", 0.46)))
+    intercept_tracker = ValueTracker(float(params.get("initial_intercept", 1.55)))
+    line_opacity = ValueTracker(0.0)
+    line_width = ValueTracker(float(params.get("line_width", 3.15)))
+    focus_pulse = ValueTracker(0.0)
+    focus_ring_opacity = ValueTracker(0.0)
+    focus_bar_progress = ValueTracker(0.0)
+    focus_bar_opacity = ValueTracker(0.0)
+    error_label_opacity = ValueTracker(0.0)
+    y_labels_opacity = ValueTracker(0.0)
+    sign_emphasis_opacity = ValueTracker(0.0)
+    all_bar_progress = ValueTracker(0.0)
+    all_bar_opacity = ValueTracker(0.0)
+    square_progress = ValueTracker(0.0)
+    square_stroke_opacity = ValueTracker(0.0)
+    square_fill_reveal = ValueTracker(0.0)
+    square_opacity = ValueTracker(0.0)
+    large_square_pulse = ValueTracker(0.0)
+    formula_opacity = ValueTracker(0.0)
+    vocab_opacity = ValueTracker(0.0)
+    cost_opacity = ValueTracker(0.0)
+    cost_value = ValueTracker(float(params.get("initial_cost", 18.7)))
+    overfit_hint_opacity = ValueTracker(0.0)
+
+    def model_y(x):
+        return slope_tracker.get_value() * float(x) + intercept_tracker.get_value()
+
+    def clipped_line_points():
+        m = slope_tracker.get_value()
+        b = intercept_tracker.get_value()
+        candidates = []
+        for x in (x_min, x_max):
+            y = m * x + b
+            if y_min <= y <= y_max:
+                candidates.append((x, y))
+        if abs(m) > 1e-8:
+            for y in (y_min, y_max):
+                x = (y - b) / m
+                if x_min <= x <= x_max:
+                    candidates.append((x, y))
+        unique = []
+        for item in candidates:
+            if not any(abs(item[0] - other[0]) < 1e-6 and abs(item[1] - other[1]) < 1e-6 for other in unique):
+                unique.append(item)
+        if len(unique) < 2:
+            unique = [(x_min, clamp_y(model_y(x_min))), (x_max, clamp_y(model_y(x_max)))]
+        unique.sort(key=lambda item: item[0])
+        return c2p(*unique[0]), c2p(*unique[-1])
+
+    x_axis = Line(c2p(x_min, y_min), c2p(x_max, y_min), color=axis_color, stroke_width=1.35)
+    y_axis = Line(c2p(x_min, y_min), c2p(x_min, y_max), color=axis_color, stroke_width=1.35)
+    ticks = VGroup()
+    for tx in (2.5, 5.0, 7.5):
+        ticks.add(Line(c2p(tx, y_min), c2p(tx, y_min) + UP * 0.06, color=axis_color, stroke_width=0.9).set_opacity(0.45))
+    for ty in (2.5, 5.0, 7.5):
+        ticks.add(Line(c2p(x_min, ty), c2p(x_min, ty) + RIGHT * 0.06, color=axis_color, stroke_width=0.9).set_opacity(0.45))
+    axes = VGroup(x_axis, y_axis, ticks).set_opacity(float(params.get("axis_opacity", 0.72)))
+
+    dots = VGroup()
+    for i, (x, y) in enumerate(raw_points):
+        color = focus_color if i == focus_index else point_color
+        radius = float(params.get("point_radius", 0.085)) * (1.15 if i == focus_index else 1.0)
+        dot = Dot(c2p(x, y), radius=radius, color=color, fill_opacity=0.92)
+        dot.set_stroke(color="#FFFFFF", width=0.65, opacity=0.22)
+        dots.add(dot)
+
+    def make_focus_ring():
+        x, y = raw_points[focus_index]
+        pulse = max(0.0, min(1.0, focus_pulse.get_value()))
+        ring = Circle(radius=0.18 + 0.13 * pulse, color=focus_color, stroke_width=1.7)
+        ring.move_to(c2p(x, y))
+        ring.set_opacity(focus_ring_opacity.get_value() * (1.0 - pulse))
+        return ring
+
+    focus_ring = always_redraw(make_focus_ring)
+
+    def make_live_line():
+        start, end = clipped_line_points()
+        line = Line(start, end, color=line_color, stroke_width=line_width.get_value())
+        line.set_opacity(line_opacity.get_value())
+        return line
+
+    live_line = always_redraw(make_live_line)
+
+    def residual_endpoints(index):
+        x, y = raw_points[index]
+        point = c2p(x, y)
+        pred = c2p(x, clamp_y(model_y(x)))
+        return point, pred
+
+    def make_focus_bar():
+        start, target = residual_endpoints(focus_index)
+        progress = max(0.0, min(1.0, focus_bar_progress.get_value()))
+        end = start + (target - start) * progress
+        bar = Line(start, end, color=residual_color, stroke_width=2.7)
+        bar.set_opacity(focus_bar_opacity.get_value())
+        return bar
+
+    focus_bar = always_redraw(make_focus_bar)
+
+    focus_x, focus_y = raw_points[focus_index]
+    error_label = Text(params.get("error_label_text", "Error"), font_size=22, color=residual_color)
+    error_label.move_to(c2p(focus_x + 0.65, (focus_y + model_y(focus_x)) / 2.0))
+    error_label.set_opacity(0.0)
+
+    y_label = MathTex("y", font_size=30, color=label_color)
+    yhat_label = MathTex(r"\hat{y}", font_size=30, color=line_color)
+    error_expr = MathTex(r"y - \hat{y}", font_size=34, color=residual_color)
+    y_label.move_to(c2p(focus_x - 0.35, focus_y + 0.28))
+    yhat_label.move_to(c2p(focus_x - 0.42, clamp_y(model_y(focus_x)) - 0.32))
+    error_expr.move_to(c2p(focus_x + 0.82, (focus_y + model_y(focus_x)) / 2.0))
+    labels_group = VGroup(y_label, yhat_label, error_expr).set_opacity(0.0)
+
+    residual_bars = VGroup()
+    for index, (x, y) in enumerate(raw_points):
+        def make_bar(i=index):
+            start, target = residual_endpoints(i)
+            progress = max(0.0, min(1.0, all_bar_progress.get_value()))
+            end = start + (target - start) * progress
+            emphasis = 1.0
+            if i in (1, 7):
+                emphasis += 0.45 * sign_emphasis_opacity.get_value()
+            bar = Line(start, end, color=residual_color, stroke_width=1.55 + (0.75 * sign_emphasis_opacity.get_value() if i in (1, 7) else 0.0))
+            bar.set_opacity(all_bar_opacity.get_value() * (0.65 if i != focus_index else 0.9) * emphasis)
+            return bar
+        residual_bars.add(always_redraw(make_bar))
+
+    residual_squares = VGroup()
+    square_fill_opacity = float(params.get("square_fill_opacity", 0.13))
+    square_stroke_opacity_max = float(params.get("square_stroke_opacity", 0.62))
+    for index, (x, y) in enumerate(raw_points):
+        def make_square(i=index):
+            start, target = residual_endpoints(i)
+            h = abs(target[1] - start[1])
+            direction = RIGHT if start[0] < origin[0] + plot_width * 0.55 else LEFT
+            progress = max(0.0, min(1.0, square_progress.get_value()))
+            width = h * progress
+            y_low = min(start[1], target[1])
+            y_high = max(start[1], target[1])
+            if direction is RIGHT:
+                pts = [np.array([start[0], y_low, 0]), np.array([start[0] + width, y_low, 0]), np.array([start[0] + width, y_high, 0]), np.array([start[0], y_high, 0])]
+            else:
+                pts = [np.array([start[0], y_low, 0]), np.array([start[0] - width, y_low, 0]), np.array([start[0] - width, y_high, 0]), np.array([start[0], y_high, 0])]
+            poly = Polygon(*pts, color=square_color, stroke_width=1.05 + (0.9 * large_square_pulse.get_value() if i == largest_index else 0.0))
+            opacity_boost = 0.28 * large_square_pulse.get_value() if i == largest_index else 0.0
+            poly.set_fill(square_color, opacity=square_opacity.get_value() * square_fill_reveal.get_value() * (square_fill_opacity + opacity_boost))
+            poly.set_stroke(square_color, opacity=square_opacity.get_value() * (square_stroke_opacity.get_value() * square_stroke_opacity_max + opacity_boost))
+            return poly
+        residual_squares.add(always_redraw(make_square))
+
+    mse_formula = MathTex(r"\mathrm{MSE}=\frac{1}{n}\sum (y-\hat{y})^2", font_size=36, color=label_color)
+    mse_formula.to_corner(UL, buff=0.48)
+    mse_formula.set_opacity(0.0)
+    loss_label = Text("Loss", font_size=22, color=muted_label_color)
+    cost_word = Text("Cost", font_size=24, color=cost_color, weight=BOLD)
+    loss_label.next_to(mse_formula, DOWN, aligned_edge=LEFT, buff=0.18)
+    cost_word.next_to(loss_label, RIGHT, buff=0.45)
+    vocab_group = VGroup(loss_label, cost_word).set_opacity(0.0)
+
+    cost_label = Text("Cost", font_size=22, color=muted_label_color)
+    cost_number = DecimalNumber(cost_value.get_value(), num_decimal_places=1, font_size=34, color=cost_color)
+    cost_number.add_updater(lambda mob: mob.set_value(cost_value.get_value()))
+    cost_group = VGroup(cost_label, cost_number).arrange(RIGHT, buff=0.18)
+    cost_group.to_corner(UR, buff=0.52)
+    cost_group.set_opacity(0.0)
+
+    def make_overfit_hint():
+        x, y = raw_points[-1]
+        start = c2p(x, y)
+        target = c2p(x, clamp_y(model_y(x)))
+        hint = DashedLine(start, target, dash_length=0.055, dashed_ratio=0.58, color=warning_color, stroke_width=1.35)
+        hint.set_opacity(overfit_hint_opacity.get_value() * 0.58)
+        return hint
+
+    overfit_hint = always_redraw(make_overfit_hint)
+
+    field = VGroup(
+        axes, residual_squares, residual_bars, dots, focus_ring, live_line, focus_bar,
+        error_label, labels_group, mse_formula, vocab_group, cost_group, overfit_hint,
+    )
+    field.em_axes = axes
+    field.em_dots = dots
+    field.em_focus_ring = focus_ring
+    field.em_live_line = live_line
+    field.em_focus_bar = focus_bar
+    field.em_error_label = error_label
+    field.em_y_labels = labels_group
+    field.em_residual_bars = residual_bars
+    field.em_residual_squares = residual_squares
+    field.em_mse_formula = mse_formula
+    field.em_vocab_group = vocab_group
+    field.em_cost_group = cost_group
+    field.em_cost_number = cost_number
+    field.em_overfit_hint = overfit_hint
+    field.em_slope = slope_tracker
+    field.em_intercept = intercept_tracker
+    field.em_line_opacity = line_opacity
+    field.em_line_width = line_width
+    field.em_focus_pulse = focus_pulse
+    field.em_focus_ring_opacity = focus_ring_opacity
+    field.em_focus_bar_progress = focus_bar_progress
+    field.em_focus_bar_opacity = focus_bar_opacity
+    field.em_error_label_opacity = error_label_opacity
+    field.em_y_labels_opacity = y_labels_opacity
+    field.em_sign_emphasis_opacity = sign_emphasis_opacity
+    field.em_all_bar_progress = all_bar_progress
+    field.em_all_bar_opacity = all_bar_opacity
+    field.em_square_progress = square_progress
+    field.em_square_stroke_opacity = square_stroke_opacity
+    field.em_square_fill_reveal = square_fill_reveal
+    field.em_square_opacity = square_opacity
+    field.em_large_square_pulse = large_square_pulse
+    field.em_formula_opacity = formula_opacity
+    field.em_vocab_opacity = vocab_opacity
+    field.em_cost_opacity = cost_opacity
+    field.em_cost_value = cost_value
+    field.em_overfit_hint_opacity = overfit_hint_opacity
+    field.em_initial_slope = float(params.get("initial_slope", 0.46))
+    field.em_initial_intercept = float(params.get("initial_intercept", 1.55))
+    field.em_step1_slope = float(params.get("step1_slope", 0.55))
+    field.em_step1_intercept = float(params.get("step1_intercept", 1.25))
+    field.em_step2_slope = float(params.get("step2_slope", 0.64))
+    field.em_step2_intercept = float(params.get("step2_intercept", 1.02))
+    field.em_final_slope = float(params.get("final_slope", 0.72))
+    field.em_final_intercept = float(params.get("final_intercept", 0.82))
+    field.em_overfit_slope = float(params.get("overfit_slope", 0.82))
+    field.em_overfit_intercept = float(params.get("overfit_intercept", 0.45))
+    field.em_cost_steps = params.get("cost_steps", [18.7, 11.4, 6.8, 2.1, 1.4, 1.6])
+    field.em_params = params
+    field.em_c2p = c2p
+    field.em_model_y = model_y
+    field.em_raw_points = raw_points
+    return field
+
+
 def make_linear_regression_fit(params, zone):
     """Build the redesigned stateful visual system for Video 3 Scene 3.
 
@@ -3487,6 +3764,9 @@ def build_object(step_dict):
 
     if action == "show_linear_formula_system":
         return make_linear_formula_system(params, zone)
+
+    if action == "show_error_minimization_system":
+        return make_error_minimization_system(params, zone)
 
     if action == "fade_out":
         return None
