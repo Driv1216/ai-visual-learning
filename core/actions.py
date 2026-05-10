@@ -2870,6 +2870,251 @@ def transition_out_for(obj, transition_name: str):
     return FadeOut(obj)
 
 
+def make_linear_formula_system(params, zone):
+    """Build the stateful visual system for Video 3 Scene 4.
+
+    Scene 4 explains the formula as geometry: one persistent equation and one
+    persistent line controlled by slope/weight and intercept/bias trackers.
+    The renderer owns all timing and beat-specific mutation.
+    """
+    equation_color = params.get("equation_color", "#F8FAFC")
+    dim_color = params.get("dim_color", "#94A3B8")
+    axis_color = params.get("axis_color", "#7C8798")
+    line_color = params.get("line_color", "#4A9EFF")
+    yhat_color = params.get("yhat_color", "#4A9EFF")
+    point_color = params.get("point_color", "#FF6B6B")
+    bias_color = params.get("bias_color", "#FFD166")
+    connector_color = params.get("connector_color", "#FFD166")
+    label_color = params.get("label_color", "#CBD5E1")
+
+    plot_width = float(params.get("plot_width", 7.8))
+    plot_height = float(params.get("plot_height", 3.7))
+    origin = _as_vector(params.get("origin", [-3.9, -2.55, 0.0]))
+    x_min, x_max = params.get("x_range", [0.0, 10.0])
+    y_min, y_max = params.get("y_range", [0.0, 10.0])
+
+    def c2p(x, y):
+        px = origin[0] + (float(x) - x_min) / (x_max - x_min) * plot_width
+        py = origin[1] + (float(y) - y_min) / (y_max - y_min) * plot_height
+        return np.array([px, py, 0.0])
+
+    equation = MathTex(
+        r"\hat{y}", "=", "w", "x", "+", "b",
+        font_size=int(params.get("equation_font_size", 72)),
+        color=equation_color,
+    )
+    equation.move_to(_as_vector(params.get("equation_home", [0.0, 2.35, 0.0])))
+    fit_to_width(equation, float(params.get("equation_max_width", 6.7)))
+    term_map = {
+        "yhat": equation[0],
+        "equals": equation[1],
+        "w": equation[2],
+        "x": equation[3],
+        "plus": equation[4],
+        "b": equation[5],
+    }
+    for term in equation:
+        term.set_opacity(float(params.get("equation_rest_opacity", 0.58)))
+
+    slope_tracker = ValueTracker(float(params.get("initial_slope", 0.62)))
+    intercept_tracker = ValueTracker(float(params.get("initial_intercept", 1.35)))
+    line_progress = ValueTracker(0.0)
+    line_opacity = ValueTracker(0.0)
+    line_width = ValueTracker(float(params.get("line_width", 3.0)))
+    prediction_drop_progress = ValueTracker(0.0)
+    prediction_drop_opacity = ValueTracker(0.0)
+    prediction_dot_opacity = ValueTracker(0.0)
+    x_tick_opacity = ValueTracker(0.0)
+    x_rise_progress = ValueTracker(0.0)
+    x_rise_opacity = ValueTracker(0.0)
+    intercept_opacity = ValueTracker(0.0)
+    wb_cue_opacity = ValueTracker(0.0)
+
+    def model_y(x):
+        return slope_tracker.get_value() * float(x) + intercept_tracker.get_value()
+
+    def clipped_line_points():
+        m = slope_tracker.get_value()
+        b = intercept_tracker.get_value()
+        candidates = []
+        for x in (x_min, x_max):
+            y = m * x + b
+            if y_min <= y <= y_max:
+                candidates.append((x, y))
+        if abs(m) > 1e-8:
+            for y in (y_min, y_max):
+                x = (y - b) / m
+                if x_min <= x <= x_max:
+                    candidates.append((x, y))
+        unique = []
+        for item in candidates:
+            if not any(abs(item[0] - other[0]) < 1e-6 and abs(item[1] - other[1]) < 1e-6 for other in unique):
+                unique.append(item)
+        if len(unique) < 2:
+            unique = [(x_min, max(y_min, min(y_max, model_y(x_min)))), (x_max, max(y_min, min(y_max, model_y(x_max))))]
+        unique.sort(key=lambda item: item[0])
+        start = c2p(*unique[0])
+        end = c2p(*unique[-1])
+        progress = max(0.0, min(1.0, line_progress.get_value()))
+        return start, start + (end - start) * progress
+
+    def make_live_line():
+        start, end = clipped_line_points()
+        line = Line(start, end, color=line_color, stroke_width=line_width.get_value())
+        line.set_opacity(line_opacity.get_value())
+        return line
+
+    live_line = always_redraw(make_live_line)
+
+    x_axis = Line(c2p(x_min, y_min), c2p(x_max, y_min), color=axis_color, stroke_width=1.45)
+    y_axis = Line(c2p(x_min, y_min), c2p(x_min, y_max), color=axis_color, stroke_width=1.45)
+    x_tip = Triangle(color=axis_color, fill_opacity=0.8, stroke_width=0).scale(0.065).rotate(-90 * DEGREES).move_to(c2p(x_max, y_min))
+    y_tip = Triangle(color=axis_color, fill_opacity=0.8, stroke_width=0).scale(0.065).move_to(c2p(x_min, y_max))
+    ticks = VGroup()
+    for tx in (2.5, 5.0, 7.5):
+        ticks.add(Line(c2p(tx, y_min), c2p(tx, y_min) + UP * 0.065, color=axis_color, stroke_width=1.0).set_opacity(0.55))
+    for ty in (2.5, 5.0, 7.5):
+        ticks.add(Line(c2p(x_min, ty), c2p(x_min, ty) + RIGHT * 0.065, color=axis_color, stroke_width=1.0).set_opacity(0.55))
+    x_label = Text(params.get("x_label_text", "Study Hours"), font_size=18, color=label_color)
+    x_label.next_to(x_axis, DOWN, buff=0.18)
+    y_label = Text(params.get("y_label_text", "Marks"), font_size=18, color=label_color).rotate(90 * DEGREES)
+    y_label.next_to(y_axis, LEFT, buff=0.22)
+    axes = VGroup(x_axis, y_axis, x_tip, y_tip, ticks, x_label, y_label)
+
+    prediction_x = float(params.get("prediction_x", 6.2))
+    real_y = float(params.get("real_y", 7.1))
+    real_point = Dot(c2p(prediction_x, real_y), radius=0.095, color=point_color, fill_opacity=1.0)
+    real_point.set_stroke(color="#FFFFFF", width=0.8, opacity=0.24)
+    real_point.set_opacity(0.0)
+
+    def make_prediction_drop():
+        x = prediction_x
+        start = c2p(x, real_y)
+        target = c2p(x, max(y_min, min(y_max, model_y(x))))
+        progress = max(0.0, min(1.0, prediction_drop_progress.get_value()))
+        end = start + (target - start) * progress
+        drop = DashedLine(start, end, dash_length=0.08, dashed_ratio=0.58, color=point_color, stroke_width=1.55)
+        drop.set_opacity(prediction_drop_opacity.get_value())
+        return drop
+
+    def make_prediction_dot():
+        dot = Dot(c2p(prediction_x, max(y_min, min(y_max, model_y(prediction_x)))), radius=0.105, color=yhat_color, fill_opacity=1.0)
+        dot.set_stroke(color="#FFFFFF", width=0.8, opacity=0.20)
+        dot.set_opacity(prediction_dot_opacity.get_value())
+        return dot
+
+    prediction_drop = always_redraw(make_prediction_drop)
+    prediction_dot = always_redraw(make_prediction_dot)
+
+    lookup_x = float(params.get("lookup_x", 4.7))
+
+    def make_x_tick():
+        tick = Line(c2p(lookup_x, y_min) + DOWN * 0.08, c2p(lookup_x, y_min) + UP * 0.12, color=equation_color, stroke_width=2.0)
+        tick.set_opacity(x_tick_opacity.get_value() * 0.72)
+        return tick
+
+    def make_x_rise():
+        start = c2p(lookup_x, y_min)
+        target = c2p(lookup_x, max(y_min, min(y_max, model_y(lookup_x))))
+        progress = max(0.0, min(1.0, x_rise_progress.get_value()))
+        rise = Line(start, start + (target - start) * progress, color=equation_color, stroke_width=1.7)
+        rise.set_opacity(x_rise_opacity.get_value() * 0.46)
+        return rise
+
+    x_tick = always_redraw(make_x_tick)
+    x_rise = always_redraw(make_x_rise)
+
+    def make_intercept_marker():
+        y = max(y_min, min(y_max, intercept_tracker.get_value()))
+        marker = Dot(c2p(x_min, y), radius=0.105, color=bias_color, fill_opacity=1.0)
+        marker.set_stroke(color="#FFFFFF", width=0.8, opacity=0.22)
+        marker.set_opacity(intercept_opacity.get_value())
+        return marker
+
+    intercept_marker = always_redraw(make_intercept_marker)
+
+    raw_scatter = params.get("scatter_points", [
+        [1.0, 2.0], [1.8, 2.9], [2.7, 3.2], [3.6, 4.6],
+        [4.8, 4.5], [5.9, 5.9], [7.0, 6.2], [8.4, 7.6],
+    ])
+    scatter = VGroup(*[
+        Dot(c2p(x, y), radius=0.085, color=point_color, fill_opacity=0.92).set_stroke(color="#FFFFFF", width=0.6, opacity=0.18)
+        for x, y in raw_scatter
+    ])
+    for dot in scatter:
+        dot.set_opacity(0.0)
+
+    def make_term_box(term_name):
+        box = SurroundingRectangle(term_map[term_name], buff=0.075, color=connector_color, corner_radius=0.04, stroke_width=1.8)
+        box.set_opacity(wb_cue_opacity.get_value())
+        return box
+
+    w_box = always_redraw(lambda: make_term_box("w"))
+    b_box = always_redraw(lambda: make_term_box("b"))
+
+    def make_wb_connector():
+        start = term_map["w"].get_bottom() + DOWN * 0.08
+        end = term_map["b"].get_bottom() + DOWN * 0.08
+        conn = CubicBezier(start, start + DOWN * 0.18, end + DOWN * 0.18, end)
+        conn.set_stroke(color=connector_color, width=1.15, opacity=wb_cue_opacity.get_value() * 0.72)
+        return conn
+
+    wb_connector = always_redraw(make_wb_connector)
+
+    field = VGroup(
+        equation, axes, live_line, real_point, prediction_drop, prediction_dot,
+        x_tick, x_rise, intercept_marker, scatter, w_box, b_box, wb_connector,
+    )
+    field.lf_equation = equation
+    field.lf_terms = term_map
+    field.lf_equation_home = equation.get_center().copy()
+    field.lf_equation_final = _as_vector(params.get("equation_final", [0.0, 3.05, 0.0]))
+    field.lf_dim_color = dim_color
+    field.lf_equation_color = equation_color
+    field.lf_yhat_color = yhat_color
+    field.lf_line_color = line_color
+    field.lf_point_color = point_color
+    field.lf_bias_color = bias_color
+    field.lf_axes = axes
+    field.lf_x_axis = x_axis
+    field.lf_y_axis = y_axis
+    field.lf_axis_extras = VGroup(x_tip, y_tip, ticks, x_label, y_label)
+    field.lf_live_line = live_line
+    field.lf_slope = slope_tracker
+    field.lf_intercept = intercept_tracker
+    field.lf_initial_slope = float(params.get("initial_slope", 0.62))
+    field.lf_initial_intercept = float(params.get("initial_intercept", 1.35))
+    field.lf_demo_slope_high = float(params.get("demo_slope_high", 0.92))
+    field.lf_demo_slope_low = float(params.get("demo_slope_low", 0.42))
+    field.lf_demo_intercept_high = float(params.get("demo_intercept_high", 2.35))
+    field.lf_demo_intercept_low = float(params.get("demo_intercept_low", 0.65))
+    field.lf_line_progress = line_progress
+    field.lf_line_opacity = line_opacity
+    field.lf_line_width = line_width
+    field.lf_prediction_drop_progress = prediction_drop_progress
+    field.lf_prediction_drop_opacity = prediction_drop_opacity
+    field.lf_prediction_dot_opacity = prediction_dot_opacity
+    field.lf_x_tick_opacity = x_tick_opacity
+    field.lf_x_rise_progress = x_rise_progress
+    field.lf_x_rise_opacity = x_rise_opacity
+    field.lf_intercept_opacity = intercept_opacity
+    field.lf_wb_cue_opacity = wb_cue_opacity
+    field.lf_real_point = real_point
+    field.lf_prediction_drop = prediction_drop
+    field.lf_prediction_dot = prediction_dot
+    field.lf_x_tick = x_tick
+    field.lf_x_rise = x_rise
+    field.lf_intercept_marker = intercept_marker
+    field.lf_scatter = scatter
+    field.lf_w_box = w_box
+    field.lf_b_box = b_box
+    field.lf_wb_connector = wb_connector
+    field.lf_c2p = c2p
+    field.lf_model_y = model_y
+    field.lf_params = params
+    return field
+
+
 def make_linear_regression_fit(params, zone):
     """Build the redesigned stateful visual system for Video 3 Scene 3.
 
@@ -3214,6 +3459,9 @@ def build_object(step_dict):
 
     if action == "show_linear_regression_fit":
         return make_linear_regression_fit(params, zone)
+
+    if action == "show_linear_formula_system":
+        return make_linear_formula_system(params, zone)
 
     if action == "fade_out":
         return None

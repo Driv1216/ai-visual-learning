@@ -16,6 +16,7 @@ from actions import (
     make_manual_rule_force_indicator,
     make_links,
     make_linear_regression_fit,
+    make_linear_formula_system,
     place_in_zone,
     transition_in_for,
     transition_out_for,
@@ -394,6 +395,8 @@ class JsonDrivenScene(MovingCameraScene):
             "mutate_classification_regression_field",
             "show_linear_regression_fit",
             "mutate_linear_regression_fit",
+            "show_linear_formula_system",
+            "mutate_linear_formula_system",
         }
 
         for idx, step in enumerate(visual_steps):
@@ -974,6 +977,318 @@ class JsonDrivenScene(MovingCameraScene):
 
                     else:
                         print(f"[mutate_linear_regression_fit] Unknown beat={beat}. Skipping.")
+                        handled = True
+
+                elif step.action == "show_linear_formula_system":
+                    # ── Video 3 Scene 4 Beat 1: formula arrives as the main object.
+                    params = dict(step.params)
+                    field_obj = make_linear_formula_system(params, step.zone)
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+
+                    if outgoing_anims:
+                        out_rt = min(0.35, max(0.05, run_time * 0.12))
+                        self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=out_rt)
+                        current_time += out_rt
+
+                    equation = getattr(field_obj, "lf_equation", None)
+                    axes = getattr(field_obj, "lf_axes", VGroup())
+                    live_line = getattr(field_obj, "lf_live_line", None)
+                    real_point = getattr(field_obj, "lf_real_point", None)
+                    prediction_drop = getattr(field_obj, "lf_prediction_drop", None)
+                    prediction_dot = getattr(field_obj, "lf_prediction_dot", None)
+                    x_tick = getattr(field_obj, "lf_x_tick", None)
+                    x_rise = getattr(field_obj, "lf_x_rise", None)
+                    intercept_marker = getattr(field_obj, "lf_intercept_marker", None)
+                    scatter = getattr(field_obj, "lf_scatter", VGroup())
+                    w_box = getattr(field_obj, "lf_w_box", None)
+                    b_box = getattr(field_obj, "lf_b_box", None)
+                    wb_connector = getattr(field_obj, "lf_wb_connector", None)
+
+                    # Add persistent system elements up front so later beats mutate
+                    # the same objects instead of replacing equation/line.
+                    if equation is not None:
+                        equation.save_state()
+                        equation.scale(float(params.get("continuity_scale", 0.44)))
+                        equation.to_corner(UR, buff=float(params.get("continuity_buff", 0.58)))
+                        equation.set_opacity(float(params.get("continuity_opacity", 0.24)))
+                        self.add(equation)
+                    for obj in [axes, live_line, real_point, prediction_drop, prediction_dot, x_tick, x_rise, intercept_marker, scatter, w_box, b_box, wb_connector]:
+                        if obj is not None:
+                            obj.set_opacity(0.0) if hasattr(obj, "set_opacity") else None
+                            self.add(obj)
+
+                    if equation is not None:
+                        arrive_rt = min(float(params.get("arrival_duration", 0.75)), max(0.2, run_time * 0.28))
+                        rest_opacity = float(params.get("equation_rest_opacity", 0.58))
+                        self.play(
+                            Restore(equation),
+                            run_time=arrive_rt,
+                            rate_func=rate_functions.ease_out_cubic,
+                        )
+                        current_time += arrive_rt
+
+                        for term in equation:
+                            term.set_opacity(0.0)
+                        remaining_rt = max(0.45, run_time - arrive_rt)
+                        write_rt = remaining_rt * 0.68
+                        hold_rt = remaining_rt * 0.12
+                        dim_rt = remaining_rt * 0.20
+                        self.play(
+                            LaggedStart(*[Write(term) for term in equation], lag_ratio=0.16),
+                            run_time=write_rt,
+                            rate_func=rate_functions.ease_in_out_sine,
+                        )
+                        current_time += write_rt
+                        self.wait(hold_rt)
+                        current_time += hold_rt
+                        self.play(
+                            AnimationGroup(*[term.animate.set_opacity(rest_opacity) for term in equation], lag_ratio=0.0),
+                            run_time=dim_rt,
+                            rate_func=rate_functions.ease_out_sine,
+                        )
+                        current_time += dim_rt
+                    else:
+                        self.wait(run_time)
+                        current_time += run_time
+
+                    register_object(step.id, step.zone, field_obj)
+                    handled = True
+
+                elif step.action == "mutate_linear_formula_system":
+                    # ── Video 3 Scene 4 Beats 2-6: mutate one equation/line system.
+                    source_id = step.params.get("source_id")
+                    field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+
+                    if field_obj is None:
+                        raise RuntimeError(f"mutate_linear_formula_system could not find source_id={source_id!r}")
+
+                    beat = int(step.params.get("beat", 2))
+                    params = dict(step.params)
+                    segment_duration = duration_map[step.anchor]
+
+                    def capped(name, default, floor=0.15, reserve=0.2):
+                        requested = float(params.get(name, default))
+                        available = max(floor, segment_duration - float(step.offset) - reserve)
+                        return max(floor, min(requested, available))
+
+                    equation = getattr(field_obj, "lf_equation", None)
+                    terms = getattr(field_obj, "lf_terms", {})
+                    axes = getattr(field_obj, "lf_axes", VGroup())
+                    line_progress = getattr(field_obj, "lf_line_progress", None)
+                    line_opacity = getattr(field_obj, "lf_line_opacity", None)
+                    line_width = getattr(field_obj, "lf_line_width", None)
+                    slope = getattr(field_obj, "lf_slope", None)
+                    intercept = getattr(field_obj, "lf_intercept", None)
+                    prediction_drop_progress = getattr(field_obj, "lf_prediction_drop_progress", None)
+                    prediction_drop_opacity = getattr(field_obj, "lf_prediction_drop_opacity", None)
+                    prediction_dot_opacity = getattr(field_obj, "lf_prediction_dot_opacity", None)
+                    x_tick_opacity = getattr(field_obj, "lf_x_tick_opacity", None)
+                    x_rise_progress = getattr(field_obj, "lf_x_rise_progress", None)
+                    x_rise_opacity = getattr(field_obj, "lf_x_rise_opacity", None)
+                    intercept_opacity = getattr(field_obj, "lf_intercept_opacity", None)
+                    wb_cue_opacity = getattr(field_obj, "lf_wb_cue_opacity", None)
+                    real_point = getattr(field_obj, "lf_real_point", None)
+                    scatter = list(getattr(field_obj, "lf_scatter", VGroup()))
+                    eq_color = getattr(field_obj, "lf_equation_color", "#F8FAFC")
+                    dim_color = getattr(field_obj, "lf_dim_color", "#94A3B8")
+                    yhat_color = getattr(field_obj, "lf_yhat_color", "#4A9EFF")
+                    bias_color = getattr(field_obj, "lf_bias_color", "#FFD166")
+
+                    def _term(name):
+                        return terms.get(name)
+
+                    rest_opacity = float(getattr(field_obj, "lf_params", {}).get("equation_rest_opacity", 0.58))
+
+                    def set_terms_rest():
+                        anims = []
+                        for term in terms.values():
+                            anims.append(term.animate.set_color(eq_color).set_opacity(rest_opacity))
+                        return anims
+
+                    def highlight_term(name, color=None):
+                        anims = set_terms_rest()
+                        term = _term(name)
+                        if term is not None:
+                            anims.append(term.animate.set_color(color or yhat_color).set_opacity(1.0))
+                        return anims
+
+                    def _register_lf():
+                        object_registry[step.id] = field_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = field_obj
+
+                    if beat == 2:
+                        # ŷ: the equation becomes a graph and a prediction on the line.
+                        rt = capped("beat2_duration", 2.8, floor=0.8)
+                        intro_anims = highlight_term("yhat", yhat_color)
+                        intro_anims.extend([axes.animate.set_opacity(1.0)])
+                        if line_progress is not None:
+                            intro_anims.append(line_progress.animate.set_value(1.0))
+                        if line_opacity is not None:
+                            intro_anims.append(line_opacity.animate.set_value(1.0))
+                        self.play(AnimationGroup(*intro_anims, lag_ratio=0.0), run_time=rt * 0.38, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.38
+
+                        real_anims = []
+                        if real_point is not None:
+                            real_anims.append(real_point.animate.set_opacity(1.0))
+                        if prediction_drop_opacity is not None:
+                            real_anims.append(prediction_drop_opacity.animate.set_value(1.0))
+                        self.play(AnimationGroup(*real_anims, lag_ratio=0.0), run_time=rt * 0.16, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.16
+
+                        drop_anims = []
+                        if prediction_drop_progress is not None:
+                            drop_anims.append(prediction_drop_progress.animate.set_value(1.0))
+                        self.play(AnimationGroup(*drop_anims, lag_ratio=0.0), run_time=rt * 0.22, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.22
+
+                        dot_anims = []
+                        if prediction_dot_opacity is not None:
+                            dot_anims.append(prediction_dot_opacity.animate.set_value(1.0))
+                        self.play(AnimationGroup(*dot_anims, lag_ratio=0.0), run_time=rt * 0.08, rate_func=rate_functions.ease_out_cubic)
+                        current_time += rt * 0.08
+
+                        fade_anims = []
+                        if real_point is not None:
+                            fade_anims.append(real_point.animate.set_opacity(0.18))
+                        ghost_opacity = float(params.get("prediction_ghost_opacity", 0.34))
+                        if prediction_drop_opacity is not None:
+                            fade_anims.append(prediction_drop_opacity.animate.set_value(ghost_opacity))
+                        if prediction_dot_opacity is not None:
+                            fade_anims.append(prediction_dot_opacity.animate.set_value(ghost_opacity))
+                        fade_anims.extend(set_terms_rest())
+                        self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=rt * 0.16, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.16
+                        _register_lf()
+                        handled = True
+
+                    elif beat == 3:
+                        # w: slope changes by tracker only; the prediction ghost follows.
+                        if slope is not None:
+                            rt = capped("beat3_duration", 2.55, floor=0.9)
+                            self.play(AnimationGroup(*highlight_term("w", yhat_color), lag_ratio=0.0), run_time=rt * 0.16)
+                            current_time += rt * 0.16
+                            self.play(
+                                slope.animate.set_value(getattr(field_obj, "lf_demo_slope_high", 0.92)),
+                                run_time=rt * 0.28,
+                                rate_func=rate_functions.ease_in_out_sine,
+                            )
+                            self.play(
+                                slope.animate.set_value(getattr(field_obj, "lf_demo_slope_low", 0.42)),
+                                run_time=rt * 0.28,
+                                rate_func=rate_functions.ease_in_out_sine,
+                            )
+                            self.play(
+                                slope.animate.set_value(getattr(field_obj, "lf_initial_slope", 0.62)),
+                                run_time=rt * 0.18,
+                                rate_func=rate_functions.ease_out_cubic,
+                            )
+                            current_time += rt * 0.74
+                            cleanup = set_terms_rest()
+                            if prediction_drop_opacity is not None:
+                                cleanup.append(prediction_drop_opacity.animate.set_value(0.0))
+                            if prediction_dot_opacity is not None:
+                                cleanup.append(prediction_dot_opacity.animate.set_value(0.0))
+                            if real_point is not None:
+                                cleanup.append(real_point.animate.set_opacity(0.0))
+                            self.play(AnimationGroup(*cleanup, lag_ratio=0.0), run_time=rt * 0.10)
+                            current_time += rt * 0.10
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+                        _register_lf()
+                        handled = True
+
+                    elif beat == 4:
+                        # x: a quick input lookup from the x-axis up to the line.
+                        rt = capped("beat4_duration", 1.65, floor=0.55)
+                        show_anims = highlight_term("x", yhat_color)
+                        if x_tick_opacity is not None:
+                            show_anims.append(x_tick_opacity.animate.set_value(1.0))
+                        self.play(AnimationGroup(*show_anims, lag_ratio=0.0), run_time=rt * 0.24, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.24
+                        rise_anims = []
+                        if x_rise_opacity is not None:
+                            rise_anims.append(x_rise_opacity.animate.set_value(1.0))
+                        if x_rise_progress is not None:
+                            rise_anims.append(x_rise_progress.animate.set_value(1.0))
+                        self.play(AnimationGroup(*rise_anims, lag_ratio=0.0), run_time=rt * 0.42, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.42
+                        cleanup = set_terms_rest()
+                        if x_tick_opacity is not None:
+                            cleanup.append(x_tick_opacity.animate.set_value(0.0))
+                        if x_rise_opacity is not None:
+                            cleanup.append(x_rise_opacity.animate.set_value(0.0))
+                        self.play(AnimationGroup(*cleanup, lag_ratio=0.0), run_time=rt * 0.34)
+                        current_time += rt * 0.34
+                        _register_lf()
+                        handled = True
+
+                    elif beat == 5:
+                        # b: intercept shifts vertically; slope is intentionally untouched.
+                        rt = capped("beat5_duration", 2.65, floor=0.9)
+                        intro = highlight_term("b", bias_color)
+                        if intercept_opacity is not None:
+                            intro.append(intercept_opacity.animate.set_value(1.0))
+                        self.play(AnimationGroup(*intro, lag_ratio=0.0), run_time=rt * 0.22, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.22
+                        if intercept is not None:
+                            self.play(intercept.animate.set_value(getattr(field_obj, "lf_demo_intercept_high", 2.35)), run_time=rt * 0.28, rate_func=rate_functions.ease_in_out_sine)
+                            self.play(intercept.animate.set_value(getattr(field_obj, "lf_demo_intercept_low", 0.65)), run_time=rt * 0.24, rate_func=rate_functions.ease_in_out_sine)
+                            self.play(intercept.animate.set_value(getattr(field_obj, "lf_initial_intercept", 1.35)), run_time=rt * 0.18, rate_func=rate_functions.ease_out_cubic)
+                            current_time += rt * 0.70
+                        cleanup = set_terms_rest()
+                        if intercept_opacity is not None:
+                            cleanup.append(intercept_opacity.animate.set_value(0.0))
+                        self.play(AnimationGroup(*cleanup, lag_ratio=0.0), run_time=rt * 0.08)
+                        current_time += rt * 0.08
+                        _register_lf()
+                        handled = True
+
+                    elif beat == 6:
+                        # Learning handoff: data appears first, then w and b become the pair to adjust.
+                        rt = capped("beat6_duration", 3.0, floor=1.0)
+                        scatter_anims = [dot.animate.set_opacity(1.0) for dot in sorted(scatter, key=lambda d: d.get_center()[0])]
+                        if scatter_anims:
+                            self.play(LaggedStart(*scatter_anims, lag_ratio=float(params.get("scatter_lag_ratio", 0.12))), run_time=rt * 0.38, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.38
+                        else:
+                            self.wait(rt * 0.38)
+                            current_time += rt * 0.38
+                        scatter_hold = rt * float(params.get("scatter_hold_ratio", 0.18))
+                        self.wait(scatter_hold)
+                        current_time += scatter_hold
+                        pair_anims = set_terms_rest()
+                        if _term("w") is not None:
+                            pair_anims.append(_term("w").animate.set_color(eq_color).set_opacity(1.0))
+                        if _term("b") is not None:
+                            pair_anims.append(_term("b").animate.set_color(bias_color).set_opacity(1.0))
+                        if wb_cue_opacity is not None:
+                            pair_anims.append(wb_cue_opacity.animate.set_value(1.0))
+                        self.play(AnimationGroup(*pair_anims, lag_ratio=0.0), run_time=rt * 0.24, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.24
+                        final_anims = []
+                        if equation is not None:
+                            final_anims.append(equation.animate.move_to(getattr(field_obj, "lf_equation_final", equation.get_center())).scale(float(params.get("final_equation_scale", 0.88))))
+                        if line_width is not None:
+                            final_anims.append(line_width.animate.set_value(float(params.get("final_line_width", 3.25))))
+                        self.play(AnimationGroup(*final_anims, lag_ratio=0.0), run_time=rt * 0.30, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.30
+                        _register_lf()
+                        handled = True
+
+                    else:
+                        print(f"[mutate_linear_formula_system] Unknown beat={beat}. Skipping.")
                         handled = True
 
                 elif step.action == "show_classification_regression_field":

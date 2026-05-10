@@ -61,6 +61,8 @@ AllowedAction = Literal[
     "mutate_classification_regression_field",
     "show_linear_regression_fit",
     "mutate_linear_regression_fit",
+    "show_linear_formula_system",
+    "mutate_linear_formula_system",
 ]
 
 AllowedZone = Literal[

@@ -1,0 +1,194 @@
+{
+  "scene_id": "video03_scene04_linear_regression_formula",
+  "video_title": "Supervised Learning",
+  "scene_title": "The Mathematical Formula of Linear Regression",
+  "order": 4,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s4_01",
+      "text": "So, we've seen the line move and settle… but how does a computer actually define that line? It uses a simple but powerful equation that you'll see everywhere in machine learning. Let's look at it right in the center of the screen: y-hat equals w-x plus b."
+    },
+    {
+      "id": "s4_02",
+      "text": "Now, don't let the symbols intimidate you. They each have a very specific job. First, look at that y with the little symbol on top. We call that y-hat… it signals that this is a predicted value, not the actual recorded data. It's the model's best guess for the output."
+    },
+    {
+      "id": "s4_03",
+      "text": "Next, we have w, which stands for the weight… changing the weight is what tilts the line. It controls the slope. A higher weight means the line gets steeper, showing a stronger relationship between your study hours and your marks."
+    },
+    {
+      "id": "s4_04",
+      "text": "Then there's x. This is our input feature — in our case, the number of hours you spent studying. The model takes this input, multiplies it by the weight, and then… it adds one last thing."
+    },
+    {
+      "id": "s4_05",
+      "text": "The bias is also known as the intercept. Visually, the bias doesn't tilt the line; instead, it shifts the entire line up or down the vertical axis. It represents where the line would start even if your input, x, was zero. It's like the baseline starting point for the prediction."
+    },
+    {
+      "id": "s4_06",
+      "text": "So, every time the model 'learns,' what it's actually doing is… it's hunting for the perfect values of w and b. It's adjusting the tilt and the shift until the line fits the data as closely as possible. But how does it know if it's actually getting 'closer' to the truth? To understand that, we need to talk about how we measure its mistakes. Let's slide this formula up and look at error minimization."
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v3s4_beat1_formula_system",
+      "anchor": "s4_01",
+      "offset": 0.0,
+      "action": "show_linear_formula_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 4.8,
+      "params": {
+        "equation_color": "#F8FAFC",
+        "dim_color": "#94A3B8",
+        "axis_color": "#7C8798",
+        "line_color": "#4A9EFF",
+        "yhat_color": "#4A9EFF",
+        "point_color": "#FF6B6B",
+        "bias_color": "#FFD166",
+        "connector_color": "#FFD166",
+        "label_color": "#CBD5E1",
+        "equation_font_size": 72,
+        "equation_home": [0.0, 2.35, 0.0],
+        "equation_final": [0.0, 3.55, 0.0],
+        "equation_max_width": 6.7,
+        "equation_rest_opacity": 0.58,
+        "continuity_scale": 0.44,
+        "continuity_buff": 0.58,
+        "continuity_opacity": 0.24,
+        "arrival_duration": 0.75,
+        "origin": [-3.9, -2.55, 0.0],
+        "plot_width": 7.8,
+        "plot_height": 3.7,
+        "x_range": [0.0, 10.0],
+        "y_range": [0.0, 10.0],
+        "x_label_text": "Study Hours",
+        "y_label_text": "Marks",
+        "initial_slope": 0.62,
+        "initial_intercept": 1.35,
+        "demo_slope_high": 0.92,
+        "demo_slope_low": 0.42,
+        "demo_intercept_high": 2.35,
+        "demo_intercept_low": 0.65,
+        "line_width": 3.0,
+        "prediction_x": 6.2,
+        "real_y": 7.1,
+        "lookup_x": 4.7,
+        "scatter_points": [
+          [1.0, 2.0],
+          [1.8, 2.9],
+          [2.7, 3.2],
+          [3.6, 4.6],
+          [4.8, 4.5],
+          [5.9, 5.9],
+          [7.0, 6.2],
+          [8.4, 7.6]
+        ]
+      }
+    },
+    {
+      "id": "v3s4_beat2_yhat_prediction",
+      "anchor": "s4_02",
+      "offset": 0.0,
+      "action": "mutate_linear_formula_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.0,
+      "params": {
+        "source_id": "v3s4_beat1_formula_system",
+        "beat": 2,
+        "beat2_duration": 3.0,
+        "prediction_ghost_opacity": 0.34
+      }
+    },
+    {
+      "id": "v3s4_beat3_weight_tilt",
+      "anchor": "s4_03",
+      "offset": 0.0,
+      "action": "mutate_linear_formula_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.7,
+      "params": {
+        "source_id": "v3s4_beat1_formula_system",
+        "beat": 3,
+        "beat3_duration": 2.7
+      }
+    },
+    {
+      "id": "v3s4_beat4_x_lookup",
+      "anchor": "s4_04",
+      "offset": 0.0,
+      "action": "mutate_linear_formula_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 1.7,
+      "params": {
+        "source_id": "v3s4_beat1_formula_system",
+        "beat": 4,
+        "beat4_duration": 1.7
+      }
+    },
+    {
+      "id": "v3s4_beat5_bias_shift",
+      "anchor": "s4_05",
+      "offset": 0.0,
+      "action": "mutate_linear_formula_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.8,
+      "params": {
+        "source_id": "v3s4_beat1_formula_system",
+        "beat": 5,
+        "beat5_duration": 2.8
+      }
+    },
+    {
+      "id": "v3s4_beat6_learning_unknowns",
+      "anchor": "s4_06",
+      "offset": 0.0,
+      "action": "mutate_linear_formula_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.2,
+      "params": {
+        "source_id": "v3s4_beat1_formula_system",
+        "beat": 6,
+        "beat6_duration": 3.2,
+        "scatter_lag_ratio": 0.12,
+        "scatter_hold_ratio": 0.18,
+        "final_equation_scale": 0.82,
+        "final_line_width": 3.25
+      }
+    }
+  ],
+  "notes": {
+    "tone": "Sparse symbolic-to-geometric explainer: one persistent equation and one persistent line carry the scene.",
+    "pacing": "The equation opens with a faint Scene 3 continuity cue, then each narration beat mutates the same line/equation system. Beat 4 stays intentionally light; Beat 6 holds the unresolved learning question.",
+    "animation_guidelines": "No definition cards or paragraph labels. Motion explains each symbol: y-hat becomes a prediction, w tilts the line with the prediction ghost still attached, x rises from the axis, b shifts the line vertically, and w/b end as paired learnable controls. Subdued gray axes are allowed as opacity-adjusted white support geometry. Do not replace the equation or line during the scene."
+  }
+}
