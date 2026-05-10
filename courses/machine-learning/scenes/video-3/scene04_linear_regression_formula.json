@@ -62,10 +62,6 @@
         "equation_final": [0.0, 3.55, 0.0],
         "equation_max_width": 6.7,
         "equation_rest_opacity": 0.58,
-        "continuity_scale": 0.44,
-        "continuity_buff": 0.58,
-        "continuity_opacity": 0.24,
-        "arrival_duration": 0.75,
         "origin": [-3.9, -2.55, 0.0],
         "plot_width": 7.8,
         "plot_height": 3.7,
@@ -116,7 +112,7 @@
     {
       "id": "v3s4_beat3_weight_tilt",
       "anchor": "s4_03",
-      "offset": 0.0,
+      "offset": 1.0,
       "action": "mutate_linear_formula_system",
       "zone": "full",
       "transition_in": "none",
@@ -133,24 +129,24 @@
     {
       "id": "v3s4_beat4_x_lookup",
       "anchor": "s4_04",
-      "offset": 0.0,
+      "offset": 0.8,
       "action": "mutate_linear_formula_system",
       "zone": "full",
       "transition_in": "none",
       "transition_out": "none",
       "persist": true,
       "replace": null,
-      "duration": 1.7,
+      "duration": 2.3,
       "params": {
         "source_id": "v3s4_beat1_formula_system",
         "beat": 4,
-        "beat4_duration": 1.7
+        "beat4_duration": 2.3
       }
     },
     {
       "id": "v3s4_beat5_bias_shift",
       "anchor": "s4_05",
-      "offset": 0.0,
+      "offset": 0.9,
       "action": "mutate_linear_formula_system",
       "zone": "full",
       "transition_in": "none",
@@ -167,22 +163,38 @@
     {
       "id": "v3s4_beat6_learning_unknowns",
       "anchor": "s4_06",
-      "offset": 0.0,
+      "offset": 0.8,
       "action": "mutate_linear_formula_system",
       "zone": "full",
       "transition_in": "none",
       "transition_out": "none",
       "persist": true,
       "replace": null,
-      "duration": 3.2,
+      "duration": 4.0,
       "params": {
         "source_id": "v3s4_beat1_formula_system",
         "beat": 6,
-        "beat6_duration": 3.2,
+        "beat6_duration": 4.0,
         "scatter_lag_ratio": 0.12,
-        "scatter_hold_ratio": 0.18,
-        "final_equation_scale": 0.82,
+        "scatter_hold_ratio": 0.22,
         "final_line_width": 3.25
+      }
+    },
+    {
+      "id": "v3s4_beat7_formula_exit",
+      "anchor": "s4_06",
+      "offset": 9.2,
+      "action": "mutate_linear_formula_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": false,
+      "replace": null,
+      "duration": 2.0,
+      "params": {
+        "source_id": "v3s4_beat1_formula_system",
+        "beat": 7,
+        "beat7_duration": 2.0
       }
     }
   ],

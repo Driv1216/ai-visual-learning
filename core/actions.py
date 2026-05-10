@@ -2928,6 +2928,7 @@ def make_linear_formula_system(params, zone):
     x_rise_progress = ValueTracker(0.0)
     x_rise_opacity = ValueTracker(0.0)
     intercept_opacity = ValueTracker(0.0)
+    error_hint_opacity = ValueTracker(0.0)
     wb_cue_opacity = ValueTracker(0.0)
 
     def model_y(x):
@@ -3009,20 +3010,27 @@ def make_linear_formula_system(params, zone):
     lookup_x = float(params.get("lookup_x", 4.7))
 
     def make_x_tick():
-        tick = Line(c2p(lookup_x, y_min) + DOWN * 0.08, c2p(lookup_x, y_min) + UP * 0.12, color=equation_color, stroke_width=2.0)
-        tick.set_opacity(x_tick_opacity.get_value() * 0.72)
+        tick = Line(c2p(lookup_x, y_min) + DOWN * 0.095, c2p(lookup_x, y_min) + UP * 0.14, color=equation_color, stroke_width=2.3)
+        tick.set_opacity(x_tick_opacity.get_value() * 0.82)
         return tick
 
     def make_x_rise():
         start = c2p(lookup_x, y_min)
         target = c2p(lookup_x, max(y_min, min(y_max, model_y(lookup_x))))
         progress = max(0.0, min(1.0, x_rise_progress.get_value()))
-        rise = Line(start, start + (target - start) * progress, color=equation_color, stroke_width=1.7)
-        rise.set_opacity(x_rise_opacity.get_value() * 0.46)
+        rise = Line(start, start + (target - start) * progress, color=equation_color, stroke_width=2.4)
+        rise.set_opacity(x_rise_opacity.get_value() * 0.72)
         return rise
+
+    def make_x_input_dot():
+        dot = Dot(c2p(lookup_x, y_min), radius=0.065, color=equation_color, fill_opacity=1.0)
+        dot.set_stroke(color=line_color, width=0.8, opacity=0.28)
+        dot.set_opacity(x_tick_opacity.get_value() * 0.82)
+        return dot
 
     x_tick = always_redraw(make_x_tick)
     x_rise = always_redraw(make_x_rise)
+    x_input_dot = always_redraw(make_x_input_dot)
 
     def make_intercept_marker():
         y = max(y_min, min(y_max, intercept_tracker.get_value()))
@@ -3038,11 +3046,25 @@ def make_linear_formula_system(params, zone):
         [4.8, 4.5], [5.9, 5.9], [7.0, 6.2], [8.4, 7.6],
     ])
     scatter = VGroup(*[
-        Dot(c2p(x, y), radius=0.085, color=point_color, fill_opacity=0.92).set_stroke(color="#FFFFFF", width=0.6, opacity=0.18)
+        Dot(c2p(x, y), radius=0.085, color=point_color, fill_opacity=0.86).set_stroke(color="#FFFFFF", width=0.6, opacity=0.18)
         for x, y in raw_scatter
     ])
     for dot in scatter:
         dot.set_opacity(0.0)
+
+    selected_error_points = raw_scatter[2:7:2]
+
+    def make_error_hints():
+        hints = VGroup()
+        for x, y in selected_error_points:
+            start = c2p(x, y)
+            end = c2p(x, max(y_min, min(y_max, model_y(x))))
+            hint = DashedLine(start, end, dash_length=0.055, dashed_ratio=0.55, color=point_color, stroke_width=1.1)
+            hint.set_opacity(error_hint_opacity.get_value() * 0.42)
+            hints.add(hint)
+        return hints
+
+    error_hints = always_redraw(make_error_hints)
 
     def make_term_box(term_name):
         box = SurroundingRectangle(term_map[term_name], buff=0.075, color=connector_color, corner_radius=0.04, stroke_width=1.8)
@@ -3063,7 +3085,7 @@ def make_linear_formula_system(params, zone):
 
     field = VGroup(
         equation, axes, live_line, real_point, prediction_drop, prediction_dot,
-        x_tick, x_rise, intercept_marker, scatter, w_box, b_box, wb_connector,
+        x_tick, x_rise, x_input_dot, intercept_marker, scatter, error_hints, w_box, b_box, wb_connector,
     )
     field.lf_equation = equation
     field.lf_terms = term_map
@@ -3098,14 +3120,17 @@ def make_linear_formula_system(params, zone):
     field.lf_x_rise_progress = x_rise_progress
     field.lf_x_rise_opacity = x_rise_opacity
     field.lf_intercept_opacity = intercept_opacity
+    field.lf_error_hint_opacity = error_hint_opacity
     field.lf_wb_cue_opacity = wb_cue_opacity
     field.lf_real_point = real_point
     field.lf_prediction_drop = prediction_drop
     field.lf_prediction_dot = prediction_dot
     field.lf_x_tick = x_tick
     field.lf_x_rise = x_rise
+    field.lf_x_input_dot = x_input_dot
     field.lf_intercept_marker = intercept_marker
     field.lf_scatter = scatter
+    field.lf_error_hints = error_hints
     field.lf_w_box = w_box
     field.lf_b_box = b_box
     field.lf_wb_connector = wb_connector

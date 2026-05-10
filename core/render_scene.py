@@ -1014,12 +1014,11 @@ class JsonDrivenScene(MovingCameraScene):
                     wb_connector = getattr(field_obj, "lf_wb_connector", None)
 
                     # Add persistent system elements up front so later beats mutate
-                    # the same objects instead of replacing equation/line.
+                    # the same objects instead of replacing equation/line. Keep the
+                    # equation invisible until Write starts to avoid an opening pop.
                     if equation is not None:
-                        equation.save_state()
-                        equation.scale(float(params.get("continuity_scale", 0.44)))
-                        equation.to_corner(UR, buff=float(params.get("continuity_buff", 0.58)))
-                        equation.set_opacity(float(params.get("continuity_opacity", 0.24)))
+                        for term in equation:
+                            term.set_opacity(0.0)
                         self.add(equation)
                     for obj in [axes, live_line, real_point, prediction_drop, prediction_dot, x_tick, x_rise, intercept_marker, scatter, w_box, b_box, wb_connector]:
                         if obj is not None:
@@ -1027,21 +1026,10 @@ class JsonDrivenScene(MovingCameraScene):
                             self.add(obj)
 
                     if equation is not None:
-                        arrive_rt = min(float(params.get("arrival_duration", 0.75)), max(0.2, run_time * 0.28))
                         rest_opacity = float(params.get("equation_rest_opacity", 0.58))
-                        self.play(
-                            Restore(equation),
-                            run_time=arrive_rt,
-                            rate_func=rate_functions.ease_out_cubic,
-                        )
-                        current_time += arrive_rt
-
-                        for term in equation:
-                            term.set_opacity(0.0)
-                        remaining_rt = max(0.45, run_time - arrive_rt)
-                        write_rt = remaining_rt * 0.68
-                        hold_rt = remaining_rt * 0.12
-                        dim_rt = remaining_rt * 0.20
+                        write_rt = run_time * 0.72
+                        hold_rt = run_time * 0.12
+                        dim_rt = run_time * 0.16
                         self.play(
                             LaggedStart(*[Write(term) for term in equation], lag_ratio=0.16),
                             run_time=write_rt,
@@ -1095,6 +1083,7 @@ class JsonDrivenScene(MovingCameraScene):
                     x_rise_progress = getattr(field_obj, "lf_x_rise_progress", None)
                     x_rise_opacity = getattr(field_obj, "lf_x_rise_opacity", None)
                     intercept_opacity = getattr(field_obj, "lf_intercept_opacity", None)
+                    error_hint_opacity = getattr(field_obj, "lf_error_hint_opacity", None)
                     wb_cue_opacity = getattr(field_obj, "lf_wb_cue_opacity", None)
                     real_point = getattr(field_obj, "lf_real_point", None)
                     scatter = list(getattr(field_obj, "lf_scatter", VGroup()))
@@ -1180,20 +1169,16 @@ class JsonDrivenScene(MovingCameraScene):
                             current_time += rt * 0.16
                             self.play(
                                 slope.animate.set_value(getattr(field_obj, "lf_demo_slope_high", 0.92)),
-                                run_time=rt * 0.28,
+                                run_time=rt * 0.34,
                                 rate_func=rate_functions.ease_in_out_sine,
                             )
-                            self.play(
-                                slope.animate.set_value(getattr(field_obj, "lf_demo_slope_low", 0.42)),
-                                run_time=rt * 0.28,
-                                rate_func=rate_functions.ease_in_out_sine,
-                            )
+                            self.wait(rt * 0.18)
                             self.play(
                                 slope.animate.set_value(getattr(field_obj, "lf_initial_slope", 0.62)),
-                                run_time=rt * 0.18,
+                                run_time=rt * 0.24,
                                 rate_func=rate_functions.ease_out_cubic,
                             )
-                            current_time += rt * 0.74
+                            current_time += rt * 0.76
                             cleanup = set_terms_rest()
                             if prediction_drop_opacity is not None:
                                 cleanup.append(prediction_drop_opacity.animate.set_value(0.0))
@@ -1222,15 +1207,18 @@ class JsonDrivenScene(MovingCameraScene):
                             rise_anims.append(x_rise_opacity.animate.set_value(1.0))
                         if x_rise_progress is not None:
                             rise_anims.append(x_rise_progress.animate.set_value(1.0))
-                        self.play(AnimationGroup(*rise_anims, lag_ratio=0.0), run_time=rt * 0.42, rate_func=rate_functions.ease_in_out_sine)
-                        current_time += rt * 0.42
+                        self.play(AnimationGroup(*rise_anims, lag_ratio=0.0), run_time=rt * 0.46, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.46
+                        hold_rt = rt * 0.14
+                        self.wait(hold_rt)
+                        current_time += hold_rt
                         cleanup = set_terms_rest()
                         if x_tick_opacity is not None:
                             cleanup.append(x_tick_opacity.animate.set_value(0.0))
                         if x_rise_opacity is not None:
                             cleanup.append(x_rise_opacity.animate.set_value(0.0))
-                        self.play(AnimationGroup(*cleanup, lag_ratio=0.0), run_time=rt * 0.34)
-                        current_time += rt * 0.34
+                        self.play(AnimationGroup(*cleanup, lag_ratio=0.0), run_time=rt * 0.16)
+                        current_time += rt * 0.16
                         _register_lf()
                         handled = True
 
@@ -1243,10 +1231,10 @@ class JsonDrivenScene(MovingCameraScene):
                         self.play(AnimationGroup(*intro, lag_ratio=0.0), run_time=rt * 0.22, rate_func=rate_functions.ease_out_sine)
                         current_time += rt * 0.22
                         if intercept is not None:
-                            self.play(intercept.animate.set_value(getattr(field_obj, "lf_demo_intercept_high", 2.35)), run_time=rt * 0.28, rate_func=rate_functions.ease_in_out_sine)
-                            self.play(intercept.animate.set_value(getattr(field_obj, "lf_demo_intercept_low", 0.65)), run_time=rt * 0.24, rate_func=rate_functions.ease_in_out_sine)
-                            self.play(intercept.animate.set_value(getattr(field_obj, "lf_initial_intercept", 1.35)), run_time=rt * 0.18, rate_func=rate_functions.ease_out_cubic)
-                            current_time += rt * 0.70
+                            self.play(intercept.animate.set_value(getattr(field_obj, "lf_demo_intercept_high", 2.35)), run_time=rt * 0.36, rate_func=rate_functions.ease_in_out_sine)
+                            self.wait(rt * 0.16)
+                            self.play(intercept.animate.set_value(getattr(field_obj, "lf_initial_intercept", 1.35)), run_time=rt * 0.28, rate_func=rate_functions.ease_out_cubic)
+                            current_time += rt * 0.80
                         cleanup = set_terms_rest()
                         if intercept_opacity is not None:
                             cleanup.append(intercept_opacity.animate.set_value(0.0))
@@ -1258,14 +1246,25 @@ class JsonDrivenScene(MovingCameraScene):
                     elif beat == 6:
                         # Learning handoff: data appears first, then w and b become the pair to adjust.
                         rt = capped("beat6_duration", 3.0, floor=1.0)
-                        scatter_anims = [dot.animate.set_opacity(1.0) for dot in sorted(scatter, key=lambda d: d.get_center()[0])]
+                        scatter_sorted = sorted(scatter, key=lambda d: d.get_center()[0])
+                        for dot in scatter_sorted:
+                            dot.shift(UP * 0.18)
+                        scatter_anims = [dot.animate.shift(DOWN * 0.18).set_opacity(0.88) for dot in scatter_sorted]
                         if scatter_anims:
                             self.play(LaggedStart(*scatter_anims, lag_ratio=float(params.get("scatter_lag_ratio", 0.12))), run_time=rt * 0.38, rate_func=rate_functions.ease_out_sine)
                             current_time += rt * 0.38
                         else:
                             self.wait(rt * 0.38)
                             current_time += rt * 0.38
-                        scatter_hold = rt * float(params.get("scatter_hold_ratio", 0.18))
+                        error_anims = []
+                        if error_hint_opacity is not None:
+                            error_anims.append(error_hint_opacity.animate.set_value(1.0))
+                        if line_width is not None:
+                            error_anims.append(line_width.animate.set_value(float(params.get("final_line_width", 3.25))))
+                        if error_anims:
+                            self.play(AnimationGroup(*error_anims, lag_ratio=0.0), run_time=rt * 0.16, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.16
+                        scatter_hold = rt * float(params.get("scatter_hold_ratio", 0.22))
                         self.wait(scatter_hold)
                         current_time += scatter_hold
                         pair_anims = set_terms_rest()
@@ -1275,15 +1274,29 @@ class JsonDrivenScene(MovingCameraScene):
                             pair_anims.append(_term("b").animate.set_color(bias_color).set_opacity(1.0))
                         if wb_cue_opacity is not None:
                             pair_anims.append(wb_cue_opacity.animate.set_value(1.0))
-                        self.play(AnimationGroup(*pair_anims, lag_ratio=0.0), run_time=rt * 0.24, rate_func=rate_functions.ease_out_sine)
-                        current_time += rt * 0.24
-                        final_anims = []
+                        self.play(AnimationGroup(*pair_anims, lag_ratio=0.0), run_time=rt * 0.22, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.22
+                        _register_lf()
+                        handled = True
+
+                    elif beat == 7:
+                        # Exit handoff: clean the equation, then fade it upward exactly
+                        # when narration says to move toward error minimization.
+                        rt = capped("beat7_duration", 2.0, floor=0.8)
+                        clean_anims = []
+                        if wb_cue_opacity is not None:
+                            clean_anims.append(wb_cue_opacity.animate.set_value(0.0))
                         if equation is not None:
-                            final_anims.append(equation.animate.move_to(getattr(field_obj, "lf_equation_final", equation.get_center())).scale(float(params.get("final_equation_scale", 0.88))))
-                        if line_width is not None:
-                            final_anims.append(line_width.animate.set_value(float(params.get("final_line_width", 3.25))))
-                        self.play(AnimationGroup(*final_anims, lag_ratio=0.0), run_time=rt * 0.30, rate_func=rate_functions.ease_in_out_sine)
-                        current_time += rt * 0.30
+                            clean_anims.extend([term.animate.set_color(eq_color).set_opacity(1.0) for term in terms.values()])
+                        if clean_anims:
+                            self.play(AnimationGroup(*clean_anims, lag_ratio=0.0), run_time=rt * 0.22, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.22
+                        exit_anims = []
+                        if equation is not None:
+                            exit_anims.append(equation.animate.shift(UP * 1.25).set_opacity(0.0))
+                        if exit_anims:
+                            self.play(AnimationGroup(*exit_anims, lag_ratio=0.0), run_time=rt * 0.78, rate_func=rate_functions.ease_in_out_sine)
+                            current_time += rt * 0.78
                         _register_lf()
                         handled = True
 
