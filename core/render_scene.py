@@ -18,6 +18,7 @@ from actions import (
     make_linear_regression_fit,
     make_linear_formula_system,
     make_error_minimization_system,
+    make_regularization_lasso_system,
     place_in_zone,
     transition_in_for,
     transition_out_for,
@@ -400,6 +401,8 @@ class JsonDrivenScene(MovingCameraScene):
             "mutate_linear_formula_system",
             "show_error_minimization_system",
             "mutate_error_minimization_system",
+            "show_regularization_lasso_system",
+            "mutate_regularization_lasso_system",
         }
 
         for idx, step in enumerate(visual_steps):
@@ -1272,6 +1275,242 @@ class JsonDrivenScene(MovingCameraScene):
 
                     else:
                         print(f"[mutate_error_minimization_system] Unknown beat={beat}. Skipping.")
+                        handled = True
+
+                elif step.action == "show_regularization_lasso_system":
+                    # ── Video 3 Scene 6 Beat 1: familiar regression world before overfitting.
+                    params = dict(step.params)
+                    field_obj = make_regularization_lasso_system(params, step.zone)
+
+                    replace_zone = step.replace
+                    outgoing_anims = []
+                    if replace_zone is not None:
+                        existing = active_objects.get(replace_zone)
+                        if existing is not None:
+                            outgoing = transition_out_for(existing, step.transition_out or "fade")
+                            if outgoing is not None:
+                                outgoing_anims.append(outgoing)
+                            clear_zone(replace_zone)
+                    if outgoing_anims:
+                        out_rt = min(0.35, max(0.05, run_time * 0.12))
+                        self.play(AnimationGroup(*outgoing_anims, lag_ratio=0.0), run_time=out_rt)
+                        current_time += out_rt
+
+                    self.add(field_obj)
+                    points_opacity = getattr(field_obj, "rl_points_opacity", None)
+                    curve_opacity = getattr(field_obj, "rl_curve_opacity", None)
+                    curve_draw = getattr(field_obj, "rl_curve_draw_progress", None)
+                    intro = []
+                    if points_opacity is not None:
+                        intro.append(points_opacity.animate.set_value(1.0))
+                    if intro:
+                        self.play(LaggedStart(*intro, lag_ratio=0.0), run_time=run_time * 0.24, rate_func=rate_functions.ease_out_sine)
+                        current_time += run_time * 0.24
+                    draw_anims = []
+                    if curve_opacity is not None:
+                        draw_anims.append(curve_opacity.animate.set_value(1.0))
+                    if curve_draw is not None:
+                        draw_anims.append(curve_draw.animate.set_value(1.0))
+                    if draw_anims:
+                        self.play(AnimationGroup(*draw_anims, lag_ratio=0.0), run_time=run_time * 0.54, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += run_time * 0.54
+                    hold_rt = max(0.0, run_time * 0.22)
+                    if hold_rt > 0:
+                        self.wait(hold_rt)
+                        current_time += hold_rt
+                    register_object(step.id, step.zone, field_obj)
+                    handled = True
+
+                elif step.action == "mutate_regularization_lasso_system":
+                    # ── Video 3 Scene 6 Beats 2-10: mutate one persistent regularization/lasso system.
+                    source_id = step.params.get("source_id")
+                    field_obj = object_registry.get(source_id) if source_id else active_objects.get(step.zone)
+                    if field_obj is None:
+                        raise RuntimeError(f"mutate_regularization_lasso_system could not find source_id={source_id!r}")
+
+                    beat = int(step.params.get("beat", 2))
+                    params = dict(step.params)
+                    segment_duration = duration_map[step.anchor]
+
+                    def capped(name, default, floor=0.15, reserve=0.2):
+                        requested = float(params.get(name, default))
+                        available = max(floor, segment_duration - float(step.offset) - reserve)
+                        return max(floor, min(requested, available))
+
+                    overfit_progress = getattr(field_obj, "rl_overfit_progress", None)
+                    regularize_progress = getattr(field_obj, "rl_regularize_progress", None)
+                    curve_opacity = getattr(field_obj, "rl_curve_opacity", None)
+                    points_opacity = getattr(field_obj, "rl_points_opacity", None)
+                    overfit_label = getattr(field_obj, "rl_overfit_label", None)
+                    bar_chart_opacity = getattr(field_obj, "rl_bar_chart_opacity", None)
+                    formula_terms = getattr(field_obj, "rl_formula_terms", VGroup())
+                    lambda_group = getattr(field_obj, "rl_lambda_group", None)
+                    lambda_opacity = getattr(field_obj, "rl_lambda_opacity", None)
+                    lambda_value = getattr(field_obj, "rl_lambda_value", None)
+                    final_dim = getattr(field_obj, "rl_final_dim", None)
+                    bar_trackers = list(getattr(field_obj, "rl_bar_trackers", []))
+                    ghost_opacities = list(getattr(field_obj, "rl_ghost_opacities", []))
+                    initial_heights = list(getattr(field_obj, "rl_initial_heights", []))
+                    compressed_heights = list(getattr(field_obj, "rl_compressed_heights", []))
+                    final_heights = list(getattr(field_obj, "rl_final_heights", []))
+                    collapse_order = list(getattr(field_obj, "rl_collapse_order", []))
+                    lambda_mid = float(getattr(field_obj, "rl_lambda_mid", 0.9))
+                    lambda_high = float(getattr(field_obj, "rl_lambda_high", 1.8))
+
+                    def _register_rl():
+                        object_registry[step.id] = field_obj
+                        step_zone_map[step.id] = step.zone
+                        active_objects[step.zone] = field_obj
+
+                    if beat == 2:
+                        rt = capped("beat2_duration", 3.4, floor=1.0)
+                        anims = []
+                        if overfit_progress is not None:
+                            anims.append(overfit_progress.animate.set_value(1.0))
+                        self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=rt * 0.86, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.86
+                        self.wait(rt * 0.14)
+                        current_time += rt * 0.14
+                        _register_rl(); handled = True
+
+                    elif beat == 3:
+                        rt = capped("beat3_duration", 1.5, floor=0.5)
+                        if overfit_label is not None:
+                            self.play(FadeIn(overfit_label, shift=UP * 0.08), run_time=rt * 0.42, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.42
+                            self.wait(rt * 0.58)
+                            current_time += rt * 0.58
+                        else:
+                            self.wait(rt); current_time += rt
+                        _register_rl(); handled = True
+
+                    elif beat == 4:
+                        rt = capped("beat4_duration", 3.4, floor=1.0)
+                        if overfit_label is not None:
+                            self.play(FadeOut(overfit_label), run_time=rt * 0.16, rate_func=rate_functions.ease_in_sine)
+                            current_time += rt * 0.16
+                        calm_anims = []
+                        if regularize_progress is not None:
+                            calm_anims.append(regularize_progress.animate.set_value(1.0))
+                        if bar_chart_opacity is not None:
+                            calm_anims.append(bar_chart_opacity.animate.set_value(1.0))
+                        for tracker, height in zip(bar_trackers, initial_heights):
+                            calm_anims.append(tracker.animate.set_value(float(height)))
+                        self.play(AnimationGroup(*calm_anims, lag_ratio=0.0), run_time=rt * 0.48, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.48
+                        fade_anims = []
+                        if curve_opacity is not None:
+                            fade_anims.append(curve_opacity.animate.set_value(0.0))
+                        if points_opacity is not None:
+                            fade_anims.append(points_opacity.animate.set_value(0.0))
+                        self.play(AnimationGroup(*fade_anims, lag_ratio=0.0), run_time=rt * 0.24, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.24
+                        self.wait(rt * 0.12)
+                        current_time += rt * 0.12
+                        _register_rl(); handled = True
+
+                    elif beat == 5:
+                        rt = capped("beat5_duration", 3.0, floor=0.9)
+                        per = rt * 0.74 / max(1, len(formula_terms))
+                        for term in formula_terms:
+                            self.play(FadeIn(term, shift=UP * 0.05), run_time=per, rate_func=rate_functions.ease_out_sine)
+                            current_time += per
+                        self.wait(rt * 0.26)
+                        current_time += rt * 0.26
+                        _register_rl(); handled = True
+
+                    elif beat == 6:
+                        rt = capped("beat6_duration", 2.2, floor=0.7)
+                        anims = []
+                        for i, term in enumerate(formula_terms):
+                            if i == len(formula_terms) - 1:
+                                anims.append(term.animate.set_color("#FFD166").set_opacity(1.0))
+                            else:
+                                anims.append(term.animate.set_opacity(0.36))
+                        if lambda_opacity is not None:
+                            anims.append(lambda_opacity.animate.set_value(1.0))
+                        if lambda_value is not None:
+                            lambda_value.set_value(0.0)
+                        self.play(AnimationGroup(*anims, lag_ratio=0.0), run_time=rt * 0.56, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.56
+                        self.wait(rt * 0.44)
+                        current_time += rt * 0.44
+                        _register_rl(); handled = True
+
+                    elif beat == 7:
+                        rt = capped("beat7_duration", 3.0, floor=1.0)
+                        fade_formula = [term.animate.set_opacity(0.0) for term in formula_terms]
+                        if fade_formula:
+                            self.play(AnimationGroup(*fade_formula, lag_ratio=0.0), run_time=rt * 0.18, rate_func=rate_functions.ease_in_out_sine)
+                            current_time += rt * 0.18
+                        pressure = []
+                        if lambda_value is not None:
+                            pressure.append(lambda_value.animate.set_value(lambda_mid))
+                        for tracker, height in zip(bar_trackers, compressed_heights):
+                            pressure.append(tracker.animate.set_value(float(height)))
+                        self.play(AnimationGroup(*pressure, lag_ratio=0.0), run_time=rt * 0.66, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.66
+                        self.wait(rt * 0.16)
+                        current_time += rt * 0.16
+                        _register_rl(); handled = True
+
+                    elif beat == 8:
+                        rt = capped("beat8_duration", 3.2, floor=1.1)
+                        if lambda_value is not None:
+                            self.play(lambda_value.animate.set_value(lambda_high), run_time=rt * 0.20, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.20
+                        remaining_rt = rt * 0.62
+                        per = remaining_rt / max(1, len(collapse_order))
+                        for idx_c in collapse_order:
+                            if 0 <= idx_c < len(bar_trackers):
+                                near_zero = max(0.08, float(final_heights[idx_c]) + 0.12)
+                                self.play(bar_trackers[idx_c].animate.set_value(near_zero), run_time=per * 0.42, rate_func=rate_functions.ease_in_out_sine)
+                                current_time += per * 0.42
+                                self.wait(per * 0.16)
+                                current_time += per * 0.16
+                                collapse = [bar_trackers[idx_c].animate.set_value(0.0)]
+                                if idx_c < len(ghost_opacities):
+                                    collapse.append(ghost_opacities[idx_c].animate.set_value(0.42))
+                                self.play(AnimationGroup(*collapse, lag_ratio=0.0), run_time=per * 0.42, rate_func=rate_functions.ease_in_sine)
+                                current_time += per * 0.42
+                        survivor_anims = []
+                        for i, tracker in enumerate(bar_trackers):
+                            if i not in collapse_order and i < len(final_heights):
+                                survivor_anims.append(tracker.animate.set_value(float(final_heights[i])))
+                        if survivor_anims:
+                            self.play(AnimationGroup(*survivor_anims, lag_ratio=0.0), run_time=rt * 0.12, rate_func=rate_functions.ease_out_sine)
+                            current_time += rt * 0.12
+                        self.wait(rt * 0.06)
+                        current_time += rt * 0.06
+                        _register_rl(); handled = True
+
+                    elif beat == 9:
+                        rt = capped("beat9_duration", 2.2, floor=0.7)
+                        polish = []
+                        if lambda_value is not None:
+                            polish.append(lambda_value.animate.set_value(lambda_high))
+                        for i, ghost in enumerate(ghost_opacities):
+                            if i in collapse_order:
+                                polish.append(ghost.animate.set_value(0.32))
+                        self.play(AnimationGroup(*polish, lag_ratio=0.0), run_time=rt * 0.28, rate_func=rate_functions.ease_out_sine)
+                        current_time += rt * 0.28
+                        self.wait(rt * 0.72)
+                        current_time += rt * 0.72
+                        _register_rl(); handled = True
+
+                    elif beat == 10:
+                        rt = capped("beat10_duration", 3.0, floor=0.9)
+                        dim_anims = []
+                        if final_dim is not None:
+                            dim_anims.append(final_dim.animate.set_value(float(params.get("final_dim", 0.62))))
+                        self.play(AnimationGroup(*dim_anims, lag_ratio=0.0), run_time=rt * 0.58, rate_func=rate_functions.ease_in_out_sine)
+                        current_time += rt * 0.58
+                        self.wait(rt * 0.42)
+                        current_time += rt * 0.42
+                        _register_rl(); handled = True
+
+                    else:
+                        print(f"[mutate_regularization_lasso_system] Unknown beat={beat}. Skipping.")
                         handled = True
 
                 elif step.action == "show_linear_formula_system":

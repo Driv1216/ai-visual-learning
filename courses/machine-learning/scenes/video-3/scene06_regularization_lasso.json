@@ -1,0 +1,307 @@
+{
+  "scene_id": "video03_scene06_regularization_lasso",
+  "video_title": "Supervised Learning",
+  "scene_title": "Regularization and Lasso Regression",
+  "order": 6,
+  "duration_mode": "audio_driven",
+  "voice": {
+    "language": "en-IN",
+    "speaker": "priya",
+    "model": "bulbul:v3"
+  },
+  "narration": [
+    {
+      "id": "s6_01",
+      "text": "Now, you might think the goal is to get our error as close to zero as possible. But… there's a catch."
+    },
+    {
+      "id": "s6_02",
+      "text": "If a model is too eager to fit every single data point, it starts fitting the noise instead of the actual pattern. Look at this bendy line — it's trying way too hard."
+    },
+    {
+      "id": "s6_03",
+      "text": "We call this overfitting."
+    },
+    {
+      "id": "s6_04",
+      "text": "To prevent this, we use something called Regularization. Basically… it's a penalty we add to the model to keep it from becoming too complex."
+    },
+    {
+      "id": "s6_05",
+      "text": "One of the most powerful ways to do this is through Lasso Regression. Let's look at the formula: J equals MSE plus lambda times the sum of the absolute weights."
+    },
+    {
+      "id": "s6_06",
+      "text": "That lambda symbol you see? That's our regularization strength. It's like a volume knob for the penalty."
+    },
+    {
+      "id": "s6_07",
+      "text": "Right now, with lambda at zero, all the features are being used. But watch what happens as we move the lambda slider up."
+    },
+    {
+      "id": "s6_08",
+      "text": "As the penalty gets stronger, it can actually push some of these coefficients exactly to zero."
+    },
+    {
+      "id": "s6_09",
+      "text": "When a weight becomes zero, that feature is effectively removed from the model. This means Lasso isn't just regularizing… it's actually performing feature selection."
+    },
+    {
+      "id": "s6_10",
+      "text": "It's helping the model ignore the less useful information and focus only on what truly matters. So, we've mastered predicting continuous numbers and keeping our models in check. But what if our answer isn't a number at all?"
+    }
+  ],
+  "visual_timeline": [
+    {
+      "id": "v3s6_beat1_lasso_system",
+      "anchor": "s6_01",
+      "offset": 0.0,
+      "action": "show_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.2,
+      "params": {
+        "axis_color": "#7C8798",
+        "point_color": "#E5E7EB",
+        "line_color": "#4A9EFF",
+        "overfit_color": "#FF6B6B",
+        "bar_color": "#4A9EFF",
+        "survivor_color": "#7DD3FC",
+        "ghost_color": "#CBD5E1",
+        "lambda_color": "#FFD166",
+        "label_color": "#F8FAFC",
+        "muted_label_color": "#CBD5E1",
+        "origin": [-4.15, -2.25, 0.0],
+        "plot_width": 8.25,
+        "plot_height": 4.55,
+        "x_range": [0.0, 9.0],
+        "y_range": [0.0, 6.0],
+        "points": [
+          [0.8, 1.5],
+          [1.6, 2.3],
+          [2.4, 2.1],
+          [3.2, 3.5],
+          [4.2, 3.2],
+          [5.1, 4.7],
+          [6.0, 4.1],
+          [7.1, 5.5],
+          [8.0, 5.2]
+        ],
+        "smooth_curve": [
+          [0.45, 1.25],
+          [1.6, 1.85],
+          [2.8, 2.42],
+          [4.0, 3.0],
+          [5.2, 3.55],
+          [6.5, 4.18],
+          [8.35, 5.05]
+        ],
+        "overfit_curve": [
+          [0.45, 1.1],
+          [0.8, 1.5],
+          [1.25, 2.65],
+          [1.6, 2.3],
+          [2.05, 1.68],
+          [2.4, 2.1],
+          [2.95, 3.95],
+          [3.2, 3.5],
+          [3.75, 2.8],
+          [4.2, 3.2],
+          [4.65, 5.2],
+          [5.1, 4.7],
+          [5.55, 3.55],
+          [6.0, 4.1],
+          [6.55, 5.85],
+          [7.1, 5.5],
+          [7.55, 4.75],
+          [8.0, 5.2],
+          [8.35, 5.35]
+        ],
+        "calm_curve": [
+          [0.45, 1.35],
+          [1.9, 2.02],
+          [3.3, 2.7],
+          [4.8, 3.38],
+          [6.3, 4.08],
+          [8.35, 4.95]
+        ],
+        "bar_origin": [-3.45, -2.22, 0.0],
+        "bar_width": 0.55,
+        "bar_gap": 0.42,
+        "bar_scale": 1.0,
+        "initial_bar_heights": [2.7, 1.4, 3.1, 0.9, 2.3, 1.1],
+        "compressed_bar_heights": [2.25, 0.75, 2.55, 0.38, 1.85, 0.55],
+        "final_bar_heights": [1.9, 0.0, 2.35, 0.0, 1.45, 0.0],
+        "collapse_order": [3, 5, 1],
+        "lambda_start": 0.0,
+        "lambda_mid": 0.9,
+        "lambda_high": 1.8,
+        "overfit_label_pos": [2.6, 2.05, 0.0],
+        "formula_pos": [0.0, 2.58, 0.0],
+        "lambda_pos": [3.85, 2.25, 0.0]
+      }
+    },
+    {
+      "id": "v3s6_beat2_overfit_curve",
+      "anchor": "s6_02",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.4,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 2,
+        "beat2_duration": 3.4
+      }
+    },
+    {
+      "id": "v3s6_beat3_name_overfitting",
+      "anchor": "s6_03",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 1.5,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 3,
+        "beat3_duration": 1.5
+      }
+    },
+    {
+      "id": "v3s6_beat4_regularization_transform",
+      "anchor": "s6_04",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.4,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 4,
+        "beat4_duration": 3.4
+      }
+    },
+    {
+      "id": "v3s6_beat5_lasso_formula",
+      "anchor": "s6_05",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.0,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 5,
+        "beat5_duration": 3.0
+      }
+    },
+    {
+      "id": "v3s6_beat6_lambda_isolated",
+      "anchor": "s6_06",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.2,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 6,
+        "beat6_duration": 2.2
+      }
+    },
+    {
+      "id": "v3s6_beat7_lambda_pressure",
+      "anchor": "s6_07",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.0,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 7,
+        "beat7_duration": 3.0
+      }
+    },
+    {
+      "id": "v3s6_beat8_zero_coefficients",
+      "anchor": "s6_08",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.2,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 8,
+        "beat8_duration": 3.2
+      }
+    },
+    {
+      "id": "v3s6_beat9_feature_selection_clarity",
+      "anchor": "s6_09",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 2.2,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 9,
+        "beat9_duration": 2.2
+      }
+    },
+    {
+      "id": "v3s6_beat10_resolution_dim",
+      "anchor": "s6_10",
+      "offset": 0.0,
+      "action": "mutate_regularization_lasso_system",
+      "zone": "full",
+      "transition_in": "none",
+      "transition_out": "none",
+      "persist": true,
+      "replace": null,
+      "duration": 3.0,
+      "params": {
+        "source_id": "v3s6_beat1_lasso_system",
+        "beat": 10,
+        "beat10_duration": 3.0,
+        "final_dim": 0.62
+      }
+    }
+  ],
+  "notes": {
+    "tone": "Direct continuation of Scene 5: no title card. Start in the familiar regression world, then show the line becoming too complex before regularization reorganizes the idea into feature weights.",
+    "pacing": "Comfort, discomfort, recognition, control, pressure, elimination, clarity. Formula and compression must not compete; the formula exits fully before lambda pressure compresses the bars.",
+    "animation_guidelines": "Use one persistent regularization/lasso system. The curve should morph, not visibly replace. Bars rise while the curve relaxes. Formula builds term-by-term and exits completely before bar compression. Weak bars collapse into readable ghost memory outlines exactly when they hit zero. Do not add a Feature Selection label. Scene 7 tease remains audio-only."
+  }
+}

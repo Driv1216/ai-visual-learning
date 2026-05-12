@@ -3417,6 +3417,220 @@ def make_error_minimization_system(params, zone):
     return field
 
 
+def make_regularization_lasso_system(params, zone):
+    """Build the stateful visual system for Video 3 Scene 6.
+
+    Scene 6 explains overfitting, regularization, and Lasso feature selection
+    through one evolving system: a regression curve relaxes into a coefficient
+    bar chart, lambda applies pressure, and weak bars collapse into ghosts.
+    """
+    axis_color = params.get("axis_color", "#7C8798")
+    point_color = params.get("point_color", "#E5E7EB")
+    line_color = params.get("line_color", "#4A9EFF")
+    overfit_color = params.get("overfit_color", "#FF6B6B")
+    bar_color = params.get("bar_color", "#4A9EFF")
+    survivor_color = params.get("survivor_color", "#7DD3FC")
+    ghost_color = params.get("ghost_color", "#CBD5E1")
+    lambda_color = params.get("lambda_color", "#FFD166")
+    label_color = params.get("label_color", "#F8FAFC")
+    muted_color = params.get("muted_label_color", "#CBD5E1")
+
+    plot_width = float(params.get("plot_width", 8.25))
+    plot_height = float(params.get("plot_height", 4.55))
+    origin = _as_vector(params.get("origin", [-4.15, -2.25, 0.0]))
+    x_min, x_max = params.get("x_range", [0.0, 9.0])
+    y_min, y_max = params.get("y_range", [0.0, 6.0])
+
+    raw_points = params.get("points", [
+        [0.8, 1.5], [1.6, 2.3], [2.4, 2.1], [3.2, 3.5], [4.2, 3.2],
+        [5.1, 4.7], [6.0, 4.1], [7.1, 5.5], [8.0, 5.2],
+    ])
+    smooth_points = params.get("smooth_curve", [
+        [0.45, 1.25], [1.6, 1.85], [2.8, 2.42], [4.0, 3.0], [5.2, 3.55], [6.5, 4.18], [8.35, 5.05],
+    ])
+    overfit_points = params.get("overfit_curve", [
+        [0.45, 1.1], [0.8, 1.5], [1.25, 2.65], [1.6, 2.3], [2.05, 1.68], [2.4, 2.1],
+        [2.95, 3.95], [3.2, 3.5], [3.75, 2.8], [4.2, 3.2], [4.65, 5.2], [5.1, 4.7],
+        [5.55, 3.55], [6.0, 4.1], [6.55, 5.85], [7.1, 5.5], [7.55, 4.75], [8.0, 5.2], [8.35, 5.35],
+    ])
+    calm_points = params.get("calm_curve", [
+        [0.45, 1.35], [1.9, 2.02], [3.3, 2.7], [4.8, 3.38], [6.3, 4.08], [8.35, 4.95],
+    ])
+
+    def c2p(x, y):
+        px = origin[0] + (float(x) - x_min) / (x_max - x_min) * plot_width
+        py = origin[1] + (float(y) - y_min) / (y_max - y_min) * plot_height
+        return np.array([px, py, 0.0])
+
+    def sample_path(points, n=72):
+        pts = [np.array(p, dtype=float) for p in points]
+        if len(pts) < 2:
+            pts = [np.array([x_min, y_min], dtype=float), np.array([x_max, y_max], dtype=float)]
+        seg_lengths = [float(np.linalg.norm(pts[i + 1] - pts[i])) for i in range(len(pts) - 1)]
+        total = sum(seg_lengths) or 1.0
+        samples = []
+        for k in range(n):
+            d = total * k / max(1, n - 1)
+            acc = 0.0
+            for i, seg in enumerate(seg_lengths):
+                if acc + seg >= d or i == len(seg_lengths) - 1:
+                    t = 0.0 if seg == 0 else (d - acc) / seg
+                    point = pts[i] + (pts[i + 1] - pts[i]) * t
+                    samples.append(point)
+                    break
+                acc += seg
+        return samples
+
+    smooth_samples = sample_path(smooth_points)
+    overfit_samples = sample_path(overfit_points)
+    calm_samples = sample_path(calm_points)
+
+    points_opacity = ValueTracker(0.0)
+    curve_opacity = ValueTracker(0.0)
+    curve_draw_progress = ValueTracker(0.0)
+    overfit_progress = ValueTracker(0.0)
+    regularize_progress = ValueTracker(0.0)
+    bar_chart_opacity = ValueTracker(0.0)
+    formula_opacity = ValueTracker(0.0)
+    lambda_value = ValueTracker(float(params.get("lambda_start", 0.0)))
+    lambda_opacity = ValueTracker(0.0)
+    final_dim = ValueTracker(1.0)
+    overfit_label_opacity = ValueTracker(0.0)
+
+    x_axis = Line(c2p(x_min, y_min), c2p(x_max, y_min), color=axis_color, stroke_width=1.2)
+    y_axis = Line(c2p(x_min, y_min), c2p(x_min, y_max), color=axis_color, stroke_width=1.2)
+    axes = VGroup(x_axis, y_axis).set_opacity(float(params.get("axis_opacity", 0.58)))
+
+    dots = VGroup()
+    for x, y in raw_points:
+        dot = Dot(c2p(x, y), radius=float(params.get("point_radius", 0.075)), color=point_color, fill_opacity=0.9)
+        dot.set_stroke("#FFFFFF", width=0.45, opacity=0.18)
+        dots.add(dot)
+    dots.set_opacity(0.0)
+    dots.add_updater(lambda mob: mob.set_opacity(points_opacity.get_value() * final_dim.get_value()))
+
+    def make_curve():
+        overfit = max(0.0, min(1.0, overfit_progress.get_value()))
+        regularize = max(0.0, min(1.0, regularize_progress.get_value()))
+        draw = max(0.0, min(1.0, curve_draw_progress.get_value()))
+        count = max(2, int(2 + draw * (len(smooth_samples) - 2)))
+        coords = []
+        for i in range(count):
+            base = smooth_samples[i]
+            bend = base + (overfit_samples[i] - base) * overfit
+            calm = bend + (calm_samples[i] - bend) * regularize
+            coords.append(c2p(calm[0], calm[1]))
+        curve = VMobject()
+        curve.set_points_smoothly(coords)
+        color = interpolate_color(line_color, overfit_color, overfit * (1.0 - 0.55 * regularize))
+        curve.set_stroke(color=color, width=float(params.get("curve_width", 3.2)), opacity=curve_opacity.get_value() * final_dim.get_value())
+        return curve
+
+    curve = always_redraw(make_curve)
+
+    overfit_label = Text("Overfitting", font_size=30, color=overfit_color, weight=BOLD)
+    overfit_label.move_to(_as_vector(params.get("overfit_label_pos", [2.6, 2.05, 0.0])))
+    overfit_label.set_opacity(0.0)
+
+    bar_origin = _as_vector(params.get("bar_origin", [-3.45, -2.22, 0.0]))
+    bar_width = float(params.get("bar_width", 0.55))
+    bar_gap = float(params.get("bar_gap", 0.42))
+    bar_scale = float(params.get("bar_scale", 1.0))
+    initial_heights = [float(v) for v in params.get("initial_bar_heights", [2.7, 1.4, 3.1, 0.9, 2.3, 1.1])]
+    compressed_heights = [float(v) for v in params.get("compressed_bar_heights", [2.25, 0.75, 2.55, 0.38, 1.85, 0.55])]
+    final_heights = [float(v) for v in params.get("final_bar_heights", [1.9, 0.0, 2.35, 0.0, 1.45, 0.0])]
+    collapse_order = [int(i) for i in params.get("collapse_order", [3, 5, 1])]
+    bar_trackers = [ValueTracker(0.0) for _ in initial_heights]
+    ghost_opacities = [ValueTracker(0.0) for _ in initial_heights]
+    survivor_indices = [i for i, value in enumerate(final_heights) if value > 0.0]
+
+    baseline = Line(bar_origin + LEFT * 0.3, bar_origin + RIGHT * ((bar_width + bar_gap) * len(initial_heights) - bar_gap + 0.3), color=axis_color, stroke_width=1.25)
+    baseline.set_opacity(0.0)
+    baseline.add_updater(lambda mob: mob.set_opacity(bar_chart_opacity.get_value() * 0.72 * final_dim.get_value()))
+
+    bars = VGroup()
+    ghosts = VGroup()
+    for i, height_tracker in enumerate(bar_trackers):
+        x_left = bar_origin[0] + i * (bar_width + bar_gap)
+        x_center = x_left + bar_width / 2.0
+
+        def make_bar(index=i, tracker=height_tracker, x0=x_left):
+            h = max(0.0, tracker.get_value()) * bar_scale
+            rect = Rectangle(width=bar_width, height=max(0.001, h), stroke_width=0.0)
+            rect.set_fill(survivor_color if index in survivor_indices else bar_color, opacity=0.88 * bar_chart_opacity.get_value() * final_dim.get_value())
+            rect.move_to(np.array([x0 + bar_width / 2.0, bar_origin[1] + h / 2.0, 0.0]))
+            return rect
+
+        def make_ghost(index=i, x0=x_left):
+            memory_h = max(initial_heights[index] * bar_scale, 0.18)
+            ghost = Rectangle(width=bar_width, height=memory_h, color=ghost_color, stroke_width=1.25)
+            ghost.set_fill(ghost_color, opacity=0.0)
+            ghost.set_stroke(ghost_color, opacity=ghost_opacities[index].get_value() * final_dim.get_value())
+            ghost.move_to(np.array([x0 + bar_width / 2.0, bar_origin[1] + memory_h / 2.0, 0.0]))
+            return ghost
+
+        bars.add(always_redraw(make_bar))
+        ghosts.add(always_redraw(make_ghost))
+
+    bar_labels = VGroup()
+    for i in range(len(initial_heights)):
+        label = Text(f"w{i + 1}", font_size=18, color=muted_color)
+        label.move_to(np.array([bar_origin[0] + i * (bar_width + bar_gap) + bar_width / 2.0, bar_origin[1] - 0.28, 0.0]))
+        bar_labels.add(label)
+    bar_labels.set_opacity(0.0)
+    bar_labels.add_updater(lambda mob: mob.set_opacity(bar_chart_opacity.get_value() * 0.62 * final_dim.get_value()))
+
+    formula_terms = VGroup(
+        MathTex("J=", font_size=38, color=label_color),
+        MathTex(r"\mathrm{MSE}", font_size=38, color=label_color),
+        MathTex("+", font_size=38, color=label_color),
+        MathTex(r"\lambda\sum |w|", font_size=38, color=label_color),
+    ).arrange(RIGHT, buff=0.18)
+    formula_terms.move_to(_as_vector(params.get("formula_pos", [0.0, 2.58, 0.0])))
+    formula_terms.set_opacity(0.0)
+
+    lambda_label = MathTex(r"\lambda=", font_size=34, color=lambda_color)
+    lambda_number = DecimalNumber(lambda_value.get_value(), num_decimal_places=1, font_size=34, color=lambda_color)
+    lambda_number.add_updater(lambda mob: mob.set_value(lambda_value.get_value()))
+    lambda_group = VGroup(lambda_label, lambda_number).arrange(RIGHT, buff=0.12)
+    lambda_group.move_to(_as_vector(params.get("lambda_pos", [3.85, 2.25, 0.0])))
+    lambda_group.set_opacity(0.0)
+    lambda_group.add_updater(lambda mob: mob.set_opacity(lambda_opacity.get_value() * final_dim.get_value()))
+
+    system = VGroup(axes, dots, curve, overfit_label, baseline, ghosts, bars, bar_labels, formula_terms, lambda_group)
+    system.rl_axes = axes
+    system.rl_dots = dots
+    system.rl_curve = curve
+    system.rl_overfit_label = overfit_label
+    system.rl_baseline = baseline
+    system.rl_bars = bars
+    system.rl_ghosts = ghosts
+    system.rl_bar_labels = bar_labels
+    system.rl_formula_terms = formula_terms
+    system.rl_lambda_group = lambda_group
+    system.rl_points_opacity = points_opacity
+    system.rl_curve_opacity = curve_opacity
+    system.rl_curve_draw_progress = curve_draw_progress
+    system.rl_overfit_progress = overfit_progress
+    system.rl_regularize_progress = regularize_progress
+    system.rl_bar_chart_opacity = bar_chart_opacity
+    system.rl_formula_opacity = formula_opacity
+    system.rl_lambda_value = lambda_value
+    system.rl_lambda_opacity = lambda_opacity
+    system.rl_final_dim = final_dim
+    system.rl_overfit_label_opacity = overfit_label_opacity
+    system.rl_bar_trackers = bar_trackers
+    system.rl_ghost_opacities = ghost_opacities
+    system.rl_initial_heights = initial_heights
+    system.rl_compressed_heights = compressed_heights
+    system.rl_final_heights = final_heights
+    system.rl_collapse_order = collapse_order
+    system.rl_lambda_mid = float(params.get("lambda_mid", 0.9))
+    system.rl_lambda_high = float(params.get("lambda_high", 1.8))
+    system.rl_params = params
+    return system
+
+
 def make_linear_regression_fit(params, zone):
     """Build the redesigned stateful visual system for Video 3 Scene 3.
 
@@ -3767,6 +3981,9 @@ def build_object(step_dict):
 
     if action == "show_error_minimization_system":
         return make_error_minimization_system(params, zone)
+
+    if action == "show_regularization_lasso_system":
+        return make_regularization_lasso_system(params, zone)
 
     if action == "fade_out":
         return None

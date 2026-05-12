@@ -65,6 +65,8 @@ AllowedAction = Literal[
     "mutate_linear_formula_system",
     "show_error_minimization_system",
     "mutate_error_minimization_system",
+    "show_regularization_lasso_system",
+    "mutate_regularization_lasso_system",
 ]
 
 AllowedZone = Literal[
