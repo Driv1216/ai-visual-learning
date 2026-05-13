@@ -295,6 +295,7 @@
       "zone": "center",
       "transition_in": "create",
       "transition_out": "fade",
+      "duration": 0.42,
       "persist": true,
       "replace": "center",
       "camera_scale": 0.9,
@@ -310,41 +311,12 @@
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
+      "duration": 0.46,
       "persist": true,
       "replace": "center",
       "camera_scale": 0.88,
       "params": {
         "stage": "measured"
-      },
-      "offset": 0.0
-    },
-    {
-      "id": "v5c",
-      "anchor": "n5d",
-      "action": "square_stage_sequence",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 0.87,
-      "params": {
-        "stage": "tension"
-      },
-      "offset": 0.0
-    },
-    {
-      "id": "v5d",
-      "anchor": "n5e",
-      "action": "square_stage_sequence",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 0.86,
-      "params": {
-        "stage": "rotated"
       },
       "offset": 0.0
     },
@@ -355,13 +327,14 @@
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
+      "duration": 0.48,
       "persist": true,
       "replace": "center",
       "camera_scale": 0.84,
       "params": {
         "stage": "distorted"
       },
-      "offset": 0.0
+      "offset": -0.15
     },
     {
       "id": "v5f",
@@ -370,28 +343,14 @@
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
+      "duration": 0.48,
       "persist": true,
       "replace": "center",
       "camera_scale": 0.84,
       "params": {
         "stage": "noisy"
       },
-      "offset": 0.0
-    },
-    {
-      "id": "v5g",
-      "anchor": "n5h",
-      "action": "square_stage_sequence",
-      "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
-      "persist": true,
-      "replace": "center",
-      "camera_scale": 0.84,
-      "params": {
-        "stage": "lighting"
-      },
-      "offset": 0.0
+      "offset": -0.1
     },
     {
       "id": "v5h",
@@ -400,13 +359,14 @@
       "zone": "center",
       "transition_in": "transform",
       "transition_out": "fade",
+      "duration": 0.55,
       "persist": true,
       "replace": "center",
       "camera_scale": 0.86,
       "params": {
         "stage": "pressure"
       },
-      "offset": 0.0
+      "offset": -0.2
     },
     {
       "id": "v5h_clear",
@@ -415,12 +375,14 @@
       "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
+      "duration": 0.28,
       "persist": false,
       "replace": null,
       "camera_scale": 1.0,
       "params": {
         "zones": [
-          "center"
+          "center",
+          "bottom"
         ]
       },
       "offset": 0.0
@@ -432,43 +394,14 @@
       "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
+      "duration": 0.42,
       "persist": true,
-      "replace": null,
+      "replace": "center",
       "camera_scale": 0.94,
       "params": {
         "text": "description becomes the bottleneck"
       },
-      "offset": 0.5
-    },
-    {
-      "id": "v6a",
-      "anchor": "n6b",
-      "action": "highlight_text",
-      "zone": "bottom",
-      "transition_in": "write",
-      "transition_out": "fade",
-      "persist": false,
-      "replace": "bottom",
-      "camera_scale": 0.96,
-      "params": {
-        "text": "The difficulty is not just computation..."
-      },
-      "offset": 0.0
-    },
-    {
-      "id": "v6b",
-      "anchor": "n6c",
-      "action": "highlight_text",
-      "zone": "bottom",
-      "transition_in": "write",
-      "transition_out": "fade",
-      "persist": false,
-      "replace": "bottom",
-      "camera_scale": 0.96,
-      "params": {
-        "text": "It is description."
-      },
-      "offset": 0.5
+      "offset": 0.15
     },
     {
       "id": "v6_clear",
@@ -477,6 +410,7 @@
       "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
+      "duration": 0.26,
       "persist": false,
       "replace": null,
       "camera_scale": 1.0,
@@ -486,7 +420,7 @@
           "bottom"
         ]
       },
-      "offset": 0.5
+      "offset": 0.0
     },
     {
       "id": "v7",
@@ -495,29 +429,30 @@
       "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
+      "duration": 0.5,
       "persist": true,
-      "replace": null,
+      "replace": "center",
       "camera_scale": 0.88,
       "params": {
         "stage": "wall"
       },
-      "offset": 0.0
+      "offset": -0.15
     },
     {
       "id": "v8",
       "anchor": "n8",
-      "action": "transform_text",
+      "action": "show_text",
       "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
+      "duration": 0.45,
       "persist": true,
       "replace": "center",
       "camera_scale": 0.94,
       "params": {
-        "from": "description becomes the bottleneck",
-        "to": "Machine learning begins here."
+        "text": "Machine learning begins here."
       },
-      "offset": 0.3
+      "offset": 0.0
     }
   ],
   "notes": {

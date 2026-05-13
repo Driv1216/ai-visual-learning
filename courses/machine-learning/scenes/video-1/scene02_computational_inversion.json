@@ -367,7 +367,7 @@
       "anchor": "s2_n8",
       "offset": 0.0,
       "action": "transform_group_to_examples",
-      "zone": "center_left_center",
+      "zone": "center_left",
       "content": {
         "from_ids": [
           "v10_data_stays_left",
@@ -384,13 +384,13 @@
         "grid_rows": 2,
         "grid_cols": 2,
         "font_size": 24,
-        "cell_width": 1.7,
-        "cell_height": 0.8
+        "cell_width": 1.55,
+        "cell_height": 0.74
       },
       "transition_in": "transform",
       "duration": 0.75,
       "persist": true,
-      "replace": "center_left_center",
+      "replace": "center_left",
       "notes": "Do not suddenly pop in a new unrelated table. This should feel like Data + Answers resolving into concrete examples."
     },
     {
@@ -416,12 +416,17 @@
       "anchor": "s2_n8",
       "offset": 0.55,
       "action": "transform_box_to_pattern",
-      "zone": "pattern_right_compact",
+      "zone": "center_right",
       "content": "Pattern",
       "style": {
         "source_id": "v14_rules_emerge_right",
         "pattern_type": "simple_curve_or_mapping",
-        "font_size": 28
+        "font_size": 28,
+        "position": [
+          2.25,
+          0.0,
+          0.0
+        ]
       },
       "transition_in": "transform",
       "duration": 0.65,
@@ -440,9 +445,10 @@
         "to": "v18_rules_to_pattern"
       },
       "style": {
-        "link_count": 2,
-        "stroke_opacity": 0.35,
-        "stroke_width": 2.2
+        "mode": "single_arrow",
+        "stroke_opacity": 0.72,
+        "stroke_width": 3.0,
+        "color": "#94A3B8"
       },
       "transition_in": "grow",
       "duration": 0.45,

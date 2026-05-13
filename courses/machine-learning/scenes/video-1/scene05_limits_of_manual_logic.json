@@ -427,99 +427,140 @@
       "params": {
         "points": [
           [
-            -1.55,
-            -0.42,
+            -1.95,
+            -0.58,
+            0
+          ],
+          [
+            -1.42,
+            -0.32,
             0
           ],
           [
             -0.88,
-            -0.12,
+            -0.06,
             0
           ],
           [
-            -0.18,
-            0.08,
+            -0.30,
+            0.10,
             0
           ],
           [
-            0.62,
-            0.30,
+            0.28,
+            0.24,
             0
           ],
           [
-            1.52,
-            0.76,
+            0.92,
+            0.50,
+            0
+          ],
+          [
+            1.58,
+            0.82,
+            0
+          ],
+          [
+            2.03,
+            1.08,
             0
           ]
         ],
-        "title": "Learning patterns from data",
-        "title_color": "#E5EEF9",
-        "title_font_size": 30,
-        "title_max_width": 5.4,
-        "title_buff": 0.46,
         "color": "#58A6FF",
-        "stroke_width": 5.8,
+        "stroke_width": 6.4,
         "opacity": 1.0,
         "scale": 1.28,
         "glow": true,
         "glow_color": "#58A6FF",
-        "glow_width": 17.0,
-        "glow_opacity": 0.20,
+        "glow_width": 18.0,
+        "glow_opacity": 0.18,
+        "show_band": true,
+        "band_color": "#58A6FF",
+        "band_width": 22.0,
+        "band_opacity": 0.075,
         "show_guides": true,
-        "guide_color": "#475569",
-        "guide_opacity": 0.18,
-        "guide_stroke_width": 1.1,
+        "guide_color": "#64748B",
+        "guide_opacity": 0.16,
+        "guide_stroke_width": 1.15,
+        "guide_width": 4.75,
+        "guide_height": 2.15,
         "show_points": true,
         "point_color": "#D7E7FF",
-        "point_opacity": 0.72,
-        "point_radius": 0.035,
+        "point_opacity": 0.82,
+        "point_radius": 0.042,
         "point_glow": true,
-        "point_glow_opacity": 0.13,
-        "point_glow_scale": 2.6,
+        "point_glow_opacity": 0.15,
+        "point_glow_scale": 2.8,
         "data_points": [
           [
-            -1.48,
-            -0.48,
+            -1.92,
+            -0.63,
             0
           ],
           [
-            -1.12,
-            -0.26,
+            -1.66,
+            -0.42,
             0
           ],
           [
-            -0.76,
-            -0.18,
+            -1.35,
+            -0.37,
             0
           ],
           [
-            -0.38,
-            0.02,
+            -1.06,
+            -0.15,
             0
           ],
           [
-            0.04,
-            0.08,
+            -0.72,
+            -0.04,
             0
           ],
           [
-            0.45,
-            0.26,
+            -0.44,
+            0.16,
+            0
+          ],
+          [
+            -0.08,
+            0.05,
+            0
+          ],
+          [
+            0.20,
+            0.27,
+            0
+          ],
+          [
+            0.53,
+            0.32,
             0
           ],
           [
             0.86,
-            0.34,
+            0.54,
             0
           ],
           [
-            1.24,
-            0.58,
+            1.12,
+            0.46,
             0
           ],
           [
-            1.50,
-            0.78,
+            1.42,
+            0.76,
+            0
+          ],
+          [
+            1.76,
+            0.88,
+            0
+          ],
+          [
+            2.02,
+            1.06,
             0
           ]
         ],
@@ -535,6 +576,6 @@
   "notes": {
     "tone": "Restrained, precise, and increasingly strained until the curve resolves the scene.",
     "pacing": "One rule card stays alive from S1 through S9, deforming quickly in S4, weakening in S5, making room in S8, and receding behind the curve in S9.",
-    "animation_guidelines": "Do not replace the rule card. Keep the ghost domain shapes faint and temporary. The final curve has no axes, no labels, and no companion text."
+    "animation_guidelines": "Do not replace the rule card. Keep the ghost domain shapes faint and temporary. The final curve may use a very subtle graph frame, but avoid labels or companion text."
   }
 }

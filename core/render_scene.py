@@ -275,13 +275,12 @@ class JsonDrivenScene(MovingCameraScene):
                 radius = cluster.get("radius", 1.0)
                 phase = cluster_index * 0.73
                 cloud_group = VGroup()
-                # Use stacked translucent discs instead of closed blob outlines.
-                # The viewer should read atmospheric density, not drawn regions.
+                # Soft density only. Opacities are intentionally lower on the
+                # held state so the clusters do not bloom into bright white.
                 layer_specs = (
-                    (0.78, 0.105 if held else 0.135, np.array([0.00, 0.00, 0.0])),
-                    (0.54, 0.082 if held else 0.108, np.array([0.18 * np.cos(phase), 0.10 * np.sin(phase), 0.0])),
-                    (0.38, 0.066 if held else 0.086, np.array([-0.16 * np.sin(phase), 0.12 * np.cos(phase), 0.0])),
-                    (0.24, 0.050 if held else 0.068, np.array([0.11 * np.cos(phase + 1.7), -0.09 * np.sin(phase + 0.4), 0.0])),
+                    (0.76, 0.070 if held else 0.092, np.array([0.00, 0.00, 0.0])),
+                    (0.52, 0.056 if held else 0.072, np.array([0.18 * np.cos(phase), 0.10 * np.sin(phase), 0.0])),
+                    (0.36, 0.044 if held else 0.058, np.array([-0.16 * np.sin(phase), 0.12 * np.cos(phase), 0.0])),
                 )
                 for scale, opacity, offset in layer_specs:
                     glow = Dot(center + offset, radius=radius * scale, color=TAXONOMY_COLORS["cluster"])
@@ -290,11 +289,33 @@ class JsonDrivenScene(MovingCameraScene):
                 ghosts.add(cloud_group)
             return ghosts
 
-        def taxonomy_density_glints(params, max_lines=56):
-            # The beat map asks for hidden structure as soft luminance, not line
-            # networks. Keeping this as an empty group prevents fast blinking
-            # connector clutter while preserving the existing call sites.
-            return VGroup()
+        def taxonomy_density_glints(params, max_lines=42):
+            points = [vector_from_param(point) for point in params.get("points", [])]
+            clusters = params.get("clusters", [])
+            lines = VGroup()
+            for cluster in clusters:
+                center = vector_from_param(cluster.get("center"))
+                radius = cluster.get("radius", 1.0)
+                local = [point for point in points if np.linalg.norm(point - center) <= radius * 0.90]
+                local.sort(key=lambda point: (point[0], point[1]))
+                created = 0
+                for index, point in enumerate(local):
+                    candidates = sorted(
+                        local[index + 1:],
+                        key=lambda other: np.linalg.norm(point - other),
+                    )
+                    for other in candidates[:2]:
+                        distance = np.linalg.norm(point - other)
+                        if 0.18 <= distance <= radius * 0.55 and created < max_lines:
+                            line = Line(point, other, color=TAXONOMY_COLORS["cluster"], stroke_width=1.0)
+                            line.set_opacity(0.17)
+                            lines.add(line)
+                            created += 1
+                        if created >= max_lines:
+                            break
+                    if created >= max_lines:
+                        break
+            return lines
 
         def taxonomy_broken_wavefronts(anchor_center, color, max_radius=1.55, rings=4):
             stages = []
@@ -312,24 +333,30 @@ class JsonDrivenScene(MovingCameraScene):
             anchors = params.get("anchors", [])
             points = params.get("points", [])
             territories = VGroup()
-            for anchor_index, anchor in enumerate(anchors):
+            for anchor in anchors:
                 point_index = anchor.get("index")
                 if point_index is None or not 0 <= point_index < len(points):
                     continue
                 color = TAXONOMY_COLORS["amber"] if anchor.get("class", "a") == "a" else TAXONOMY_COLORS["blue"]
                 center = vector_from_param(points[point_index])
-                phase = anchor_index * 0.49
-                territory = VGroup()
-                layer_specs = (
-                    (0.92, 0.050 if held else 0.072, np.array([0.00, 0.00, 0.0])),
-                    (0.60, 0.042 if held else 0.060, np.array([0.10 * np.cos(phase), 0.07 * np.sin(phase), 0.0])),
-                    (0.34, 0.033 if held else 0.048, np.array([-0.08 * np.sin(phase), 0.06 * np.cos(phase), 0.0])),
-                )
-                for scale, opacity, offset in layer_specs:
-                    patch = Dot(center + offset, radius=1.03 * scale, color=color)
-                    patch.set_opacity(opacity)
-                    territory.add(patch)
-                territories.add(territory)
+                local_points = []
+                for other_index, raw_point in enumerate(points):
+                    if other_index == point_index:
+                        continue
+                    point = vector_from_param(raw_point)
+                    distance = np.linalg.norm(point - center)
+                    if 0.20 < distance <= 1.25:
+                        local_points.append((distance, point))
+                local_points.sort(key=lambda item: item[0])
+                influence_lines = VGroup()
+                for distance, point in local_points[:9]:
+                    amount = max(0.0, 1.0 - distance / 1.25)
+                    line = Line(center, point, color=color, stroke_width=1.05)
+                    line.set_opacity((0.18 if held else 0.24) * amount)
+                    influence_lines.add(line)
+                anchor_halo = Dot(center, radius=0.34 if held else 0.42, color=color)
+                anchor_halo.set_opacity(0.045 if held else 0.065)
+                territories.add(VGroup(anchor_halo, influence_lines))
             return territories
 
         def taxonomy_reward_residue(point, color, amount=1.0):
@@ -4115,8 +4142,8 @@ class JsonDrivenScene(MovingCameraScene):
                             hold_anims.append(Succession(Transform(source_glows, pulse_glows), Transform(source_glows, target_glows)))
                         if len(source_clouds) != 0:
                             cloud_breath = source_clouds.copy()
-                            cloud_breath.set_opacity(0.92)
-                            hold_anims.append(Succession(Transform(source_clouds, cloud_breath), source_clouds.animate.set_opacity(0.82)))
+                            cloud_breath.set_opacity(0.76)
+                            hold_anims.append(Succession(Transform(source_clouds, cloud_breath), source_clouds.animate.set_opacity(0.74)))
                         if hold_anims:
                             self.play(AnimationGroup(*hold_anims, lag_ratio=0.0), run_time=run_time * 0.22)
                             self.wait(run_time * 0.78)
@@ -4281,9 +4308,9 @@ class JsonDrivenScene(MovingCameraScene):
                                     (stage_index + 1) * len(ordered_influence) // halo_count
                                 ]
                                 if group_items:
-                                    halo_stages.append(AnimationGroup(*[halo.animate.set_opacity(0.115) for halo in group_items], lag_ratio=0.0))
+                                    halo_stages.append(AnimationGroup(*[halo.animate.set_opacity(0.32) for halo in group_items], lag_ratio=0.0))
                             if halo_stages:
-                                anims.append(Succession(*halo_stages, AnimationGroup(*[halo.animate.set_opacity(0.72) for halo in ordered_influence], lag_ratio=0.0)))
+                                anims.append(Succession(*halo_stages, AnimationGroup(*[halo.animate.set_opacity(0.42) for halo in ordered_influence], lag_ratio=0.0)))
                         if len(territories) != 0:
                             for territory in territories:
                                 territory.set_opacity(0)
@@ -4291,7 +4318,7 @@ class JsonDrivenScene(MovingCameraScene):
                             anims.append(
                                 Succession(
                                     Wait(run_time * 0.10),
-                                    territories.animate.set_opacity(1.0),
+                                    territories.animate.set_opacity(0.82),
                                     Wait(run_time * 0.24),
                                     Transform(territories, held_territories),
                                 )
@@ -4307,7 +4334,7 @@ class JsonDrivenScene(MovingCameraScene):
                         if len(territories) != 0:
                             self.remove(territories)
                         if len(influence) != 0:
-                            influence.set_opacity(0.72)
+                            influence.set_opacity(0.42)
                             new_obj.add(influence)
                             new_obj.taxonomy_influence = influence
                         if len(held_territories) != 0:

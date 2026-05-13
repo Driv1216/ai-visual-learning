@@ -480,6 +480,9 @@ def make_axis_free_curve(params, zone):
         max_corner = np.max(points, axis=0)
         local_center = (min_corner + max_corner) / 2
         points = [point - local_center for point in points]
+    else:
+        local_center = ORIGIN
+
     curve = VMobject()
     curve.set_points_smoothly(points)
     curve.set_stroke(
@@ -496,8 +499,10 @@ def make_axis_free_curve(params, zone):
         guide_color = params.get("guide_color", "#334155")
         guide_opacity = params.get("guide_opacity", 0.20)
         guide_stroke_width = params.get("guide_stroke_width", 1.2)
-        x_axis = Line(LEFT * 1.85 + DOWN * 0.72, RIGHT * 1.85 + DOWN * 0.72, color=guide_color, stroke_width=guide_stroke_width)
-        y_axis = Line(LEFT * 1.85 + DOWN * 0.72, LEFT * 1.85 + UP * 0.92, color=guide_color, stroke_width=guide_stroke_width)
+        guide_width = params.get("guide_width", 4.25)
+        guide_height = params.get("guide_height", 1.95)
+        x_axis = Line(LEFT * guide_width / 2 + DOWN * guide_height / 2, RIGHT * guide_width / 2 + DOWN * guide_height / 2, color=guide_color, stroke_width=guide_stroke_width)
+        y_axis = Line(LEFT * guide_width / 2 + DOWN * guide_height / 2, LEFT * guide_width / 2 + UP * guide_height / 2, color=guide_color, stroke_width=guide_stroke_width)
         guide_group.add(x_axis, y_axis)
         guide_group.set_opacity(guide_opacity)
         guide_group.scale(params.get("scale", 1.0))
@@ -529,6 +534,16 @@ def make_axis_free_curve(params, zone):
         data_points.scale(params.get("scale", 1.0))
         group.add(data_points)
 
+    confidence_band = None
+    if params.get("show_band", False):
+        confidence_band = curve.copy()
+        confidence_band.set_stroke(
+            params.get("band_color", params.get("color", ACCENT)),
+            width=params.get("band_width", params.get("stroke_width", 4.0) * 3.4),
+            opacity=params.get("band_opacity", 0.10),
+        )
+        group.add(confidence_band)
+
     curve_glow = None
     if params.get("glow", False):
         curve_glow = curve.copy()
@@ -558,6 +573,7 @@ def make_axis_free_curve(params, zone):
     group.pattern_points = data_points
     group.pattern_curve = curve
     group.pattern_glow = curve_glow if params.get("glow", False) else None
+    group.pattern_band = confidence_band
     group.pattern_title = title
     group.pattern_guides = guide_group
     return group
@@ -950,13 +966,31 @@ def make_pattern_object(params, zone):
 
 def make_links(params, from_obj, to_obj):
     """
-    Draw link lines from from_obj to to_obj.
-    FIX: flatten one level of submobjects so we get actual grid cells
-    rather than hitting glow/halo wrapper layers.
+    Draw links from from_obj to to_obj. By default this keeps the older
+    multi-line behavior, but Scene 2 can opt into a single centered arrow to
+    avoid example-grid overlap.
     """
-    link_count = max(1, params.get("link_count", 3))
+    mode = params.get("mode", "multi")
     stroke_width = params.get("stroke_width", 3)
     stroke_opacity = params.get("stroke_opacity", 0.55)
+    color = params.get("color", TEXT_SUB)
+
+    if mode in {"single", "single_arrow", "arrow"}:
+        start = from_obj.get_right() + RIGHT * params.get("start_buff", 0.16)
+        end = to_obj.get_left() + LEFT * params.get("end_buff", 0.16)
+        arrow = Arrow(
+            start,
+            end,
+            buff=0.0,
+            stroke_width=stroke_width,
+            color=color,
+            max_tip_length_to_length_ratio=params.get("max_tip_length_to_length_ratio", 0.12),
+            max_stroke_width_to_length_ratio=12,
+        )
+        arrow.set_opacity(stroke_opacity)
+        return arrow
+
+    link_count = max(1, params.get("link_count", 3))
 
     # FIX: flatten one level to get real leaf cells, not wrapper VGroups
     raw_subs = from_obj.submobjects
@@ -1460,14 +1494,14 @@ def make_show_generalization_pattern(params, zone):
     # They look like training data that has been seen and half-forgotten —
     # not stored, not labelled, just faint presences.
     echo_positions = [
-        LEFT * 2.55 + UP * 0.95,
-        LEFT * 2.10 + UP * 0.35,
-        LEFT * 2.70 + DOWN * 0.25,
-        LEFT * 1.85 + UP * 0.72,
-        LEFT * 1.55 + DOWN * 0.08,
-        LEFT * 1.95 + DOWN * 0.58,
-        LEFT * 1.30 + UP * 0.42,
-        LEFT * 2.35 + UP * 0.12,
+        LEFT * 3.65 + UP * 0.92,
+        LEFT * 3.15 + UP * 0.36,
+        LEFT * 3.48 + DOWN * 0.28,
+        LEFT * 2.82 + UP * 0.68,
+        LEFT * 2.45 + DOWN * 0.06,
+        LEFT * 2.90 + DOWN * 0.62,
+        LEFT * 2.15 + UP * 0.38,
+        LEFT * 3.28 + UP * 0.10,
     ]
     old_dots = VGroup(*[
         Dot(p, radius=0.042, color=SECONDARY).set_opacity(examples_opacity)
@@ -1485,14 +1519,14 @@ def make_show_generalization_pattern(params, zone):
     # to visually communicate: "these noisy observations → this clean rule."
     # These are different from the old_dots (which are memories on the left).
     right_scatter = [
-        RIGHT * 1.45 + DOWN * 0.30,
-        RIGHT * 1.72 + DOWN * 0.05,
-        RIGHT * 1.95 + UP * 0.22,
-        RIGHT * 2.25 + UP * 0.10,
-        RIGHT * 2.55 + UP * 0.42,
-        RIGHT * 2.82 + UP * 0.28,
-        RIGHT * 3.10 + UP * 0.62,
-        RIGHT * 3.35 + UP * 0.50,
+        RIGHT * 1.82 + DOWN * 0.46,
+        RIGHT * 2.10 + DOWN * 0.20,
+        RIGHT * 2.38 + UP * 0.10,
+        RIGHT * 2.70 + DOWN * 0.02,
+        RIGHT * 3.02 + UP * 0.34,
+        RIGHT * 3.34 + UP * 0.22,
+        RIGHT * 3.66 + UP * 0.62,
+        RIGHT * 3.98 + UP * 0.48,
     ]
     scatter_dots = VGroup(*[
         Dot(p, radius=0.038, color=SECONDARY).set_opacity(
@@ -1502,26 +1536,27 @@ def make_show_generalization_pattern(params, zone):
     ])
 
     curve_pts = [
-        RIGHT * 1.25 + DOWN * 0.18,
-        RIGHT * 1.70 + DOWN * 0.00,
-        RIGHT * 2.15 + UP * 0.20,
-        RIGHT * 2.60 + UP * 0.38,
-        RIGHT * 3.05 + UP * 0.56,
-        RIGHT * 3.50 + UP * 0.72,
+        RIGHT * 1.68 + DOWN * 0.34,
+        RIGHT * 2.10 + DOWN * 0.14,
+        RIGHT * 2.56 + UP * 0.10,
+        RIGHT * 3.02 + UP * 0.34,
+        RIGHT * 3.52 + UP * 0.58,
+        RIGHT * 4.02 + UP * 0.78,
     ]
     learned_curve = VMobject()
     learned_curve.set_points_smoothly(curve_pts)
-    learned_curve.set_stroke(ACCENT, width=3.6, opacity=pattern_opacity)
+    learned_curve.set_stroke(ACCENT, width=4.4, opacity=pattern_opacity)
 
     curve_glow = VMobject()
     curve_glow.set_points_smoothly(curve_pts)
-    curve_glow.set_stroke(ACCENT, width=16, opacity=pattern_opacity * 0.10)
+    curve_glow.set_stroke(ACCENT, width=18, opacity=pattern_opacity * 0.11)
 
-    # Faint axis lines to give the curve a mini-graph context
-    ax_origin = RIGHT * 1.15 + DOWN * 0.30
-    x_ax = Line(ax_origin, ax_origin + RIGHT * 2.55, color=TEXT_SUB, stroke_width=0.9)
-    y_ax = Line(ax_origin, ax_origin + UP * 1.22, color=TEXT_SUB, stroke_width=0.9)
-    axes = VGroup(x_ax, y_ax).set_opacity(0.0 if stage == "memory" else pattern_opacity * 0.18)
+    # Faint axis lines to give the curve a clearer mini-graph context without
+    # making the scene feel like a full chart slide.
+    ax_origin = RIGHT * 1.58 + DOWN * 0.50
+    x_ax = Line(ax_origin, ax_origin + RIGHT * 2.85, color=TEXT_SUB, stroke_width=1.05)
+    y_ax = Line(ax_origin, ax_origin + UP * 1.55, color=TEXT_SUB, stroke_width=1.05)
+    axes = VGroup(x_ax, y_ax).set_opacity(0.0 if stage == "memory" else pattern_opacity * 0.22)
 
     learned_pattern_group = VGroup(axes, scatter_dots, curve_glow, learned_curve)
 
@@ -1532,14 +1567,14 @@ def make_show_generalization_pattern(params, zone):
     # NO error. NO feedback. The model doesn't change.
     new_visible = stage in {"new_example", "final"}
 
-    input_pos    = LEFT * 2.20 + UP * 1.10   # comes from upper-left
-    model_in     = LEFT * 0.88 + UP * 0.18
-    model_out    = RIGHT * 0.88 + UP * 0.18
-    landing_pos  = RIGHT * 2.60 + UP * 0.38  # sits exactly on curve_pts[3]
+    input_pos    = LEFT * 3.55 + UP * 1.02   # comes from upper-left, away from graph
+    model_in     = LEFT * 1.02 + UP * 0.16
+    model_out    = RIGHT * 1.02 + UP * 0.16
+    landing_pos  = RIGHT * 3.02 + UP * 0.34  # sits exactly on curve_pts[3]
 
     input_dot = Dot(input_pos, radius=0.068, color=SECONDARY)
     input_dot.set_opacity(new_point_opacity)
-    input_lbl = Text("new data", font_size=13, color=SECONDARY, weight=MEDIUM)
+    input_lbl = Text("new data", font_size=12, color=SECONDARY, weight=MEDIUM)
     input_lbl.next_to(input_dot, UP, buff=0.10)
     input_lbl.set_opacity(new_point_opacity * 0.82)
 
@@ -1559,7 +1594,7 @@ def make_show_generalization_pattern(params, zone):
 
     pred_dot = Dot(landing_pos, radius=0.072, color=PRIMARY)
     pred_dot.set_opacity(new_point_opacity)
-    pred_lbl = Text("prediction", font_size=13, color=TEXT_SUB, weight=MEDIUM)
+    pred_lbl = Text("prediction", font_size=12, color=TEXT_SUB, weight=MEDIUM)
     pred_lbl.next_to(pred_dot, RIGHT, buff=0.12)
     pred_lbl.set_opacity(new_point_opacity * 0.72)
 
@@ -1576,8 +1611,8 @@ def make_show_generalization_pattern(params, zone):
     )
 
     # ── 4. FINAL TEXT ──────────────────────────────────────────────────
-    title    = Text("Generalization", font_size=36, color=TEXT_MAIN, weight=BOLD)
-    subtitle = Text("works on new examples", font_size=20, color=TEXT_SUB, weight=MEDIUM)
+    title    = Text("Generalization", font_size=34, color=TEXT_MAIN, weight=BOLD)
+    subtitle = Text("new examples follow the learned pattern", font_size=18, color=TEXT_SUB, weight=MEDIUM)
     final_text = VGroup(title, subtitle).arrange(DOWN, buff=0.14)
     final_text.move_to(DOWN * 2.55)
     final_text.set_opacity(1.0 if show_text else 0.0)
