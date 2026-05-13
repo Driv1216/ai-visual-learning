@@ -49,11 +49,20 @@
       "duration": 0.1,
       "params": {
         "horizon_y": -0.18,
-        "line_count": 5,
-        "initial_opacity": 0.32,
+        "vanishing_point": [0.0, -0.18, 0.0],
+        "left_near": [-4.15, -3.12, 0.0],
+        "right_near": [4.15, -3.12, 0.0],
+        "left_far": [-0.32, -0.2, 0.0],
+        "right_far": [0.32, -0.2, 0.0],
+        "band_count": 7,
+        "path_fill_opacity": 0.12,
+        "path_glow_opacity": 0.065,
+        "edge_opacity": 0.24,
+        "band_opacity": 0.14,
+        "particle_opacity": 0.22,
         "upper_ambient_opacity": 0.0,
-        "horizon_half_width": 5.55,
-        "point_start": [0.0, -0.64, 0.0]
+        "horizon_half_width": 4.9,
+        "point_start": [0.0, -1.08, 0.0]
       }
     },
     {
@@ -67,8 +76,13 @@
       "params": {
         "source_id": "v8_road_field",
         "mode": "settle",
-        "shift_down": 0.34,
-        "target_opacity": 0.34
+        "structure": 0.35,
+        "band_shift": 0.05,
+        "band_opacity": 0.18,
+        "edge_opacity": 0.30,
+        "path_fill_opacity": 0.14,
+        "path_glow_opacity": 0.078,
+        "particle_opacity": 0.16
       }
     },
     {
@@ -82,8 +96,15 @@
       "params": {
         "source_id": "v8_settle_mystery",
         "mode": "settle",
-        "shift_down": 0.24,
-        "target_opacity": 0.40
+        "structure": 0.78,
+        "band_shift": 0.075,
+        "band_opacity": 0.23,
+        "edge_opacity": 0.42,
+        "path_fill_opacity": 0.17,
+        "path_glow_opacity": 0.095,
+        "particle_opacity": 0.07,
+        "point_opacity": 0.18,
+        "point_halo_opacity": 0.035
       }
     },
     {
@@ -97,12 +118,19 @@
       "params": {
         "source_id": "v8_settle_clarity",
         "mode": "emerge_horizon",
-        "horizon_half_width": 5.55,
-        "core_opacity": 1.0,
-        "wing_opacity": 0.92,
-        "glow_opacity": 0.15,
-        "lower_opacity": 0.30,
-        "compress_shift": 0.18
+        "horizon_half_width": 4.9,
+        "core_opacity": 0.82,
+        "wing_opacity": 0.34,
+        "glow_opacity": 0.25,
+        "bloom_opacity": 0.13,
+        "glow_width": 20.0,
+        "core_width": 1.25,
+        "wing_width": 0.75,
+        "lower_opacity": 0.15,
+        "edge_opacity": 0.46,
+        "particle_opacity": 0.04,
+        "point_opacity": 0.34,
+        "point_halo_opacity": 0.075
       }
     },
     {
@@ -116,8 +144,13 @@
       "params": {
         "source_id": "v8_horizon_emergence",
         "mode": "warm_upper_field",
-        "target_opacity": 0.10,
-        "target_color": "#182135"
+        "target_opacity": 0.17,
+        "target_color": "#1B2A45",
+        "bloom_opacity": 0.16,
+        "glow_opacity": 0.30,
+        "path_glow_opacity": 0.12,
+        "point_opacity": 0.48,
+        "point_halo_opacity": 0.105
       }
     },
     {
@@ -131,15 +164,19 @@
       "params": {
         "source_id": "v8_upper_field_warmth",
         "mode": "cross_point",
-        "start": [0.0, -0.64, 0.0],
+        "start": [0.0, -1.08, 0.0],
+        "approach_mid": [0.0, -0.54, 0.0],
         "cross": [0.0, -0.14, 0.0],
-        "rest": [0.0, 1.04, 0.0],
+        "rest": [0.0, 1.08, 0.0],
         "cross_at": 1.15,
         "point_opacity": 1.0,
-        "point_halo_opacity": 0.20,
-        "rest_halo_opacity": 0.13,
-        "line_response_opacity": 1.0,
-        "response_glow_opacity": 0.22
+        "point_halo_opacity": 0.22,
+        "rest_halo_opacity": 0.15,
+        "line_response_opacity": 0.9,
+        "wing_response_opacity": 0.48,
+        "response_glow_opacity": 0.32,
+        "response_bloom_opacity": 0.21,
+        "rest_upper_opacity": 0.20
       }
     },
     {
@@ -157,8 +194,8 @@
     }
   ],
   "notes": {
-    "tone": "quiet threshold; final-frame-first, no title, labels, text, icons, diagrams, or replacements",
-    "pacing": "One persistent field opens already present, settles through the first two beats, resolves into a horizon on the transition beat, warms the upper field continuously across the three change statements, then lets a single point cross and hold.",
-    "animation_guidelines": "Use only the road-ahead field mutation modes. Horizon emergence must read center-out, upper-field warmth must be continuous and subtle, and the point crossing timing should be adjusted to the exact word begins after WAV timestamps are generated. WAV-only pipeline."
+    "tone": "quiet threshold; abstract perspective path, luminous horizon, single traveler point, no title, labels, text, icons, diagrams, or replacements",
+    "pacing": "One persistent perspective field begins as uncertainty, organizes into structure, opens into a luminous horizon, warms the upper field continuously across the change statements, then lets one traveler point cross the threshold.",
+    "animation_guidelines": "Use only the road-ahead field mutation modes. The lower field must read as an abstract path rather than random horizontal lines; horizon emergence must read as luminosity/threshold rather than a divider; tune point crossing to the exact word begins after WAV timestamps are generated. WAV-only pipeline."
   }
 }

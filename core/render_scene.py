@@ -3149,8 +3149,14 @@ class JsonDrivenScene(MovingCameraScene):
 
                     mode = step.params.get("mode", "settle")
                     lower_lines = getattr(road_obj, "road_lower_lines", VGroup())
+                    path_bands = getattr(road_obj, "road_path_bands", lower_lines)
+                    path_edges = getattr(road_obj, "road_path_edges", VGroup())
+                    path_fill = getattr(road_obj, "road_path_fill", None)
+                    path_glow = getattr(road_obj, "road_path_glow", None)
+                    uncertainty_particles = getattr(road_obj, "road_uncertainty_particles", VGroup())
                     upper_ambient = getattr(road_obj, "road_upper_ambient", None)
                     horizon_glow = getattr(road_obj, "road_horizon_glow", None)
+                    horizon_bloom = getattr(road_obj, "road_horizon_bloom", None)
                     horizon_core = getattr(road_obj, "road_horizon_core", None)
                     horizon_left = getattr(road_obj, "road_horizon_left", None)
                     horizon_right = getattr(road_obj, "road_horizon_right", None)
@@ -3159,16 +3165,35 @@ class JsonDrivenScene(MovingCameraScene):
                     horizon_y = getattr(road_obj, "road_horizon_y", step.params.get("horizon_y", -0.18))
                     horizon_half_width = step.params.get(
                         "horizon_half_width",
-                        getattr(road_obj, "road_horizon_half_width", 5.5),
+                        getattr(road_obj, "road_horizon_half_width", 4.75),
                     )
 
                     if mode == "settle":
-                        shift_down = step.params.get("shift_down", 0.26)
-                        target_opacity = step.params.get("target_opacity", 0.38)
+                        structure = step.params.get("structure", 0.45)
+                        band_opacity = step.params.get("band_opacity", 0.20)
+                        edge_opacity = step.params.get("edge_opacity", 0.32)
+                        particle_opacity = step.params.get("particle_opacity", 0.12)
+                        point_opacity = step.params.get("point_opacity", 0.0)
                         anims = []
-                        for index, line in enumerate(lower_lines):
-                            line_shift = shift_down * (0.78 + 0.08 * (index % 3))
-                            anims.append(line.animate.shift(DOWN * line_shift).set_stroke(opacity=target_opacity))
+                        for index, band in enumerate(path_bands):
+                            # Small perspective-preserving shifts make the field visibly organize
+                            # without becoming a busy road drawing.
+                            shift = DOWN * step.params.get("band_shift", 0.08) * (1.0 - min(index, 5) * 0.08)
+                            anims.append(band.animate.shift(shift).set_stroke(opacity=band_opacity * (1.0 - 0.05 * index)))
+                        for edge in path_edges:
+                            anims.append(edge.animate.set_stroke(opacity=edge_opacity))
+                        if path_fill is not None:
+                            anims.append(path_fill.animate.set_fill(opacity=step.params.get("path_fill_opacity", 0.15)))
+                        if path_glow is not None:
+                            anims.append(path_glow.animate.set_fill(opacity=step.params.get("path_glow_opacity", 0.075)))
+                        for index, dot in enumerate(uncertainty_particles):
+                            drift = np.array([0.0, -0.05 - 0.01 * (index % 3), 0.0]) * structure
+                            anims.append(dot.animate.shift(drift).set_opacity(particle_opacity))
+                        if point is not None and point_opacity > 0:
+                            point.set_opacity(max(point.get_opacity(), 0.001))
+                            anims.append(point.animate.set_opacity(point_opacity))
+                        if point_halo is not None and step.params.get("point_halo_opacity", 0.0) > 0:
+                            anims.append(point_halo.animate.set_stroke(opacity=step.params.get("point_halo_opacity", 0.06)))
                         if anims:
                             self.play(
                                 AnimationGroup(*anims, lag_ratio=0.0),
@@ -3184,34 +3209,42 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
 
                     elif mode == "emerge_horizon":
-                        core_opacity = step.params.get("core_opacity", 1.0)
-                        wing_opacity = step.params.get("wing_opacity", 0.92)
-                        glow_opacity = step.params.get("glow_opacity", 0.16)
-                        compress_shift = step.params.get("compress_shift", 0.18)
+                        core_opacity = step.params.get("core_opacity", 0.72)
+                        wing_opacity = step.params.get("wing_opacity", 0.38)
+                        glow_opacity = step.params.get("glow_opacity", 0.24)
+                        bloom_opacity = step.params.get("bloom_opacity", 0.11)
+                        lower_opacity = step.params.get("lower_opacity", 0.16)
                         anims = []
-                        if lower_lines:
-                            anims.extend([
-                                line.animate.shift(DOWN * compress_shift).set_stroke(opacity=step.params.get("lower_opacity", 0.30))
-                                for line in lower_lines
-                            ])
+                        for index, band in enumerate(path_bands):
+                            anims.append(band.animate.set_stroke(opacity=lower_opacity * (1.0 - 0.05 * index)))
+                        for edge in path_edges:
+                            anims.append(edge.animate.set_stroke(opacity=step.params.get("edge_opacity", 0.36)))
+                        if uncertainty_particles:
+                            anims.extend([dot.animate.set_opacity(step.params.get("particle_opacity", 0.055)) for dot in uncertainty_particles])
+                        if horizon_bloom is not None:
+                            anims.append(horizon_bloom.animate.set_fill(opacity=bloom_opacity))
+                        if horizon_glow is not None:
+                            anims.append(horizon_glow.animate.set_stroke(opacity=glow_opacity, width=step.params.get("glow_width", 18.0)))
                         if horizon_core is not None:
-                            anims.append(horizon_core.animate.set_stroke(opacity=core_opacity))
+                            anims.append(horizon_core.animate.set_stroke(opacity=core_opacity, width=step.params.get("core_width", 1.35)))
                         if horizon_left is not None:
                             anims.append(
                                 horizon_left.animate.put_start_and_end_on(
-                                    np.array([0.0, horizon_y, 0.0]),
+                                    np.array([-horizon_half_width * 0.40, horizon_y, 0.0]),
                                     np.array([-horizon_half_width, horizon_y, 0.0]),
-                                ).set_stroke(opacity=wing_opacity)
+                                ).set_stroke(opacity=wing_opacity, width=step.params.get("wing_width", 0.9))
                             )
                         if horizon_right is not None:
                             anims.append(
                                 horizon_right.animate.put_start_and_end_on(
-                                    np.array([0.0, horizon_y, 0.0]),
+                                    np.array([horizon_half_width * 0.40, horizon_y, 0.0]),
                                     np.array([horizon_half_width, horizon_y, 0.0]),
-                                ).set_stroke(opacity=wing_opacity)
+                                ).set_stroke(opacity=wing_opacity, width=step.params.get("wing_width", 0.9))
                             )
-                        if horizon_glow is not None:
-                            anims.append(horizon_glow.animate.set_stroke(opacity=glow_opacity))
+                        if point is not None:
+                            anims.append(point.animate.set_opacity(step.params.get("point_opacity", 0.36)))
+                        if point_halo is not None:
+                            anims.append(point_halo.animate.set_stroke(opacity=step.params.get("point_halo_opacity", 0.08)))
                         if anims:
                             self.play(
                                 AnimationGroup(*anims, lag_ratio=0.0),
@@ -3227,12 +3260,27 @@ class JsonDrivenScene(MovingCameraScene):
                         handled = True
 
                     elif mode == "warm_upper_field":
+                        anims = []
                         if upper_ambient is not None:
-                            self.play(
+                            anims.append(
                                 upper_ambient.animate.set_fill(
-                                    step.params.get("target_color", "#182135"),
-                                    opacity=step.params.get("target_opacity", 0.10),
-                                ),
+                                    step.params.get("target_color", "#1A2740"),
+                                    opacity=step.params.get("target_opacity", 0.16),
+                                )
+                            )
+                        if horizon_bloom is not None:
+                            anims.append(horizon_bloom.animate.set_fill(opacity=step.params.get("bloom_opacity", 0.15)))
+                        if horizon_glow is not None:
+                            anims.append(horizon_glow.animate.set_stroke(opacity=step.params.get("glow_opacity", 0.26)))
+                        if path_glow is not None:
+                            anims.append(path_glow.animate.set_fill(opacity=step.params.get("path_glow_opacity", 0.10)))
+                        if point is not None:
+                            anims.append(point.animate.set_opacity(step.params.get("point_opacity", 0.46)))
+                        if point_halo is not None:
+                            anims.append(point_halo.animate.set_stroke(opacity=step.params.get("point_halo_opacity", 0.10)))
+                        if anims:
+                            self.play(
+                                AnimationGroup(*anims, lag_ratio=0.0),
                                 run_time=run_time,
                                 rate_func=linear,
                             )
@@ -3246,18 +3294,22 @@ class JsonDrivenScene(MovingCameraScene):
 
                     elif mode == "cross_point":
                         if point is not None:
-                            start = _as_vector(step.params.get("start", [0.0, horizon_y - 0.46, 0.0]))
+                            start = _as_vector(step.params.get("start", [0.0, -1.02, 0.0]))
                             cross = _as_vector(step.params.get("cross", [0.0, horizon_y + 0.02, 0.0]))
-                            rest = _as_vector(step.params.get("rest", [0.0, 1.02, 0.0]))
+                            rest = _as_vector(step.params.get("rest", [0.0, 1.06, 0.0]))
                             cross_at = max(0.05, min(run_time - 0.05, step.params.get("cross_at", run_time * 0.40)))
                             remaining = max(0.05, run_time - cross_at)
                             point.move_to(start)
                             point.set_opacity(step.params.get("point_opacity", 1.0))
-                            first_anims = [point.animate.move_to(cross)]
                             if point_halo is not None:
                                 point_halo.move_to(start)
-                                point_halo.set_stroke(opacity=step.params.get("point_halo_opacity", 0.22))
-                                first_anims.append(point_halo.animate.move_to(cross))
+                                point_halo.set_stroke(opacity=step.params.get("point_halo_opacity", 0.18))
+                            approach_mid = _as_vector(step.params.get("approach_mid", [0.0, -0.48, 0.0]))
+                            path_to_cross = VMobject()
+                            path_to_cross.set_points_smoothly([start, approach_mid, cross])
+                            first_anims = [MoveAlongPath(point, path_to_cross)]
+                            if point_halo is not None:
+                                first_anims.append(MoveAlongPath(point_halo, path_to_cross.copy()))
                             self.play(
                                 AnimationGroup(*first_anims, lag_ratio=0.0),
                                 run_time=cross_at,
@@ -3266,14 +3318,18 @@ class JsonDrivenScene(MovingCameraScene):
                             response_anims = [point.animate.move_to(rest)]
                             if point_halo is not None:
                                 response_anims.append(point_halo.animate.move_to(rest).set_stroke(opacity=step.params.get("rest_halo_opacity", 0.14)))
+                            if horizon_bloom is not None:
+                                response_anims.append(horizon_bloom.animate.set_fill(opacity=step.params.get("response_bloom_opacity", 0.19)))
                             if horizon_core is not None:
-                                response_anims.append(horizon_core.animate.set_stroke(opacity=step.params.get("line_response_opacity", 1.0), width=step.params.get("response_stroke_width", 2.5)))
+                                response_anims.append(horizon_core.animate.set_stroke(opacity=step.params.get("line_response_opacity", 0.86), width=step.params.get("response_stroke_width", 1.55)))
                             if horizon_left is not None:
-                                response_anims.append(horizon_left.animate.set_stroke(opacity=step.params.get("line_response_opacity", 1.0), width=step.params.get("response_stroke_width", 2.3)))
+                                response_anims.append(horizon_left.animate.set_stroke(opacity=step.params.get("wing_response_opacity", 0.46), width=step.params.get("response_wing_width", 1.0)))
                             if horizon_right is not None:
-                                response_anims.append(horizon_right.animate.set_stroke(opacity=step.params.get("line_response_opacity", 1.0), width=step.params.get("response_stroke_width", 2.3)))
+                                response_anims.append(horizon_right.animate.set_stroke(opacity=step.params.get("wing_response_opacity", 0.46), width=step.params.get("response_wing_width", 1.0)))
                             if horizon_glow is not None:
-                                response_anims.append(horizon_glow.animate.set_stroke(opacity=step.params.get("response_glow_opacity", 0.22)))
+                                response_anims.append(horizon_glow.animate.set_stroke(opacity=step.params.get("response_glow_opacity", 0.30)))
+                            if upper_ambient is not None:
+                                response_anims.append(upper_ambient.animate.set_fill(step.params.get("rest_upper_color", "#1C2E4B"), opacity=step.params.get("rest_upper_opacity", 0.18)))
                             self.play(
                                 AnimationGroup(*response_anims, lag_ratio=0.0),
                                 run_time=remaining,
