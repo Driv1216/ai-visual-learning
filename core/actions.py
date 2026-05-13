@@ -1529,8 +1529,8 @@ def make_show_generalization_pattern(params, zone):
         RIGHT * 3.98 + UP * 0.48,
     ]
     scatter_dots = VGroup(*[
-        Dot(p, radius=0.038, color=SECONDARY).set_opacity(
-            0.0 if stage == "memory" else pattern_opacity * 0.22
+        Dot(p, radius=0.044, color=SECONDARY).set_opacity(
+            0.0 if stage == "memory" else pattern_opacity * 0.40
         )
         for p in right_scatter
     ])
@@ -1545,11 +1545,11 @@ def make_show_generalization_pattern(params, zone):
     ]
     learned_curve = VMobject()
     learned_curve.set_points_smoothly(curve_pts)
-    learned_curve.set_stroke(ACCENT, width=4.4, opacity=pattern_opacity)
+    learned_curve.set_stroke(ACCENT, width=2.7, opacity=pattern_opacity)
 
     curve_glow = VMobject()
     curve_glow.set_points_smoothly(curve_pts)
-    curve_glow.set_stroke(ACCENT, width=18, opacity=pattern_opacity * 0.11)
+    curve_glow.set_stroke(ACCENT, width=8, opacity=pattern_opacity * 0.045)
 
     # Faint axis lines to give the curve a clearer mini-graph context without
     # making the scene feel like a full chart slide.
@@ -1594,16 +1594,16 @@ def make_show_generalization_pattern(params, zone):
 
     pred_dot = Dot(landing_pos, radius=0.072, color=PRIMARY)
     pred_dot.set_opacity(new_point_opacity)
-    pred_lbl = Text("prediction", font_size=12, color=TEXT_SUB, weight=MEDIUM)
-    pred_lbl.next_to(pred_dot, RIGHT, buff=0.12)
-    pred_lbl.set_opacity(new_point_opacity * 0.72)
+    pred_lbl = Text("prediction", font_size=13, color=TEXT_MAIN, weight=MEDIUM)
+    pred_lbl.next_to(pred_dot, UP + RIGHT, buff=0.12)
+    pred_lbl.set_opacity(new_point_opacity * 0.90)
 
     # Tiny cross-hair tick on the landing dot to show it sits ON the curve
-    tick_h = Line(landing_pos + LEFT*0.10, landing_pos + RIGHT*0.10,
-                  color=ACCENT, stroke_width=1.8)
-    tick_v = Line(landing_pos + DOWN*0.10, landing_pos + UP*0.10,
-                  color=ACCENT, stroke_width=1.8)
-    landing_tick = VGroup(tick_h, tick_v).set_opacity(new_point_opacity * 0.80)
+    tick_h = Line(landing_pos + LEFT*0.085, landing_pos + RIGHT*0.085,
+                  color=ACCENT, stroke_width=1.2)
+    tick_v = Line(landing_pos + DOWN*0.085, landing_pos + UP*0.085,
+                  color=ACCENT, stroke_width=1.2)
+    landing_tick = VGroup(tick_h, tick_v).set_opacity(new_point_opacity * 0.58)
 
     new_example_group = VGroup(
         input_dot, input_lbl, in_arrow,
@@ -1632,7 +1632,7 @@ TAXONOMY_COLORS = {
     "neutral": "#5D6470",
     "amber": "#F2A93B",
     "blue": "#5B8CFF",
-    "cluster": "#F8F2DF",
+    "cluster": "#D8CFA8",
     "agent": "#FFFFFF",
     "trail": "#FFFFFF",
     "reward": "#F6C453",
@@ -1768,7 +1768,7 @@ def _taxonomy_glows(params, stage):
             position = _taxonomy_point_position(point, params, drift)
             halo_radius = 0.078 + density * 0.070
             halo = Dot(position, radius=halo_radius, color=TAXONOMY_COLORS["cluster"])
-            halo.set_opacity((0.125 if stage == "unsupervised_clusters" else 0.145) * density)
+            halo.set_opacity((0.095 if stage == "unsupervised_clusters" else 0.080) * density)
             glows.add(halo)
 
     if stage == "supervised_boundary":
@@ -1857,8 +1857,8 @@ def _taxonomy_points(params, stage):
                 opacity = min(0.96, opacity + _taxonomy_mixed_neighborhood_amount(index, params) * 0.08)
         elif stage in {"unsupervised_clusters", "unsupervised_hold"}:
             density = _taxonomy_density_amount(point, params)
-            opacity = params.get("neutral_opacity", 0.24) + max(0.0, density - 0.22) * (0.34 if stage == "unsupervised_clusters" else 0.38)
-            color = _mix_hex(TAXONOMY_COLORS["neutral"], TAXONOMY_COLORS["cluster"], max(0.0, density - 0.24) * 0.28)
+            opacity = params.get("neutral_opacity", 0.24) + max(0.0, density - 0.22) * (0.24 if stage == "unsupervised_clusters" else 0.18)
+            color = _mix_hex(TAXONOMY_COLORS["neutral"], TAXONOMY_COLORS["cluster"], max(0.0, density - 0.24) * 0.20)
         elif stage in {"semi_anchors", *influence_stages} and index in anchor_indices:
             color = TAXONOMY_COLORS["amber"] if anchor_map[index] == "a" else TAXONOMY_COLORS["blue"]
             opacity = 0.96
@@ -2542,6 +2542,217 @@ def make_workflow_cycle(params, zone):
 
     place_in_zone(full, zone)
     return full
+
+
+def make_workflow_pipeline(params, zone):
+    """Scene 7 — clean card-based professional ML workflow pipeline.
+
+    This intentionally avoids the older circular workflow mutation system.
+    It builds a complete, readable state for each narration beat:
+    DATA → CLEAN → TRAIN → EVAL → IMPROVE, then a restrained return loop.
+    """
+    stage = params.get("stage", "intro")
+    labels = params.get("labels", ["DATA", "CLEAN", "TRAIN", "EVAL", "IMPROVE"])
+    card_w = params.get("card_width", 1.62)
+    card_h = params.get("card_height", 0.92)
+    y = params.get("y", -0.12)
+    xs = params.get("x_positions", [-4.05, -2.00, 0.05, 2.10, 4.15])
+
+    stage_to_active = {
+        "intro": -1,
+        "data": 0,
+        "messy": 0,
+        "clean": 1,
+        "train": 2,
+        "eval": 3,
+        "overfit": 3,
+        "improve": 4,
+        "monitor": 4,
+        "loop": 4,
+        "final": 4,
+    }
+    active_idx = stage_to_active.get(stage, -1)
+    shown_count = 5 if stage == "intro" else max(1, active_idx + 1)
+    if stage in {"loop", "final", "monitor"}:
+        shown_count = 5
+
+    def opacity_for(idx):
+        if stage == "intro":
+            return 0.25
+        if idx <= active_idx:
+            return 1.0 if idx == active_idx else 0.70
+        return 0.20
+
+    def stroke_for(idx):
+        if stage == "overfit" and idx == 3:
+            return "#E8A838"
+        if idx <= active_idx:
+            return SECONDARY
+        return "#324057"
+
+    def fill_for(idx):
+        if stage == "overfit" and idx == 3:
+            return "#1a1006"
+        if idx <= active_idx:
+            return "#0d1724"
+        return "#0b1320"
+
+    def make_card(idx, label):
+        pos = np.array([xs[idx], y, 0.0])
+        op = opacity_for(idx)
+        stroke_col = stroke_for(idx)
+        fill_col = fill_for(idx)
+
+        shadow = RoundedRectangle(
+            width=card_w + 0.12,
+            height=card_h + 0.12,
+            corner_radius=0.18,
+            stroke_color=stroke_col,
+            stroke_width=1.1,
+            fill_opacity=0,
+        ).set_stroke(opacity=0.13 if idx <= active_idx else 0.05)
+        shadow.move_to(pos)
+
+        card = RoundedRectangle(
+            width=card_w,
+            height=card_h,
+            corner_radius=0.16,
+            stroke_color=stroke_col,
+            stroke_width=2.1 if idx == active_idx else 1.45,
+            fill_color=fill_col,
+            fill_opacity=0.86 if idx <= active_idx else 0.36,
+        )
+        card.set_stroke(opacity=0.92 if idx <= active_idx else 0.32)
+        card.move_to(pos)
+
+        text = Text(label, font_size=22, weight=MEDIUM, color=TEXT_MAIN)
+        fit_to_width(text, card_w * 0.72)
+        text.move_to(pos + UP * 0.18)
+        text.set_opacity(0.95 if idx <= active_idx or stage == "intro" else 0.34)
+
+        internals = VGroup()
+        base_y = pos[1] - 0.21
+
+        if idx == 0:
+            if stage == "messy":
+                dots = [
+                    Dot(np.array([pos[0] - 0.38, base_y + 0.04, 0]), radius=0.025, color="#E8A838"),
+                    Dot(np.array([pos[0] - 0.08, base_y - 0.06, 0]), radius=0.018, color=TEXT_SUB),
+                    Cross(Dot(np.array([pos[0] + 0.24, base_y + 0.02, 0]), radius=0.026), stroke_color="#E8A838", stroke_width=1.4).scale(0.35),
+                    Line(np.array([pos[0] - 0.44, base_y - 0.16, 0]), np.array([pos[0] + 0.42, base_y - 0.11, 0]), color=TEXT_SUB, stroke_width=1.0).set_opacity(0.45),
+                ]
+            else:
+                dots = [
+                    Dot(np.array([pos[0] - 0.34 + j * 0.23, base_y, 0]), radius=0.022, color=TEXT_SUB).set_opacity(0.58)
+                    for j in range(4)
+                ]
+            internals.add(*dots)
+
+        elif idx == 1 and idx <= active_idx:
+            rows = VGroup()
+            for r in range(3):
+                yy = base_y + (r - 1) * 0.085
+                rows.add(Line(np.array([pos[0] - 0.42, yy, 0]), np.array([pos[0] + 0.42, yy, 0]), color=TEXT_SUB, stroke_width=1.25).set_opacity(0.58))
+                rows.add(Dot(np.array([pos[0] - 0.52, yy, 0]), radius=0.015, color=SECONDARY).set_opacity(0.70))
+            internals.add(rows)
+
+        elif idx == 2 and idx <= active_idx:
+            core = Circle(radius=0.11, stroke_color=SECONDARY, stroke_width=1.6, fill_color="#101d2b", fill_opacity=0.82)
+            core.move_to(np.array([pos[0], base_y, 0]))
+            spokes = VGroup(
+                Line(core.get_center() + LEFT * 0.30, core.get_center() + LEFT * 0.13, color=TEXT_SUB, stroke_width=1.0).set_opacity(0.55),
+                Line(core.get_center() + RIGHT * 0.13, core.get_center() + RIGHT * 0.30, color=TEXT_SUB, stroke_width=1.0).set_opacity(0.55),
+                Line(core.get_center() + DOWN * 0.20, core.get_center() + DOWN * 0.33, color=TEXT_SUB, stroke_width=1.0).set_opacity(0.45),
+            )
+            internals.add(spokes, core)
+
+        elif idx == 3 and idx <= active_idx:
+            if stage == "overfit":
+                good = Line(np.array([pos[0] - 0.42, base_y - 0.06, 0]), np.array([pos[0] - 0.05, base_y + 0.12, 0]), color=SECONDARY, stroke_width=2.0)
+                weak = Line(np.array([pos[0] + 0.04, base_y + 0.10, 0]), np.array([pos[0] + 0.42, base_y - 0.10, 0]), color="#E8A838", stroke_width=2.0)
+                warn = Text("train ≠ new", font_size=12, color="#E8A838", weight=MEDIUM).move_to(pos + DOWN * 0.31)
+                internals.add(good, weak, warn)
+            else:
+                gauge = Arc(radius=0.26, start_angle=PI, angle=-PI * 0.82, color=TEXT_SUB, stroke_width=1.5).set_opacity(0.55)
+                gauge.move_to(np.array([pos[0], base_y - 0.02, 0]))
+                needle = Line(np.array([pos[0], base_y - 0.03, 0]), np.array([pos[0] + 0.20, base_y + 0.10, 0]), color=SECONDARY, stroke_width=1.6)
+                internals.add(gauge, needle)
+
+        elif idx == 4 and idx <= active_idx:
+            monitor = RoundedRectangle(width=0.48, height=0.23, corner_radius=0.04, stroke_color=SECONDARY, stroke_width=1.2, fill_opacity=0)
+            monitor.move_to(np.array([pos[0], base_y + 0.03, 0]))
+            pulse = VMobject(color=SECONDARY, stroke_width=1.7)
+            pulse.set_points_as_corners([
+                np.array([pos[0] - 0.19, base_y + 0.02, 0]),
+                np.array([pos[0] - 0.06, base_y + 0.02, 0]),
+                np.array([pos[0] + 0.00, base_y + 0.12, 0]),
+                np.array([pos[0] + 0.07, base_y - 0.04, 0]),
+                np.array([pos[0] + 0.19, base_y - 0.04, 0]),
+            ])
+            internals.add(monitor, pulse)
+
+        internals.set_opacity(op)
+        return VGroup(shadow, card, text, internals)
+
+    cards = VGroup()
+    for i, label in enumerate(labels):
+        card_group = make_card(i, label)
+        if i >= shown_count and stage != "intro":
+            card_group.set_opacity(0.0)
+        cards.add(card_group)
+
+    arrows = VGroup()
+    for i in range(4):
+        if stage == "intro" or i < shown_count - 1:
+            start = np.array([xs[i] + card_w / 2 + 0.12, y, 0])
+            end = np.array([xs[i + 1] - card_w / 2 - 0.12, y, 0])
+            arr = Arrow(start, end, buff=0.0, color=TEXT_SUB, stroke_width=1.7, tip_length=0.14, max_stroke_width_to_length_ratio=10)
+            arr.set_opacity(0.70 if i < active_idx else 0.22)
+            arrows.add(arr)
+
+    flows = VGroup()
+    if stage in {"clean", "train", "eval", "improve", "monitor"}:
+        from_i = max(0, min(active_idx - 1, 3))
+        to_i = max(1, min(active_idx, 4))
+        for k in range(3):
+            dot = Dot(
+                np.array([xs[from_i] + 0.55 + k * 0.20, y - 0.62 - 0.04 * (k % 2), 0]),
+                radius=0.020,
+                color=SECONDARY,
+            ).set_opacity(0.62)
+            flows.add(dot)
+        flow_line = Line(np.array([xs[from_i] + 0.52, y - 0.62, 0]), np.array([xs[to_i] - 0.52, y - 0.62, 0]), color=SECONDARY, stroke_width=1.2).set_opacity(0.32)
+        flows.add(flow_line)
+
+    loop = VGroup()
+    if stage in {"loop", "final"}:
+        bottom_y = y - 1.03
+        right_x = xs[4] + 0.40
+        left_x = xs[0] - 0.40
+        down = Line(np.array([right_x, y - card_h / 2 - 0.08, 0]), np.array([right_x, bottom_y, 0]), color=SECONDARY, stroke_width=1.8).set_opacity(0.72)
+        across = Line(np.array([right_x, bottom_y, 0]), np.array([left_x, bottom_y, 0]), color=SECONDARY, stroke_width=1.8).set_opacity(0.72)
+        up = Line(np.array([left_x, bottom_y, 0]), np.array([left_x, y - card_h / 2 - 0.08, 0]), color=SECONDARY, stroke_width=1.8).set_opacity(0.72)
+        tip = Triangle(color=SECONDARY, fill_color=SECONDARY, fill_opacity=1.0).scale(0.070)
+        tip.move_to(np.array([left_x, y - card_h / 2 - 0.05, 0]))
+        loop_label = Text("continuous improvement", font_size=17, color=TEXT_SUB, weight=MEDIUM)
+        loop_label.move_to(np.array([(left_x + right_x) / 2, bottom_y - 0.24, 0]))
+        loop_label.set_opacity(0.68)
+        loop.add(down, across, up, tip, loop_label)
+
+    heading = VGroup()
+    if params.get("show_heading", stage == "intro"):
+        h_text = params.get("heading", "Machine learning is a workflow")
+        title = Text(h_text, font_size=34, color=TEXT_MAIN, weight=MEDIUM)
+        fit_to_width(title, 9.6)
+        title.move_to(np.array([0.0, y + 1.55, 0.0]))
+        subtitle = Text("not a one-step algorithm", font_size=20, color=TEXT_SUB)
+        subtitle.move_to(title.get_center() + DOWN * 0.42)
+        subtitle.set_opacity(0.72)
+        heading.add(title, subtitle)
+
+    group = VGroup(heading, arrows, cards, flows, loop)
+    place_in_zone(group, zone)
+    return group
 
 
 def make_road_ahead_field(params, zone):
@@ -3998,6 +4209,9 @@ def build_object(step_dict):
 
     if action == "show_workflow_cycle":
         return make_workflow_cycle(params, zone)
+
+    if action == "show_workflow_pipeline":
+        return make_workflow_pipeline(params, zone)
 
     if action == "show_road_ahead_field":
         return make_road_ahead_field(params, zone)

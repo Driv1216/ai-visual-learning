@@ -278,9 +278,9 @@ class JsonDrivenScene(MovingCameraScene):
                 # Soft density only. Opacities are intentionally lower on the
                 # held state so the clusters do not bloom into bright white.
                 layer_specs = (
-                    (0.76, 0.070 if held else 0.092, np.array([0.00, 0.00, 0.0])),
-                    (0.52, 0.056 if held else 0.072, np.array([0.18 * np.cos(phase), 0.10 * np.sin(phase), 0.0])),
-                    (0.36, 0.044 if held else 0.058, np.array([-0.16 * np.sin(phase), 0.12 * np.cos(phase), 0.0])),
+                    (0.76, 0.040 if held else 0.060, np.array([0.00, 0.00, 0.0])),
+                    (0.52, 0.032 if held else 0.046, np.array([0.18 * np.cos(phase), 0.10 * np.sin(phase), 0.0])),
+                    (0.36, 0.026 if held else 0.036, np.array([-0.16 * np.sin(phase), 0.12 * np.cos(phase), 0.0])),
                 )
                 for scale, opacity, offset in layer_specs:
                     glow = Dot(center + offset, radius=radius * scale, color=TAXONOMY_COLORS["cluster"])
@@ -307,8 +307,8 @@ class JsonDrivenScene(MovingCameraScene):
                     for other in candidates[:2]:
                         distance = np.linalg.norm(point - other)
                         if 0.18 <= distance <= radius * 0.55 and created < max_lines:
-                            line = Line(point, other, color=TAXONOMY_COLORS["cluster"], stroke_width=1.0)
-                            line.set_opacity(0.17)
+                            line = Line(point, other, color=TAXONOMY_COLORS["cluster"], stroke_width=0.85)
+                            line.set_opacity(0.22)
                             lines.add(line)
                             created += 1
                         if created >= max_lines:
@@ -4104,8 +4104,8 @@ class JsonDrivenScene(MovingCameraScene):
                                 Succession(
                                     Wait(run_time * 0.16),
                                     FadeIn(glints),
-                                    Wait(run_time * 0.46),
-                                    glints.animate.set_opacity(0.18),
+                                    Wait(run_time * 0.18),
+                                    glints.animate.set_opacity(0.22),
                                 )
                             )
                         if anims:
@@ -4117,6 +4117,10 @@ class JsonDrivenScene(MovingCameraScene):
                             self.remove(ghosts)
                         if len(glints) != 0:
                             self.remove(glints)
+                        if len(glints) != 0:
+                            glints.set_opacity(0.22)
+                            new_obj.add(glints)
+                            new_obj.taxonomy_cluster_lines = glints
                         if len(held_ghosts) != 0:
                             new_obj.add(held_ghosts)
                             new_obj.taxonomy_cluster_clouds = held_ghosts
@@ -4130,6 +4134,16 @@ class JsonDrivenScene(MovingCameraScene):
                         source_glows = getattr(source_obj, "taxonomy_glows", VGroup())
                         target_glows = getattr(new_obj, "taxonomy_glows", VGroup())
                         source_clouds = getattr(source_obj, "taxonomy_cluster_clouds", VGroup())
+                        source_lines = getattr(source_obj, "taxonomy_cluster_lines", VGroup())
+                        held_lines = taxonomy_density_glints(merged_params)
+                        if len(source_lines) != 0:
+                            source_lines.set_opacity(0.22)
+                            new_obj.add(source_lines)
+                            new_obj.taxonomy_cluster_lines = source_lines
+                        elif len(held_lines) != 0:
+                            held_lines.set_opacity(0.22)
+                            new_obj.add(held_lines)
+                            new_obj.taxonomy_cluster_lines = held_lines
                         if len(source_clouds) != 0:
                             new_obj.add(source_clouds)
                             new_obj.taxonomy_cluster_clouds = source_clouds
@@ -4142,8 +4156,8 @@ class JsonDrivenScene(MovingCameraScene):
                             hold_anims.append(Succession(Transform(source_glows, pulse_glows), Transform(source_glows, target_glows)))
                         if len(source_clouds) != 0:
                             cloud_breath = source_clouds.copy()
-                            cloud_breath.set_opacity(0.76)
-                            hold_anims.append(Succession(Transform(source_clouds, cloud_breath), source_clouds.animate.set_opacity(0.74)))
+                            cloud_breath.set_opacity(0.42)
+                            hold_anims.append(Succession(Transform(source_clouds, cloud_breath), source_clouds.animate.set_opacity(0.40)))
                         if hold_anims:
                             self.play(AnimationGroup(*hold_anims, lag_ratio=0.0), run_time=run_time * 0.22)
                             self.wait(run_time * 0.78)

@@ -468,17 +468,17 @@
           ]
         ],
         "color": "#58A6FF",
-        "stroke_width": 6.4,
-        "opacity": 1.0,
+        "stroke_width": 4.6,
+        "opacity": 0.96,
         "scale": 1.28,
         "glow": true,
         "glow_color": "#58A6FF",
-        "glow_width": 18.0,
-        "glow_opacity": 0.18,
+        "glow_width": 10.0,
+        "glow_opacity": 0.09,
         "show_band": true,
         "band_color": "#58A6FF",
-        "band_width": 22.0,
-        "band_opacity": 0.075,
+        "band_width": 15.0,
+        "band_opacity": 0.045,
         "show_guides": true,
         "guide_color": "#64748B",
         "guide_opacity": 0.16,
@@ -487,11 +487,11 @@
         "guide_height": 2.15,
         "show_points": true,
         "point_color": "#D7E7FF",
-        "point_opacity": 0.82,
-        "point_radius": 0.042,
+        "point_opacity": 0.92,
+        "point_radius": 0.047,
         "point_glow": true,
-        "point_glow_opacity": 0.15,
-        "point_glow_scale": 2.8,
+        "point_glow_opacity": 0.12,
+        "point_glow_scale": 2.35,
         "data_points": [
           [
             -1.92,
@@ -564,6 +564,10 @@
             0
           ]
         ],
+        "title": "Learning patterns from data",
+        "title_font_size": 24,
+        "title_color": "#EAF2FF",
+        "title_weight": "MEDIUM",
         "position": [
           0.0,
           0.02,
@@ -576,6 +580,6 @@
   "notes": {
     "tone": "Restrained, precise, and increasingly strained until the curve resolves the scene.",
     "pacing": "One rule card stays alive from S1 through S9, deforming quickly in S4, weakening in S5, making room in S8, and receding behind the curve in S9.",
-    "animation_guidelines": "Do not replace the rule card. Keep the ghost domain shapes faint and temporary. The final curve may use a very subtle graph frame, but avoid labels or companion text."
+    "animation_guidelines": "Do not replace the rule card. Keep the ghost domain shapes faint and temporary. The final curve should keep the restrained title text and may use a very subtle graph frame, but avoid extra labels or companion explanatory text."
   }
 }

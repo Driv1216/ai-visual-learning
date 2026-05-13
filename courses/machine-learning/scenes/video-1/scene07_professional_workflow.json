@@ -68,197 +68,175 @@
   ],
   "visual_timeline": [
     {
-      "id": "v7_title",
+      "id": "v7_pipeline_intro",
       "anchor": "s7_01",
       "offset": 0.0,
-      "action": "show_title",
-      "zone": "title",
+      "action": "show_workflow_pipeline",
+      "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
-      "persist": false,
-      "duration": 1.1,
-      "params": {
-        "text": "The Professional Workflow"
-      }
-    },
-    {
-      "id": "v7_node_data_unlabeled",
-      "anchor": "s7_01",
-      "offset": 0.5,
-      "action": "show_workflow_cycle",
-      "zone": "center",
-      "transition_in": "create",
       "persist": true,
-      "duration": 1.2,
+      "duration": 1.0,
       "params": {
-        "nodes": ["DATA"],
-        "node_radius": 0.42,
-        "unlabeled": true
+        "stage": "intro",
+        "show_heading": true,
+        "heading": "Machine learning is a workflow"
       }
     },
     {
-      "id": "v7_reveal_data_label",
+      "id": "v7_data",
       "anchor": "s7_02",
       "offset": 0.0,
-      "action": "mutate_workflow_cycle",
+      "action": "show_workflow_pipeline",
       "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
       "persist": true,
       "duration": 0.9,
       "params": {
-        "source_id": "v7_node_data_unlabeled",
-        "mode": "reveal_label",
-        "node_label": "DATA"
+        "stage": "data"
       }
     },
     {
-      "id": "v7_noise_data",
+      "id": "v7_messy_data",
       "anchor": "s7_03",
-      "offset": 0.3,
-      "action": "mutate_workflow_cycle",
+      "offset": 0.15,
+      "action": "show_workflow_pipeline",
       "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
       "persist": true,
-      "duration": 1.6,
+      "duration": 1.0,
       "params": {
-        "source_id": "v7_node_data_unlabeled",
-        "mode": "noise_node",
-        "node_label": "DATA",
-        "node_radius": 0.42
+        "stage": "messy"
       }
     },
     {
-      "id": "v7_add_preprocessing",
+      "id": "v7_clean",
       "anchor": "s7_04",
       "offset": 0.0,
-      "action": "mutate_workflow_cycle",
+      "action": "show_workflow_pipeline",
       "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
       "persist": true,
-      "duration": 1.5,
+      "duration": 1.1,
       "params": {
-        "source_id": "v7_node_data_unlabeled",
-        "mode": "add_nodes",
-        "nodes": ["DATA", "PREPROCESSING"],
-        "node_radius": 0.42
+        "stage": "clean"
       }
     },
     {
-      "id": "v7_add_training",
+      "id": "v7_train",
       "anchor": "s7_05",
       "offset": 0.0,
-      "action": "mutate_workflow_cycle",
+      "action": "show_workflow_pipeline",
       "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
       "persist": true,
-      "duration": 1.5,
+      "duration": 1.1,
       "params": {
-        "source_id": "v7_add_preprocessing",
-        "mode": "add_nodes",
-        "nodes": ["DATA", "PREPROCESSING", "TRAINING"],
-        "node_radius": 0.42
+        "stage": "train"
       }
     },
     {
-      "id": "v7_training_internal",
-      "anchor": "s7_05",
-      "offset": 1.8,
-      "action": "mutate_workflow_cycle",
-      "zone": "center",
-      "persist": true,
-      "duration": 1.4,
-      "params": {
-        "source_id": "v7_add_training",
-        "mode": "internal_node",
-        "node_label": "TRAINING",
-        "node_radius": 0.42
-      }
-    },
-    {
-      "id": "v7_add_evaluation",
+      "id": "v7_eval",
       "anchor": "s7_06",
       "offset": 0.0,
-      "action": "mutate_workflow_cycle",
+      "action": "show_workflow_pipeline",
       "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
       "persist": true,
-      "duration": 1.5,
+      "duration": 1.1,
       "params": {
-        "source_id": "v7_add_training",
-        "mode": "add_nodes",
-        "nodes": ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION"],
-        "node_radius": 0.42
+        "stage": "eval"
       }
     },
     {
-      "id": "v7_warn_evaluation",
+      "id": "v7_overfit",
       "anchor": "s7_07",
-      "offset": 0.4,
-      "action": "mutate_workflow_cycle",
+      "offset": 0.25,
+      "action": "show_workflow_pipeline",
       "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
       "persist": true,
-      "duration": 1.8,
+      "duration": 1.2,
       "params": {
-        "source_id": "v7_add_evaluation",
-        "mode": "warn_node",
-        "node_label": "EVALUATION"
+        "stage": "overfit"
       }
     },
     {
-      "id": "v7_add_improvement",
+      "id": "v7_improve",
       "anchor": "s7_08",
       "offset": 0.0,
-      "action": "mutate_workflow_cycle",
+      "action": "show_workflow_pipeline",
       "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
       "persist": true,
-      "duration": 1.6,
+      "duration": 1.1,
       "params": {
-        "source_id": "v7_add_evaluation",
-        "mode": "add_nodes",
-        "nodes": ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION", "IMPROVEMENT"],
-        "node_radius": 0.42,
-        "warn_node": "EVALUATION"
+        "stage": "improve"
       }
     },
     {
-      "id": "v7_close_loop",
-      "anchor": "s7_10",
-      "offset": 0.6,
-      "action": "mutate_workflow_cycle",
-      "zone": "center",
-      "persist": true,
-      "duration": 2.2,
-      "params": {
-        "source_id": "v7_add_improvement",
-        "mode": "close_loop",
-        "nodes": ["DATA", "PREPROCESSING", "TRAINING", "EVALUATION", "IMPROVEMENT"],
-        "node_radius": 0.42,
-        "warn_node": "EVALUATION",
-        "complete": true
-      }
-    },
-    {
-      "id": "v7_pulse_resolution",
-      "anchor": "s7_11",
+      "id": "v7_monitor",
+      "anchor": "s7_09",
       "offset": 0.0,
-      "action": "mutate_workflow_cycle",
+      "action": "show_workflow_pipeline",
       "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 1.1,
+      "params": {
+        "stage": "monitor"
+      }
+    },
+    {
+      "id": "v7_loop",
+      "anchor": "s7_10",
+      "offset": 0.3,
+      "action": "show_workflow_pipeline",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
       "persist": true,
       "duration": 1.4,
       "params": {
-        "source_id": "v7_close_loop",
-        "mode": "pulse_all"
+        "stage": "loop"
+      }
+    },
+    {
+      "id": "v7_final",
+      "anchor": "s7_11",
+      "offset": 0.0,
+      "action": "show_workflow_pipeline",
+      "zone": "center",
+      "transition_in": "transform",
+      "transition_out": "fade",
+      "persist": true,
+      "duration": 0.9,
+      "params": {
+        "stage": "final"
       }
     },
     {
       "id": "v7_final_hold",
       "anchor": "s7_11",
-      "offset": 1.5,
+      "offset": 1.1,
       "action": "hold",
       "zone": "center",
       "persist": true,
-      "duration": 2.2,
+      "duration": 1.6,
       "params": {}
     }
   ],
   "notes": {
-    "tone": "deliberate and elegant — a pipeline that discovers it is a loop",
-    "pacing": "Beat 1: unlabeled circle under title. Beat 2: label reveals. Each subsequent node arrives with its narration beat. EVALUATION warning is fully isolated. Closing arc is the most expressive motion. Final 2.2s hold is guaranteed.",
-    "animation_guidelines": "Arc geometry: nodes on elliptical arc so closing arrow completes a genuine loop. DATA noise uses internal specks not jitter. TRAINING uses dim-white converging dots. EVALUATION amber persists via warn_node param on all subsequent steps. Final hold is explicit in timeline."
+    "tone": "clean, professional, readable — a pipeline that becomes a loop",
+    "pacing": "Each narration beat transforms the full pipeline state once. The scene avoids cumulative node mutation so no duplicate circles or clutter can persist.",
+    "animation_guidelines": "Use large rounded workflow cards instead of circles. On-screen labels are short: DATA, CLEAN, TRAIN, EVAL, IMPROVE. Amber is reserved for the overfitting/evaluation warning. The final loop is a restrained return path below the cards, not a giant arc."
   }
 }
