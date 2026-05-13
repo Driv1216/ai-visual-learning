@@ -3152,6 +3152,36 @@ class JsonDrivenScene(MovingCameraScene):
                     point_halo = getattr(road_obj, "point_halo", getattr(road_obj, "road_point_halo", None))
                     trail_path = getattr(road_obj, "trail_path", getattr(road_obj, "road_trail_path", None))
                     trail_segments = getattr(road_obj, "trail_segments", getattr(road_obj, "road_trail_segments", VGroup()))
+                    data_dots = getattr(road_obj, "data_dots", getattr(road_obj, "road_data_dots", VGroup()))
+                    rules_label = getattr(road_obj, "rules_label", getattr(road_obj, "road_rules_label", None))
+                    learning_label = getattr(road_obj, "learning_label", getattr(road_obj, "road_learning_label", None))
+                    endpoint_glow_segments = getattr(road_obj, "endpoint_glow_segments", getattr(road_obj, "road_endpoint_glow_segments", VGroup()))
+                    future_dots = getattr(road_obj, "future_dots", getattr(road_obj, "road_future_dots", VGroup()))
+
+                    def _apply_context_state(alpha=1.0):
+                        if "data_dot_opacity" in step.params:
+                            dot_opacity = step.params.get("data_dot_opacity", 0.12)
+                            for index, dot in enumerate(data_dots):
+                                dot.set_opacity(dot_opacity * (0.82 + 0.03 * (index % 5)))
+                        if rules_label is not None:
+                            if "rules_peak_opacity" in step.params:
+                                rules_peak = step.params.get("rules_peak_opacity", 0.38)
+                                rules_label.set_opacity(rules_peak * np.sin(np.pi * max(0.0, min(1.0, alpha))))
+                            elif "rules_opacity" in step.params:
+                                rules_label.set_opacity(step.params.get("rules_opacity", 0.0))
+                        if learning_label is not None:
+                            if "learning_opacity" in step.params:
+                                learning_target = step.params.get("learning_opacity", 0.60)
+                                learning_start = step.params.get("learning_start_alpha", 0.45)
+                                if alpha <= learning_start:
+                                    learning_alpha = 0.0
+                                else:
+                                    learning_alpha = (alpha - learning_start) / max(0.01, 1.0 - learning_start)
+                                learning_label.set_opacity(learning_target * rate_functions.ease_in_out_sine(max(0.0, min(1.0, learning_alpha))))
+                        if "future_dot_opacity" in step.params:
+                            future_opacity = step.params.get("future_dot_opacity", 0.10)
+                            for index, dot in enumerate(future_dots):
+                                dot.set_opacity(future_opacity * (1.0 - 0.12 * index))
 
                     def _trail_opacity(index, progress, brightness=1.0, wave_center=None, wave_width=0.12, wave_strength=0.0):
                         count = max(1, len(trail_segments))
@@ -3189,6 +3219,21 @@ class JsonDrivenScene(MovingCameraScene):
                                 opacity=_trail_opacity(index, progress, brightness, wave_center, wave_width, wave_strength),
                                 width=step.params.get("trail_width", getattr(road_obj, "trail_width", 2.15)),
                             )
+                        wake_strength = step.params.get("wake_strength", 0.0)
+                        wake_segments = int(step.params.get("wake_segments", 0))
+                        if wake_strength > 0 and wake_segments > 0 and progress < 1.0:
+                            active_index = int(progress * max(1, len(trail_segments)))
+                            for index in range(max(0, active_index - wake_segments), min(len(trail_segments), active_index + 1)):
+                                segment = trail_segments[index]
+                                current_opacity = segment.get_stroke_opacity()
+                                segment.set_stroke(opacity=min(0.96, current_opacity + wake_strength))
+                        endpoint_glow_opacity = step.params.get("endpoint_glow_opacity", 0.0)
+                        endpoint_glow_width = step.params.get("endpoint_glow_width", None)
+                        for index, glow_segment in enumerate(endpoint_glow_segments):
+                            glow_segment.set_stroke(
+                                opacity=endpoint_glow_opacity * (0.70 + 0.30 * ((index + 1) / max(1, len(endpoint_glow_segments)))),
+                                width=endpoint_glow_width or glow_segment.get_stroke_width(),
+                            )
                         if trail_path is not None and point is not None:
                             destination = trail_path.point_from_proportion(progress)
                             point.move_to(destination)
@@ -3208,6 +3253,7 @@ class JsonDrivenScene(MovingCameraScene):
                             progress = start_progress + (target_progress - start_progress) * eased
                             brightness = start_brightness + (target_brightness - start_brightness) * eased
                             _apply_trail_state(progress=progress, brightness=brightness)
+                            _apply_context_state(alpha)
 
                         return UpdateFromAlphaFunc(road_obj, updater)
 
@@ -3221,11 +3267,17 @@ class JsonDrivenScene(MovingCameraScene):
                             point_halo.set_stroke(opacity=halo_opacity)
                         if target_progress <= getattr(road_obj, "trail_progress", 0.0) + 1e-6:
                             pulse_scale = step.params.get("pulse_scale", 1.08)
+                            dot_opacity = step.params.get("data_dot_opacity", None)
+                            dot_anims = []
+                            if dot_opacity is not None:
+                                for index, dot in enumerate(data_dots):
+                                    dot_anims.append(dot.animate.set_opacity(dot_opacity * (0.82 + 0.03 * (index % 5))))
                             if point is not None and point_halo is not None:
                                 self.play(
                                     AnimationGroup(
                                         point.animate.scale(pulse_scale).set_opacity(step.params.get("pulse_opacity", 1.0)),
                                         point_halo.animate.scale(pulse_scale).set_stroke(opacity=step.params.get("pulse_halo_opacity", 0.16)),
+                                        *dot_anims,
                                         lag_ratio=0.0,
                                     ),
                                     run_time=run_time * 0.45,
@@ -3320,6 +3372,7 @@ class JsonDrivenScene(MovingCameraScene):
                                 )
                                 if point_halo is not None:
                                     point_halo.move_to(trail_path.point_from_proportion(1.0))
+                                _apply_context_state(alpha)
 
                             self.play(
                                 UpdateFromAlphaFunc(road_obj, wave_updater),
@@ -3327,6 +3380,7 @@ class JsonDrivenScene(MovingCameraScene):
                                 rate_func=linear,
                             )
                             _apply_trail_state(progress=1.0, brightness=step.params.get("final_trail_brightness", final_brightness))
+                            _apply_context_state(1.0)
                             if point_halo is not None:
                                 point_halo.set_stroke(opacity=step.params.get("rest_halo_opacity", 0.12))
                             current_time += run_time
@@ -3340,6 +3394,7 @@ class JsonDrivenScene(MovingCameraScene):
 
                     elif mode == "final_hold":
                         _apply_trail_state(progress=getattr(road_obj, "trail_progress", 1.0), brightness=getattr(road_obj, "trail_brightness", 1.18))
+                        _apply_context_state(1.0)
                         self.wait(run_time)
                         current_time += run_time
                         object_registry[step.id] = road_obj

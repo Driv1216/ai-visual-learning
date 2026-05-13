@@ -59,14 +59,48 @@
         "trail_origin_opacity": 0.22,
         "trail_endpoint_opacity": 0.76,
         "trail_initial_brightness": 1.0,
-        "point_start": [-2.45, -0.12, 0.0],
+        "endpoint_glow_start": 0.80,
+        "endpoint_glow_width": 5.4,
+        "endpoint_glow_color": "#D9F7FF",
+        "label_font_size": 34,
+        "label_font": "Arial",
+        "rules_text": "Rules",
+        "rules_color": "#D7E4F5",
+        "rules_position": [-3.18, 2.12, 0.0],
+        "learning_text": "Learning",
+        "learning_color": "#FFF2D7",
+        "learning_position": [3.02, 2.12, 0.0],
+        "data_dot_color": "#D9F4FF",
+        "data_dot_specs": [
+          [-3.35, 1.72, 0.020],
+          [-2.55, 1.06, 0.016],
+          [-1.70, 1.62, 0.018],
+          [-0.88, 1.12, 0.015],
+          [-0.12, 1.78, 0.018],
+          [0.78, 1.24, 0.016],
+          [1.62, 1.74, 0.020],
+          [2.50, 1.18, 0.016],
+          [3.22, 1.62, 0.018],
+          [-3.00, 0.36, 0.015],
+          [-1.12, 0.58, 0.014],
+          [0.12, 0.82, 0.015],
+          [1.92, 0.96, 0.016],
+          [3.06, 0.46, 0.014]
+        ],
+        "future_dot_color": "#FFE6B8",
+        "future_dot_specs": [
+          [2.70, 0.82, 0.020],
+          [3.04, 0.96, 0.017],
+          [3.38, 1.10, 0.014]
+        ],
+        "point_start": [-2.45, 0.18, 0.0],
         "path_points": [
-          [-2.45, -0.12, 0.0],
-          [-1.48, 0.08, 0.0],
-          [-0.58, -0.16, 0.0],
-          [0.34, 0.10, 0.0],
-          [1.28, 0.33, 0.0],
-          [2.34, 0.43, 0.0]
+          [-2.45, 0.18, 0.0],
+          [-1.48, 0.38, 0.0],
+          [-0.58, 0.14, 0.0],
+          [0.34, 0.40, 0.0],
+          [1.28, 0.63, 0.0],
+          [2.34, 0.73, 0.0]
         ]
       }
     },
@@ -104,25 +138,34 @@
         "trail_brightness": 1.0,
         "trail_origin_opacity": 0.22,
         "trail_endpoint_opacity": 0.74,
+        "wake_segments": 4,
+        "wake_strength": 0.08,
+        "data_dot_opacity": 0.12,
         "point_opacity": 0.96,
         "point_halo_opacity": 0.11
       }
     },
     {
-      "id": "v8_trail_understands",
+      "id": "v8_rules_to_learning",
       "anchor": "s8_03",
-      "offset": 0.4,
+      "offset": 0.08,
       "action": "mutate_road_ahead_field",
       "zone": "full",
       "persist": true,
-      "duration": 2.1,
+      "duration": 3.2,
       "params": {
         "source_id": "v8_trail_begins",
         "mode": "emerge_horizon",
-        "target_progress": 0.58,
-        "trail_brightness": 1.06,
+        "target_progress": 0.64,
+        "trail_brightness": 1.07,
         "trail_origin_opacity": 0.23,
         "trail_endpoint_opacity": 0.78,
+        "wake_segments": 4,
+        "wake_strength": 0.07,
+        "data_dot_opacity": 0.125,
+        "rules_peak_opacity": 0.40,
+        "learning_opacity": 0.60,
+        "learning_start_alpha": 0.52,
         "point_opacity": 0.98,
         "point_halo_opacity": 0.12
       }
@@ -136,12 +179,18 @@
       "persist": true,
       "duration": 9.0,
       "params": {
-        "source_id": "v8_trail_understands",
+        "source_id": "v8_rules_to_learning",
         "mode": "warm_upper_field",
         "target_progress": 0.88,
         "trail_brightness": 1.16,
         "trail_origin_opacity": 0.25,
         "trail_endpoint_opacity": 0.82,
+        "wake_segments": 3,
+        "wake_strength": 0.05,
+        "data_dot_opacity": 0.13,
+        "rules_opacity": 0.0,
+        "learning_opacity": 0.60,
+        "learning_start_alpha": 0.0,
         "point_opacity": 1.0,
         "point_halo_opacity": 0.14
       }
@@ -153,18 +202,25 @@
       "action": "mutate_road_ahead_field",
       "zone": "full",
       "persist": true,
-      "duration": 3.0,
+      "duration": 2.75,
       "params": {
         "source_id": "v8_trail_accumulates",
         "mode": "cross_point",
-        "arrival_time": 1.1,
-        "arrival_hold": 0.24,
+        "arrival_time": 1.05,
+        "arrival_hold": 0.22,
         "trail_brightness": 1.22,
         "final_trail_brightness": 1.18,
         "trail_origin_opacity": 0.26,
         "trail_endpoint_opacity": 0.84,
-        "point_halo_opacity": 0.16,
-        "rest_halo_opacity": 0.12,
+        "endpoint_glow_opacity": 0.18,
+        "endpoint_glow_width": 5.8,
+        "data_dot_opacity": 0.13,
+        "rules_opacity": 0.0,
+        "learning_opacity": 0.62,
+        "learning_start_alpha": 0.0,
+        "future_dot_opacity": 0.11,
+        "point_halo_opacity": 0.17,
+        "rest_halo_opacity": 0.15,
         "wave_width": 0.13,
         "wave_strength": 0.30
       }
@@ -172,20 +228,27 @@
     {
       "id": "v8_final_rest",
       "anchor": "s8_05",
-      "offset": 3.05,
+      "offset": 2.78,
       "action": "mutate_road_ahead_field",
       "zone": "full",
       "persist": true,
-      "duration": 2.2,
+      "duration": 0.45,
       "params": {
         "source_id": "v8_arrival_reverse_wave",
-        "mode": "final_hold"
+        "mode": "final_hold",
+        "endpoint_glow_opacity": 0.12,
+        "endpoint_glow_width": 5.6,
+        "data_dot_opacity": 0.13,
+        "rules_opacity": 0.0,
+        "learning_opacity": 0.62,
+        "learning_start_alpha": 0.0,
+        "future_dot_opacity": 0.10
       }
     }
   ],
   "notes": {
-    "tone": "quiet, abstract, cinematic point-and-trail ending; no title, labels, captions, icons, particles, fragments, dots, road, horizon, or decorative field elements",
-    "pacing": "One persistent point breathes, begins moving, creates a curved trail behind itself, lets the trail accumulate brightness, arrives at rest, then sends a restrained reverse wave back through the existing trail.",
-    "animation_guidelines": "Narration script is unchanged. Use existing road-ahead action names only as compatibility shells. The trail must never appear before the point reaches it; the reverse wave must be implemented only as temporary brightness inside the existing trail. WAV-only pipeline; render review happens on the render device."
+    "tone": "quiet, abstract, cinematic ending with a point-created trail, faint static data dots, Rules-to-Learning text contrast, endpoint-only arrival glow, and a tiny future hint beyond the resting point",
+    "pacing": "Narration script is unchanged. The point breathes, begins moving, creates a curved trail, passes through a barely-there data field, crosses from dim Rules to warmer Learning, arrives, sends a restrained reverse wave through the existing trail, then holds briefly near the audio end.",
+    "animation_guidelines": "Do not implement the skipped mathematics/data/structured-learning layer system. Keep additions restrained: data dots stay static, Rules fades out completely, Learning persists, endpoint glow affects only the final trail region, and the future hint remains tiny and low opacity. WAV-only pipeline; render review happens on the render device."
   }
 }

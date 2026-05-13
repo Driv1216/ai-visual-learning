@@ -2786,12 +2786,12 @@ def make_workflow_loop(params, zone):
 
 
 def make_road_ahead_field(params, zone):
-    """Scene 8 ending field: one luminous point creates its own trail.
+    """Scene 8 ending field: a luminous point creates a learning trail.
 
-    The public action name remains road-ahead for compatibility, but the visual
-    is intentionally minimal: a point, its attached halo, and the trail produced
-    by its motion.  No rule fragments, example dots, horizons, or field glows are
-    created here.
+    The public action name remains road-ahead for compatibility.  The visual is
+    still centered on point-plus-trail, with restrained scene-ending context:
+    faint static data dots, Rules/Learning words, endpoint emphasis, and a tiny
+    future hint beyond the final point.
     """
     point_color = params.get("point_color", "#F8FBFF")
     trail_color = params.get("trail_color", params.get("learned_path_color", "#8EE6FF"))
@@ -2799,11 +2799,11 @@ def make_road_ahead_field(params, zone):
     segment_count = max(8, int(params.get("trail_segments", 64)))
 
     path_points = [_as_vector(p) for p in params.get("path_points", params.get("learned_path_points", [
-        [-2.45, -0.12, 0.0], [-1.42, 0.08, 0.0], [-0.54, -0.17, 0.0],
-        [0.42, 0.10, 0.0], [1.35, 0.34, 0.0], [2.34, 0.43, 0.0],
+        [-2.45, 0.18, 0.0], [-1.42, 0.38, 0.0], [-0.54, 0.13, 0.0],
+        [0.42, 0.40, 0.0], [1.35, 0.64, 0.0], [2.34, 0.73, 0.0],
     ]))]
     if len(path_points) < 2:
-        path_points = [np.array([-2.45, -0.12, 0.0]), np.array([2.34, 0.43, 0.0])]
+        path_points = [np.array([-2.45, 0.18, 0.0]), np.array([2.34, 0.73, 0.0])]
 
     trail_path = VMobject(color=trail_color)
     trail_path.set_points_smoothly(path_points)
@@ -2821,6 +2821,51 @@ def make_road_ahead_field(params, zone):
         segment.set_stroke(opacity=0.0)
         trail_segments.add(segment)
 
+    data_dots = VGroup()
+    dot_color = params.get("data_dot_color", "#D9F4FF")
+    dot_specs = params.get("data_dot_specs") or [
+        [-3.35, 1.72, 0.020], [-2.55, 1.06, 0.016], [-1.70, 1.62, 0.018],
+        [-0.88, 1.12, 0.015], [-0.12, 1.78, 0.018], [0.78, 1.24, 0.016],
+        [1.62, 1.74, 0.020], [2.50, 1.18, 0.016], [3.22, 1.62, 0.018],
+        [-3.00, 0.36, 0.015], [-1.12, 0.58, 0.014], [0.12, 0.82, 0.015],
+        [1.92, 0.96, 0.016], [3.06, 0.46, 0.014],
+    ]
+    for x, y, radius in dot_specs:
+        dot = Dot(np.array([x, y, 0.0]), radius=radius, color=dot_color)
+        dot.set_opacity(0.0)
+        data_dots.add(dot)
+
+    label_font_size = params.get("label_font_size", 34)
+    label_font = params.get("label_font", "Arial")
+    rules_label = Text(params.get("rules_text", "Rules"), font_size=label_font_size, color=params.get("rules_color", "#D7E4F5"), font=label_font)
+    rules_label.move_to(_as_vector(params.get("rules_position", [-3.15, 2.15, 0.0])))
+    rules_label.set_opacity(0.0)
+    learning_label = Text(params.get("learning_text", "Learning"), font_size=label_font_size, color=params.get("learning_color", "#FFF2D7"), font=label_font)
+    learning_label.move_to(_as_vector(params.get("learning_position", [3.02, 2.15, 0.0])))
+    learning_label.set_opacity(0.0)
+
+    endpoint_glow_segments = VGroup()
+    endpoint_start = max(0, int(segment_count * params.get("endpoint_glow_start", 0.80)))
+    for index in range(endpoint_start, segment_count):
+        glow_segment = Line(
+            sample_points[index],
+            sample_points[index + 1],
+            color=params.get("endpoint_glow_color", trail_color),
+            stroke_width=params.get("endpoint_glow_width", trail_width * 2.6),
+        )
+        glow_segment.set_stroke(opacity=0.0)
+        endpoint_glow_segments.add(glow_segment)
+
+    future_dots = VGroup()
+    future_color = params.get("future_dot_color", "#FFE6B8")
+    future_specs = params.get("future_dot_specs") or [
+        [2.70, 0.82, 0.020], [3.04, 0.96, 0.017], [3.38, 1.10, 0.014],
+    ]
+    for x, y, radius in future_specs:
+        future_dot = Dot(np.array([x, y, 0.0]), radius=radius, color=future_color)
+        future_dot.set_opacity(0.0)
+        future_dots.add(future_dot)
+
     point_start = _as_vector(params.get("point_start", path_points[0]))
     point = Dot(point_start, radius=params.get("point_radius", 0.064), color=point_color)
     point.set_opacity(params.get("point_opacity", 0.92))
@@ -2830,7 +2875,7 @@ def make_road_ahead_field(params, zone):
     point_halo.set_stroke(opacity=params.get("point_halo_opacity", 0.10))
     point_halo.set_fill(point_color, opacity=0.0)
 
-    field = VGroup(trail_segments, point_halo, point)
+    field = VGroup(data_dots, rules_label, learning_label, trail_segments, endpoint_glow_segments, future_dots, point_halo, point)
     field.trail_path = trail_path
     field.trail_segments = trail_segments
     field.trail_sample_points = sample_points
@@ -2841,6 +2886,11 @@ def make_road_ahead_field(params, zone):
     field.trail_width = trail_width
     field.trail_origin_opacity = params.get("trail_origin_opacity", 0.24)
     field.trail_endpoint_opacity = params.get("trail_endpoint_opacity", 0.78)
+    field.data_dots = data_dots
+    field.rules_label = rules_label
+    field.learning_label = learning_label
+    field.endpoint_glow_segments = endpoint_glow_segments
+    field.future_dots = future_dots
     field.point = point
     field.point_halo = point_halo
 
@@ -2850,6 +2900,11 @@ def make_road_ahead_field(params, zone):
     field.road_trail_path = trail_path
     field.road_trail_segments = trail_segments
     field.road_trail_sample_points = sample_points
+    field.road_data_dots = data_dots
+    field.road_rules_label = rules_label
+    field.road_learning_label = learning_label
+    field.road_endpoint_glow_segments = endpoint_glow_segments
+    field.road_future_dots = future_dots
     field.road_path_points = path_points
     field.road_rule_fragments = VGroup()
     field.road_example_dots = VGroup()
