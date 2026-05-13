@@ -469,11 +469,11 @@ class JsonDrivenScene(MovingCameraScene):
             active_objects[zone_name] = obj
 
         workflow_loop_positions = {
-            "data": np.array([-3.65, 0.62, 0.0]),
-            "preprocessing": np.array([-1.35, 0.85, 0.0]),
-            "training": np.array([1.05, 0.62, 0.0]),
-            "evaluation": np.array([3.05, -0.34, 0.0]),
-            "improvement": np.array([-1.85, -1.35, 0.0]),
+            "data": np.array([-4.15, 0.65, 0.0]),
+            "preprocessing": np.array([-1.72, 1.08, 0.0]),
+            "training": np.array([0.95, 0.82, 0.0]),
+            "evaluation": np.array([3.45, -0.38, 0.0]),
+            "improvement": np.array([-1.95, -1.65, 0.0]),
         }
         workflow_loop_labels = {
             "data": "DATA",
@@ -485,21 +485,21 @@ class JsonDrivenScene(MovingCameraScene):
 
         def workflow_loop_node(key, warning=False):
             pos = workflow_loop_positions[key]
-            radius = 0.38
+            radius = 0.36
             color = "#E8A838" if warning else "#56D7E6"
             fill = "#1a1006" if warning else "#0c1624"
-            halo = Circle(radius=radius + 0.13, stroke_color=color, stroke_width=1.0)
-            halo.set_stroke(opacity=0.12 if not warning else 0.24)
+            halo = Circle(radius=radius + 0.10, stroke_color=color, stroke_width=0.85)
+            halo.set_stroke(opacity=0.10 if not warning else 0.17)
             halo.move_to(pos)
-            ring = Circle(radius=radius, stroke_color=color, stroke_width=2.25)
-            ring.set_fill(fill, opacity=0.62 if not warning else 0.70)
+            ring = Circle(radius=radius, stroke_color=color, stroke_width=1.65)
+            ring.set_fill(fill, opacity=0.55 if not warning else 0.62)
             ring.move_to(pos)
-            center_dot = Dot(pos, radius=0.040, color=color).set_opacity(0.58)
-            label = Text(workflow_loop_labels[key], font_size=18, color=TEXT_MAIN, weight=MEDIUM)
-            if label.width > 1.55:
-                label.scale(1.55 / label.width)
-            label.next_to(ring, DOWN, buff=0.17)
-            label.set_opacity(0.88)
+            center_dot = Dot(pos, radius=0.034, color=color).set_opacity(0.50)
+            label = Text(workflow_loop_labels[key], font_size=14, color=TEXT_MAIN, weight=MEDIUM)
+            if label.width > 1.28:
+                label.scale(1.28 / label.width)
+            label.next_to(ring, DOWN, buff=0.24)
+            label.set_opacity(0.76)
             node = VGroup(halo, ring, center_dot, label)
             node.workflow_key = key
             return node
@@ -512,21 +512,21 @@ class JsonDrivenScene(MovingCameraScene):
             if length == 0:
                 return VGroup()
             unit = direction / length
-            start = start + unit * 0.48
-            end = end - unit * 0.48
+            start = start + unit * 0.50
+            end = end - unit * 0.50
             if curved:
                 arrow = CurvedArrow(
                     start,
                     end,
-                    angle=-TAU * 0.19 if reverse else -TAU * 0.10,
+                    angle=-TAU * 0.09 if reverse else -TAU * 0.065,
                     color="#56D7E6",
-                    stroke_width=2.0,
-                    tip_length=0.16,
+                    stroke_width=1.15,
+                    tip_length=0.085,
                 )
-                arrow.set_opacity(0.72)
+                arrow.set_opacity(0.42 if reverse else 0.48)
                 return arrow
-            arrow = Arrow(start, end, buff=0.0, color="#9FB7C9", stroke_width=2.0, tip_length=0.14, max_stroke_width_to_length_ratio=10)
-            arrow.set_opacity(0.72)
+            arrow = Arrow(start, end, buff=0.0, color="#9FB7C9", stroke_width=1.35, tip_length=0.10, max_stroke_width_to_length_ratio=10)
+            arrow.set_opacity(0.56)
             return arrow
 
         def get_workflow_loop_source(source_id, fallback_zone="center"):
@@ -802,13 +802,13 @@ class JsonDrivenScene(MovingCameraScene):
                     if mode == "label_data":
                         data_node = nodes.get("data")
                         if data_node is not None:
-                            label = Text("DATA", font_size=20, color=TEXT_MAIN, weight=MEDIUM)
-                            label.next_to(data_node[1], DOWN, buff=0.18)
+                            label = Text("DATA", font_size=15, color=TEXT_MAIN, weight=MEDIUM)
+                            label.next_to(data_node[1], DOWN, buff=0.24)
                             label.set_opacity(0.0)
                             data_node.add(label)
                             self.add(label)
                             self.play(
-                                AnimationGroup(label.animate.set_opacity(0.90), Indicate(data_node[1], color="#56D7E6", scale_factor=1.06), lag_ratio=0.0),
+                                AnimationGroup(label.animate.set_opacity(0.78), Indicate(data_node[1], color="#56D7E6", scale_factor=1.04), lag_ratio=0.0),
                                 run_time=run_time,
                             )
                             current_time += run_time
@@ -895,23 +895,23 @@ class JsonDrivenScene(MovingCameraScene):
                         if eval_node is not None:
                             ring = eval_node[1]
                             halo = eval_node[0]
-                            warn = Circle(radius=0.58, stroke_color="#E8A838", stroke_width=1.6).move_to(ring.get_center()).set_stroke(opacity=0.0)
+                            warn = Circle(radius=0.50, stroke_color="#E8A838", stroke_width=1.05).move_to(ring.get_center()).set_stroke(opacity=0.0)
                             cue = VGroup(
-                                Line(ring.get_center() + LEFT * 0.18 + DOWN * 0.04, ring.get_center() + LEFT * 0.02 + UP * 0.12, color="#56D7E6", stroke_width=1.6),
-                                Line(ring.get_center() + RIGHT * 0.03 + UP * 0.11, ring.get_center() + RIGHT * 0.21 + DOWN * 0.10, color="#E8A838", stroke_width=1.8),
+                                Line(ring.get_center() + LEFT * 0.16 + DOWN * 0.04, ring.get_center() + LEFT * 0.02 + UP * 0.10, color="#56D7E6", stroke_width=1.15),
+                                Line(ring.get_center() + RIGHT * 0.03 + UP * 0.09, ring.get_center() + RIGHT * 0.18 + DOWN * 0.08, color="#E8A838", stroke_width=1.25),
                             ).set_opacity(0.0)
                             self.add(warn, cue)
                             self.play(
                                 AnimationGroup(
-                                    ring.animate.set_stroke(color="#E8A838", width=2.8).set_fill(color="#1a1006", opacity=0.72),
-                                    halo.animate.set_stroke(color="#E8A838", opacity=0.24),
-                                    warn.animate.set_stroke(opacity=0.34),
-                                    cue.animate.set_opacity(0.86),
+                                    ring.animate.set_stroke(color="#E8A838", width=1.9).set_fill(color="#1a1006", opacity=0.62),
+                                    halo.animate.set_stroke(color="#E8A838", opacity=0.16),
+                                    warn.animate.set_stroke(opacity=0.20),
+                                    cue.animate.set_opacity(0.66),
                                     lag_ratio=0.0,
                                 ),
                                 run_time=run_time * 0.72,
                             )
-                            self.play(warn.animate.set_stroke(opacity=0.16), run_time=run_time * 0.28)
+                            self.play(warn.animate.set_stroke(opacity=0.09), run_time=run_time * 0.28)
                             eval_node.add(warn, cue)
                             current_time += run_time
                         else:
@@ -924,21 +924,16 @@ class JsonDrivenScene(MovingCameraScene):
                         improve_node = nodes.get("improvement")
                         data_node = nodes.get("data")
                         if improve_node is not None and data_node is not None:
-                            path = CurvedArrow(
-                                workflow_loop_positions_for(step.params)["improvement"] + LEFT * 0.06 + UP * 0.47,
-                                workflow_loop_positions_for(step.params)["data"] + DOWN * 0.47,
-                                angle=-TAU * 0.18,
-                                color="#56D7E6",
-                                stroke_width=1.5,
-                                tip_length=0.12,
-                            ).set_opacity(0.0)
-                            dot = Dot(workflow_loop_positions_for(step.params)["improvement"], radius=0.035, color="#56D7E6")
-                            self.add(path, dot)
-                            self.play(path.animate.set_opacity(0.28), run_time=run_time * 0.22)
-                            self.play(MoveAlongPath(dot, path), run_time=run_time * 0.58, rate_func=rate_functions.ease_in_out_sine)
-                            self.play(FadeOut(dot), path.animate.set_opacity(0.16), run_time=run_time * 0.20)
-                            workflow_obj.add(path)
-                            workflow_obj.workflow_loop_effects.add(path)
+                            start = workflow_loop_positions["improvement"] + UP * 0.18
+                            dots = VGroup(
+                                Dot(start + RIGHT * 0.00 + UP * 0.02, radius=0.030, color="#56D7E6").set_opacity(0.0),
+                                Dot(start + LEFT * 0.16 + UP * 0.08, radius=0.026, color="#56D7E6").set_opacity(0.0),
+                                Dot(start + LEFT * 0.32 + UP * 0.14, radius=0.023, color="#56D7E6").set_opacity(0.0),
+                            )
+                            self.add(dots)
+                            self.play(AnimationGroup(*[d.animate.set_opacity(0.38) for d in dots], lag_ratio=0.10), run_time=run_time * 0.35)
+                            self.play(AnimationGroup(*[d.animate.shift(LEFT * 0.22 + UP * 0.04).set_opacity(0.14) for d in dots], lag_ratio=0.08), run_time=run_time * 0.45)
+                            self.play(FadeOut(dots), run_time=run_time * 0.20)
                             current_time += run_time
                         else:
                             self.wait(run_time)
@@ -954,7 +949,7 @@ class JsonDrivenScene(MovingCameraScene):
                             self.add(loop_arrow)
                             self.play(Create(loop_arrow), run_time=run_time * 0.72, rate_func=rate_functions.ease_out_sine)
                             pulse_targets = list(nodes.values()) + list(arrows.values())
-                            self.play(AnimationGroup(*[Indicate(obj, color="#56D7E6", scale_factor=1.025) for obj in pulse_targets], lag_ratio=0.03), run_time=run_time * 0.28)
+                            self.play(AnimationGroup(*[Indicate(obj, color="#56D7E6", scale_factor=1.012) for obj in pulse_targets], lag_ratio=0.03), run_time=run_time * 0.28)
                             current_time += run_time
                         else:
                             self.wait(run_time)
