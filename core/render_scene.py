@@ -3173,11 +3173,14 @@ class JsonDrivenScene(MovingCameraScene):
                             if "learning_opacity" in step.params:
                                 learning_target = step.params.get("learning_opacity", 0.60)
                                 learning_start = step.params.get("learning_start_alpha", 0.45)
-                                if alpha <= learning_start:
-                                    learning_alpha = 0.0
+                                if learning_start <= 0.0:
+                                    learning_label.set_opacity(learning_target)
                                 else:
-                                    learning_alpha = (alpha - learning_start) / max(0.01, 1.0 - learning_start)
-                                learning_label.set_opacity(learning_target * rate_functions.ease_in_out_sine(max(0.0, min(1.0, learning_alpha))))
+                                    if alpha <= learning_start:
+                                        learning_alpha = 0.0
+                                    else:
+                                        learning_alpha = (alpha - learning_start) / max(0.01, 1.0 - learning_start)
+                                    learning_label.set_opacity(learning_target * rate_functions.ease_in_out_sine(max(0.0, min(1.0, learning_alpha))))
                         if "future_dot_opacity" in step.params:
                             future_opacity = step.params.get("future_dot_opacity", 0.10)
                             for index, dot in enumerate(future_dots):

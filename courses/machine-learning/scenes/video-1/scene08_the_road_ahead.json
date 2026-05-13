@@ -89,18 +89,18 @@
         ],
         "future_dot_color": "#FFE6B8",
         "future_dot_specs": [
-          [2.70, 0.82, 0.020],
-          [3.04, 0.96, 0.017],
-          [3.38, 1.10, 0.014]
+          [2.70, 1.12, 0.020],
+          [3.04, 1.26, 0.017],
+          [3.38, 1.40, 0.014]
         ],
-        "point_start": [-2.45, 0.18, 0.0],
+        "point_start": [-2.45, 0.48, 0.0],
         "path_points": [
-          [-2.45, 0.18, 0.0],
-          [-1.48, 0.38, 0.0],
-          [-0.58, 0.14, 0.0],
-          [0.34, 0.40, 0.0],
-          [1.28, 0.63, 0.0],
-          [2.34, 0.73, 0.0]
+          [-2.45, 0.48, 0.0],
+          [-1.48, 0.68, 0.0],
+          [-0.58, 0.44, 0.0],
+          [0.34, 0.70, 0.0],
+          [1.28, 0.93, 0.0],
+          [2.34, 1.03, 0.0]
         ]
       }
     },
@@ -140,7 +140,7 @@
         "trail_endpoint_opacity": 0.74,
         "wake_segments": 4,
         "wake_strength": 0.08,
-        "data_dot_opacity": 0.12,
+        "data_dot_opacity": 0.18,
         "point_opacity": 0.96,
         "point_halo_opacity": 0.11
       }
@@ -162,7 +162,7 @@
         "trail_endpoint_opacity": 0.78,
         "wake_segments": 4,
         "wake_strength": 0.07,
-        "data_dot_opacity": 0.125,
+        "data_dot_opacity": 0.20,
         "rules_peak_opacity": 0.40,
         "learning_opacity": 0.60,
         "learning_start_alpha": 0.52,
@@ -187,7 +187,7 @@
         "trail_endpoint_opacity": 0.82,
         "wake_segments": 3,
         "wake_strength": 0.05,
-        "data_dot_opacity": 0.13,
+        "data_dot_opacity": 0.20,
         "rules_opacity": 0.0,
         "learning_opacity": 0.60,
         "learning_start_alpha": 0.0,
@@ -214,7 +214,7 @@
         "trail_endpoint_opacity": 0.84,
         "endpoint_glow_opacity": 0.18,
         "endpoint_glow_width": 5.8,
-        "data_dot_opacity": 0.13,
+        "data_dot_opacity": 0.20,
         "rules_opacity": 0.0,
         "learning_opacity": 0.62,
         "learning_start_alpha": 0.0,
@@ -238,7 +238,7 @@
         "mode": "final_hold",
         "endpoint_glow_opacity": 0.12,
         "endpoint_glow_width": 5.6,
-        "data_dot_opacity": 0.13,
+        "data_dot_opacity": 0.20,
         "rules_opacity": 0.0,
         "learning_opacity": 0.62,
         "learning_start_alpha": 0.0,
