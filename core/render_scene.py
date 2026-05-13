@@ -9,6 +9,7 @@ from scene_schema import SceneSpec
 from actions import (
     ACCENT,
     BG_COLOR,
+    MUTED,
     TAXONOMY_COLORS,
     ZONE_POSITIONS,
     _as_vector,
