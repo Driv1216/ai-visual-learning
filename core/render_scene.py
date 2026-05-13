@@ -3190,7 +3190,9 @@ class JsonDrivenScene(MovingCameraScene):
                             drift = np.array([0.0, -0.05 - 0.01 * (index % 3), 0.0]) * structure
                             anims.append(dot.animate.shift(drift).set_opacity(particle_opacity))
                         if point is not None and point_opacity > 0:
-                            point.set_opacity(max(point.get_opacity(), 0.001))
+                            # Manim Dot does not expose get_opacity() consistently; set a tiny
+                            # visible baseline before animating so fade-in works without crashing.
+                            point.set_opacity(0.001)
                             anims.append(point.animate.set_opacity(point_opacity))
                         if point_halo is not None and step.params.get("point_halo_opacity", 0.0) > 0:
                             anims.append(point_halo.animate.set_stroke(opacity=step.params.get("point_halo_opacity", 0.06)))
