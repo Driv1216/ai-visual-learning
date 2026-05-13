@@ -2786,166 +2786,160 @@ def make_workflow_loop(params, zone):
 
 
 def make_road_ahead_field(params, zone):
-    horizon_y = params.get("horizon_y", -0.18)
-    path_color = params.get("path_color", "#9FB6D8")
-    horizon_color = params.get("horizon_color", "#F2F6FF")
+    """Scene 8 ending field: rigid rule fragments give way to learned structure.
+
+    This intentionally keeps the existing action name for compatibility, but the
+    visual is no longer a literal road.  It is an abstract transition from
+    explicit instructions to examples organizing into a learned path.
+    """
+    rule_color = params.get("rule_color", "#9CA8B8")
+    data_color = params.get("data_color", "#6FD7FF")
+    path_color = params.get("learned_path_color", "#8EE6FF")
     ambient_color = params.get("ambient_color", "#172033")
     point_color = params.get("point_color", "#F8FBFF")
 
     frame_width = config.frame_width
     frame_height = config.frame_height
 
-    # Abstract perspective-path geometry.  The previous implementation used
-    # disconnected horizontal fragments, which rendered as random lines rather
-    # than a "road ahead".  This field is still minimal, but it gives the eye a
-    # path, a threshold, and a subject to follow.
-    vanishing = _as_vector(params.get("vanishing_point", [0.0, horizon_y, 0.0]))
-    left_near = _as_vector(params.get("left_near", [-3.95, -3.08, 0.0]))
-    right_near = _as_vector(params.get("right_near", [3.95, -3.08, 0.0]))
-    left_far = _as_vector(params.get("left_far", [-0.34, horizon_y - 0.02, 0.0]))
-    right_far = _as_vector(params.get("right_far", [0.34, horizon_y - 0.02, 0.0]))
-
-    path_fill = Polygon(
-        left_near,
-        right_near,
-        right_far,
-        left_far,
-        stroke_width=0,
-        fill_color=params.get("path_fill_color", "#101A31"),
-        fill_opacity=params.get("path_fill_opacity", 0.10),
-    )
-
-    path_glow = Polygon(
-        left_near + LEFT * 0.18,
-        right_near + RIGHT * 0.18,
-        right_far + RIGHT * 0.06,
-        left_far + LEFT * 0.06,
-        stroke_width=0,
-        fill_color=params.get("path_glow_color", "#172743"),
-        fill_opacity=params.get("path_glow_opacity", 0.055),
-    )
-
-    left_edge = Line(left_near, left_far, color=path_color, stroke_width=params.get("edge_width", 1.25))
-    right_edge = Line(right_near, right_far, color=path_color, stroke_width=params.get("edge_width", 1.25))
-    left_edge.set_stroke(opacity=params.get("edge_opacity", 0.22))
-    right_edge.set_stroke(opacity=params.get("edge_opacity", 0.22))
-
-    def interp(a, b, t):
-        return a + (b - a) * t
-
-    path_bands = VGroup()
-    band_count = params.get("band_count", 6)
-    for i in range(band_count):
-        t = (i + 1) / (band_count + 1)
-        # Nonlinear spacing creates perspective depth: bands compress toward
-        # the horizon and feel like structure, not random underlines.
-        depth_t = t ** 1.58
-        start = interp(left_near, left_far, depth_t)
-        end = interp(right_near, right_far, depth_t)
-        band = Line(start, end, color=path_color, stroke_width=params.get("band_width", 1.05))
-        band.set_stroke(opacity=params.get("band_opacity", 0.13) * (1.0 - 0.08 * i))
-        path_bands.add(band)
-
-    uncertainty_particles = VGroup()
-    particle_specs = params.get("particle_specs") or [
-        [-2.85, -2.26, 0.0], [-1.55, -1.72, 0.0], [-0.62, -2.55, 0.0],
-        [1.24, -1.88, 0.0], [2.65, -2.34, 0.0], [0.18, -1.34, 0.0],
-        [-2.08, -2.82, 0.0], [2.12, -2.84, 0.0]
-    ]
-    for j, pos in enumerate(particle_specs):
-        dot = Dot(_as_vector(pos), radius=params.get("particle_radius", 0.018), color=path_color)
-        dot.set_opacity(params.get("particle_opacity", 0.20) * (0.75 + 0.08 * (j % 4)))
-        uncertainty_particles.add(dot)
-
-    upper_height = frame_height / 2 + abs(horizon_y) + 0.35
     upper_ambient = Rectangle(
         width=frame_width + 0.6,
-        height=upper_height,
+        height=frame_height + 0.4,
         stroke_width=0,
         fill_color=ambient_color,
         fill_opacity=params.get("upper_ambient_opacity", 0.0),
     )
-    upper_ambient.move_to(np.array([0.0, horizon_y + upper_height / 2, 0.0]))
+    upper_ambient.move_to(ORIGIN)
 
-    horizon_half_width = params.get("horizon_half_width", 4.75)
-    horizon_glow = Line(
-        np.array([-horizon_half_width, horizon_y, 0.0]),
-        np.array([horizon_half_width, horizon_y, 0.0]),
-        color=horizon_color,
-        stroke_width=params.get("horizon_glow_width", 16.0),
-    ).set_stroke(opacity=params.get("horizon_glow_opacity", 0.0))
-    horizon_bloom = Rectangle(
-        width=horizon_half_width * 2.05,
-        height=params.get("horizon_bloom_height", 0.52),
+    opening_glow = Ellipse(
+        width=params.get("opening_width", frame_width * 0.68),
+        height=params.get("opening_height", 2.6),
         stroke_width=0,
-        fill_color=params.get("horizon_bloom_color", "#DDEBFF"),
-        fill_opacity=params.get("horizon_bloom_opacity", 0.0),
+        fill_color=params.get("opening_color", "#203655"),
+        fill_opacity=params.get("opening_opacity", 0.0),
     )
-    horizon_bloom.move_to(np.array([0.0, horizon_y + 0.10, 0.0]))
-    horizon_core = Line(
-        np.array([-horizon_half_width * 0.40, horizon_y, 0.0]),
-        np.array([horizon_half_width * 0.40, horizon_y, 0.0]),
-        color=horizon_color,
-        stroke_width=params.get("horizon_stroke_width", 1.45),
-    ).set_stroke(opacity=params.get("horizon_core_opacity", 0.0))
-    horizon_left = Line(
-        np.array([-horizon_half_width * 0.40, horizon_y, 0.0]),
-        np.array([-horizon_half_width * 0.40, horizon_y, 0.0]),
-        color=horizon_color,
-        stroke_width=params.get("horizon_wing_width", 1.05),
-    ).set_stroke(opacity=params.get("horizon_wing_opacity", 0.0))
-    horizon_right = Line(
-        np.array([horizon_half_width * 0.40, horizon_y, 0.0]),
-        np.array([horizon_half_width * 0.40, horizon_y, 0.0]),
-        color=horizon_color,
-        stroke_width=params.get("horizon_wing_width", 1.05),
-    ).set_stroke(opacity=params.get("horizon_wing_opacity", 0.0))
+    opening_glow.move_to(np.array([params.get("opening_x", 0.22), params.get("opening_y", 0.84), 0.0]))
 
-    point_start = _as_vector(params.get("point_start", [0.0, -1.02, 0.0]))
+    opening_glow_inner = Ellipse(
+        width=params.get("opening_inner_width", frame_width * 0.42),
+        height=params.get("opening_inner_height", 1.46),
+        stroke_width=0,
+        fill_color=params.get("opening_inner_color", params.get("opening_color", "#203655")),
+        fill_opacity=params.get("opening_inner_opacity", 0.0),
+    )
+    opening_glow_inner.move_to(np.array([params.get("opening_inner_x", 0.72), params.get("opening_inner_y", 0.98), 0.0]))
+
+    # Rigid instruction/rule fragments: left-weighted, aligned, slightly broken.
+    rule_fragments = VGroup()
+    rule_specs = params.get("rule_specs") or [
+        [-3.75, 1.10, 0.92], [-3.42, 0.78, 0.58], [-3.68, 0.44, 0.78],
+        [-3.22, 0.06, 0.46], [-3.82, -0.32, 0.88], [-3.36, -0.68, 0.62],
+        [-2.88, 0.92, 0.34], [-2.78, 0.18, 0.28], [-2.92, -0.52, 0.36],
+    ]
+    for index, spec in enumerate(rule_specs):
+        x, y, length = spec
+        jitter = 0.035 * ((index % 3) - 1)
+        start = np.array([x - length / 2, y + jitter, 0.0])
+        end = np.array([x + length / 2, y - jitter, 0.0])
+        frag = Line(start, end, color=rule_color, stroke_width=params.get("rule_width", 1.15))
+        frag.set_stroke(opacity=params.get("rule_opacity", 0.34) * (0.76 + 0.05 * (index % 4)))
+        rule_fragments.add(frag)
+
+    # Example/data points begin scattered, then renderer organizes them into a curve.
+    scatter_positions = params.get("example_scatter") or [
+        [-1.72, -1.08, 0.0], [-1.25, -0.34, 0.0], [-0.78, -0.88, 0.0],
+        [-0.30, -0.18, 0.0], [0.12, -0.64, 0.0], [0.48, 0.08, 0.0],
+        [0.86, -0.42, 0.0], [1.26, 0.24, 0.0], [1.72, -0.10, 0.0],
+        [2.05, 0.54, 0.0], [-0.98, 0.34, 0.0], [0.66, 0.72, 0.0],
+    ]
+    organized_positions = params.get("example_organized") or [
+        [-1.70, -1.04, 0.0], [-1.34, -0.80, 0.0], [-0.96, -0.52, 0.0],
+        [-0.58, -0.24, 0.0], [-0.18, -0.02, 0.0], [0.24, 0.15, 0.0],
+        [0.66, 0.31, 0.0], [1.08, 0.48, 0.0], [1.50, 0.66, 0.0],
+        [1.92, 0.86, 0.0], [-0.92, -0.04, 0.0], [0.92, 0.78, 0.0],
+    ]
+    example_dots = VGroup()
+    example_targets = []
+    for index, pos in enumerate(scatter_positions):
+        dot = Dot(_as_vector(pos), radius=params.get("example_radius", 0.038), color=data_color)
+        dot.set_opacity(params.get("example_opacity", 0.30) * (0.82 + 0.04 * (index % 4)))
+        example_dots.add(dot)
+        if index < len(organized_positions):
+            example_targets.append(_as_vector(organized_positions[index]))
+        else:
+            example_targets.append(_as_vector(pos))
+
+    path_points = [_as_vector(p) for p in params.get("learned_path_points", [
+        [-1.78, -1.06, 0.0], [-0.86, -0.34, 0.0], [0.08, 0.06, 0.0],
+        [0.98, 0.42, 0.0], [1.98, 0.92, 0.0],
+    ])]
+    learned_path = VMobject(color=path_color)
+    learned_path.set_points_smoothly(path_points)
+    learned_path.set_stroke(width=params.get("learned_path_width", 2.3), opacity=params.get("learned_path_opacity", 0.0))
+    learned_path_glow = VMobject(color=params.get("learned_path_glow_color", "#8EE6FF"))
+    learned_path_glow.set_points_smoothly(path_points)
+    learned_path_glow.set_stroke(width=params.get("learned_path_glow_width", 10.0), opacity=params.get("learned_path_glow_opacity", 0.0))
+
+    point_start = _as_vector(params.get("point_start", [-1.72, -1.16, 0.0]))
     point = Dot(point_start, radius=params.get("point_radius", 0.060), color=point_color)
     point.set_opacity(params.get("point_opacity", 0.0))
-    point_halo = Circle(radius=params.get("point_halo_radius", 0.20), color=point_color, stroke_width=1.1)
+    point_halo = Circle(radius=params.get("point_halo_radius", 0.20), color=point_color, stroke_width=1.05)
     point_halo.move_to(point_start)
     point_halo.set_stroke(opacity=params.get("point_halo_opacity", 0.0))
     point_halo.set_fill(point_color, opacity=0.0)
 
     field = VGroup(
         upper_ambient,
-        path_glow,
-        path_fill,
-        path_bands,
-        left_edge,
-        right_edge,
-        uncertainty_particles,
-        horizon_bloom,
-        horizon_glow,
-        horizon_left,
-        horizon_right,
-        horizon_core,
+        opening_glow,
+        opening_glow_inner,
+        rule_fragments,
+        example_dots,
+        learned_path_glow,
+        learned_path,
         point_halo,
         point,
     )
-    field.road_lower_lines = path_bands  # backward-compatible alias
-    field.road_path_bands = path_bands
-    field.road_path_edges = VGroup(left_edge, right_edge)
-    field.road_path_fill = path_fill
-    field.road_path_glow = path_glow
-    field.road_uncertainty_particles = uncertainty_particles
+    field.rule_fragments = rule_fragments
+    field.example_dots = example_dots
+    field.example_targets = example_targets
+    field.learned_path = learned_path
+    field.learned_path_glow = learned_path_glow
+    field.opening_glow = opening_glow
+    field.opening_glow_inner = opening_glow_inner
+    field.upper_ambient = upper_ambient
+    field.point = point
+    field.point_halo = point_halo
+    field.learned_path_points = path_points
+
+    # Backward-compatible aliases used by the existing scene JSON/action names.
+    field.road_rule_fragments = rule_fragments
+    field.road_example_dots = example_dots
+    field.road_example_targets = example_targets
+    field.road_learned_path = learned_path
+    field.road_learned_path_glow = learned_path_glow
+    field.road_opening_glow = opening_glow
+    field.road_opening_glow_inner = opening_glow_inner
     field.road_upper_ambient = upper_ambient
-    field.road_horizon_glow = horizon_glow
-    field.road_horizon_bloom = horizon_bloom
-    field.road_horizon_core = horizon_core
-    field.road_horizon_left = horizon_left
-    field.road_horizon_right = horizon_right
     field.road_point = point
     field.road_point_halo = point_halo
-    field.road_horizon_y = horizon_y
-    field.road_horizon_half_width = horizon_half_width
-    field.road_horizon_color = horizon_color
-    field.road_line_color = path_color
-    field.road_vanishing_point = vanishing
-    # full maps to ORIGIN, but avoid moving this absolute-coordinate field for
-    # the same reason as Scene 7: geometry and mutations share world coords.
+    field.road_path_points = path_points
+    field.road_lower_lines = rule_fragments
+    field.road_path_bands = VGroup()
+    field.road_path_edges = VGroup()
+    field.road_path_fill = None
+    field.road_path_glow = learned_path_glow
+    field.road_uncertainty_particles = example_dots
+    field.road_horizon_glow = learned_path_glow
+    field.road_horizon_bloom = opening_glow
+    field.road_horizon_core = learned_path
+    field.road_horizon_left = None
+    field.road_horizon_right = None
+    field.road_horizon_y = params.get("conceptual_threshold_y", 0.55)
+    field.road_horizon_half_width = 2.2
+    field.road_horizon_color = path_color
+    field.road_line_color = data_color
+
+    # Full-scene coordinates are authored in world space; only reposition for
+    # non-full zones so mutation paths remain aligned with the field geometry.
     if zone != "full":
         place_in_zone(field, zone)
     return field

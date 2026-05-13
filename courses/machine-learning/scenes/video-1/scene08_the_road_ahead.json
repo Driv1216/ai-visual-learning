@@ -48,21 +48,84 @@
       "persist": true,
       "duration": 0.1,
       "params": {
-        "horizon_y": -0.18,
-        "vanishing_point": [0.0, -0.18, 0.0],
-        "left_near": [-4.15, -3.12, 0.0],
-        "right_near": [4.15, -3.12, 0.0],
-        "left_far": [-0.32, -0.2, 0.0],
-        "right_far": [0.32, -0.2, 0.0],
-        "band_count": 7,
-        "path_fill_opacity": 0.12,
-        "path_glow_opacity": 0.065,
-        "edge_opacity": 0.24,
-        "band_opacity": 0.14,
-        "particle_opacity": 0.22,
+        "rule_color": "#9CA8B8",
+        "data_color": "#6FD7FF",
+        "learned_path_color": "#8EE6FF",
+        "learned_path_glow_color": "#8EE6FF",
+        "ambient_color": "#172033",
+        "opening_color": "#203655",
+        "point_color": "#F8FBFF",
         "upper_ambient_opacity": 0.0,
-        "horizon_half_width": 4.9,
-        "point_start": [0.0, -1.08, 0.0]
+        "opening_opacity": 0.0,
+        "opening_inner_opacity": 0.0,
+        "opening_width": 9.2,
+        "opening_height": 2.8,
+        "opening_x": 0.25,
+        "opening_y": 0.94,
+        "opening_inner_width": 5.4,
+        "opening_inner_height": 1.45,
+        "opening_inner_x": 0.72,
+        "opening_inner_y": 1.02,
+        "rule_width": 1.1,
+        "rule_opacity": 0.30,
+        "rule_specs": [
+          [-3.75, 1.04, 0.86],
+          [-3.42, 0.72, 0.56],
+          [-3.70, 0.38, 0.76],
+          [-3.22, 0.02, 0.44],
+          [-3.84, -0.36, 0.82],
+          [-3.34, -0.72, 0.58],
+          [-2.92, 0.86, 0.32],
+          [-2.76, 0.12, 0.26],
+          [-2.96, -0.58, 0.34]
+        ],
+        "example_radius": 0.04,
+        "example_opacity": 0.28,
+        "example_scatter": [
+          [-1.72, -1.08, 0.0],
+          [-1.25, -0.34, 0.0],
+          [-0.78, -0.88, 0.0],
+          [-0.30, -0.18, 0.0],
+          [0.12, -0.64, 0.0],
+          [0.48, 0.08, 0.0],
+          [0.86, -0.42, 0.0],
+          [1.26, 0.24, 0.0],
+          [1.72, -0.10, 0.0],
+          [2.05, 0.54, 0.0],
+          [-0.98, 0.34, 0.0],
+          [0.66, 0.72, 0.0]
+        ],
+        "example_organized": [
+          [-1.70, -1.04, 0.0],
+          [-1.34, -0.80, 0.0],
+          [-0.96, -0.52, 0.0],
+          [-0.58, -0.24, 0.0],
+          [-0.18, -0.02, 0.0],
+          [0.24, 0.15, 0.0],
+          [0.66, 0.31, 0.0],
+          [1.08, 0.48, 0.0],
+          [1.50, 0.66, 0.0],
+          [1.92, 0.86, 0.0],
+          [-0.92, -0.04, 0.0],
+          [0.92, 0.78, 0.0]
+        ],
+        "learned_path_points": [
+          [-1.78, -1.06, 0.0],
+          [-0.86, -0.34, 0.0],
+          [0.08, 0.06, 0.0],
+          [0.98, 0.42, 0.0],
+          [1.98, 0.92, 0.0]
+        ],
+        "learned_path_width": 1.65,
+        "learned_path_opacity": 0.0,
+        "learned_path_glow_width": 8.0,
+        "learned_path_glow_opacity": 0.0,
+        "point_start": [-1.76, -1.13, 0.0],
+        "point_radius": 0.058,
+        "point_opacity": 0.0,
+        "point_halo_radius": 0.18,
+        "point_halo_opacity": 0.0,
+        "conceptual_threshold_y": 0.62
       }
     },
     {
@@ -76,13 +139,14 @@
       "params": {
         "source_id": "v8_road_field",
         "mode": "settle",
-        "structure": 0.35,
-        "band_shift": 0.05,
-        "band_opacity": 0.18,
-        "edge_opacity": 0.30,
-        "path_fill_opacity": 0.14,
-        "path_glow_opacity": 0.078,
-        "particle_opacity": 0.16
+        "structure": 0.28,
+        "rule_recede": 0.07,
+        "rule_sink": 0.018,
+        "rule_opacity": 0.25,
+        "example_opacity": 0.30,
+        "learned_path_opacity": 0.0,
+        "learned_path_glow_opacity": 0.0,
+        "point_opacity": 0.0
       }
     },
     {
@@ -96,15 +160,17 @@
       "params": {
         "source_id": "v8_settle_mystery",
         "mode": "settle",
-        "structure": 0.78,
-        "band_shift": 0.075,
-        "band_opacity": 0.23,
-        "edge_opacity": 0.42,
-        "path_fill_opacity": 0.17,
-        "path_glow_opacity": 0.095,
-        "particle_opacity": 0.07,
-        "point_opacity": 0.18,
-        "point_halo_opacity": 0.035
+        "structure": 0.82,
+        "rule_recede": 0.14,
+        "rule_sink": 0.02,
+        "rule_opacity": 0.14,
+        "example_opacity": 0.42,
+        "learned_path_opacity": 0.34,
+        "learned_path_width": 1.55,
+        "learned_path_glow_opacity": 0.075,
+        "learned_path_glow_width": 8.5,
+        "point_opacity": 0.12,
+        "point_halo_opacity": 0.025
       }
     },
     {
@@ -118,19 +184,16 @@
       "params": {
         "source_id": "v8_settle_clarity",
         "mode": "emerge_horizon",
-        "horizon_half_width": 4.9,
-        "core_opacity": 0.82,
-        "wing_opacity": 0.34,
-        "glow_opacity": 0.25,
-        "bloom_opacity": 0.13,
-        "glow_width": 20.0,
-        "core_width": 1.25,
-        "wing_width": 0.75,
-        "lower_opacity": 0.15,
-        "edge_opacity": 0.46,
-        "particle_opacity": 0.04,
-        "point_opacity": 0.34,
-        "point_halo_opacity": 0.075
+        "rule_recede": 0.34,
+        "rule_opacity": 0.055,
+        "example_opacity": 0.48,
+        "core_opacity": 0.58,
+        "core_width": 1.75,
+        "glow_opacity": 0.13,
+        "glow_width": 9.5,
+        "bloom_opacity": 0.095,
+        "point_opacity": 0.28,
+        "point_halo_opacity": 0.055
       }
     },
     {
@@ -144,13 +207,17 @@
       "params": {
         "source_id": "v8_horizon_emergence",
         "mode": "warm_upper_field",
-        "target_opacity": 0.17,
+        "target_opacity": 0.16,
         "target_color": "#1B2A45",
-        "bloom_opacity": 0.16,
-        "glow_opacity": 0.30,
+        "bloom_opacity": 0.13,
+        "rule_opacity": 0.035,
+        "example_opacity": 0.40,
+        "learned_path_opacity": 0.66,
+        "learned_path_width": 1.85,
         "path_glow_opacity": 0.12,
-        "point_opacity": 0.48,
-        "point_halo_opacity": 0.105
+        "glow_width": 10.0,
+        "point_opacity": 0.52,
+        "point_halo_opacity": 0.10
       }
     },
     {
@@ -164,19 +231,26 @@
       "params": {
         "source_id": "v8_upper_field_warmth",
         "mode": "cross_point",
-        "start": [0.0, -1.08, 0.0],
-        "approach_mid": [0.0, -0.54, 0.0],
-        "cross": [0.0, -0.14, 0.0],
-        "rest": [0.0, 1.08, 0.0],
-        "cross_at": 1.15,
+        "path": [
+          [-1.78, -1.06, 0.0],
+          [-0.86, -0.34, 0.0],
+          [0.08, 0.06, 0.0],
+          [0.98, 0.42, 0.0],
+          [1.98, 0.92, 0.0]
+        ],
+        "start": [-1.78, -1.06, 0.0],
+        "cross": [0.98, 0.42, 0.0],
+        "rest": [2.22, 1.18, 0.0],
+        "cross_at": 1.35,
         "point_opacity": 1.0,
-        "point_halo_opacity": 0.22,
-        "rest_halo_opacity": 0.15,
-        "line_response_opacity": 0.9,
-        "wing_response_opacity": 0.48,
-        "response_glow_opacity": 0.32,
-        "response_bloom_opacity": 0.21,
-        "rest_upper_opacity": 0.20
+        "point_halo_opacity": 0.20,
+        "rest_halo_opacity": 0.13,
+        "line_response_opacity": 0.82,
+        "response_stroke_width": 2.0,
+        "response_glow_opacity": 0.20,
+        "response_glow_width": 11.0,
+        "response_bloom_opacity": 0.16,
+        "rest_upper_opacity": 0.19
       }
     },
     {
@@ -194,8 +268,8 @@
     }
   ],
   "notes": {
-    "tone": "quiet threshold; abstract perspective path, luminous horizon, single traveler point, no title, labels, text, icons, diagrams, or replacements",
-    "pacing": "One persistent perspective field begins as uncertainty, organizes into structure, opens into a luminous horizon, warms the upper field continuously across the change statements, then lets one traveler point cross the threshold.",
-    "animation_guidelines": "Use only the road-ahead field mutation modes. The lower field must read as an abstract path rather than random horizontal lines; horizon emergence must read as luminosity/threshold rather than a divider; tune point crossing to the exact word begins after WAV timestamps are generated. WAV-only pipeline."
+    "tone": "quiet, abstract, cinematic rule-to-learning transition; no title, labels, captions, icons, or lecture-style text",
+    "pacing": "One persistent field begins with faint rigid rule fragments and scattered examples, organizes the examples into a learned structure, lets old rules recede, opens the upper field, then sends one traveler point along the learned path as the real journey begins.",
+    "animation_guidelines": "Use the existing road-ahead action names only as compatibility shells. Do not use literal road geometry, thick horizon bars, platforms, divider lines, or decorative neon strokes. The learned path must feel derived from organized example dots, and the final point movement must follow that path. WAV-only pipeline; tune final cross_at after render review on the render device."
   }
 }
