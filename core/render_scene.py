@@ -10,6 +10,10 @@ from actions import (
     ACCENT,
     BG_COLOR,
     MUTED,
+    SECONDARY,
+    TEXT_MAIN,
+    TEXT_SUB,
+    WARNING,
     TAXONOMY_COLORS,
     ZONE_POSITIONS,
     _as_vector,
@@ -190,6 +194,101 @@ class JsonDrivenScene(MovingCameraScene):
             if obj is not None:
                 forget_object(obj)
 
+        def workflow_loop_positions_for(params=None):
+            params = params or {}
+            raw_positions = params.get("positions", {})
+            defaults = {
+                "data": [-3.65, 0.62, 0],
+                "preprocessing": [-1.34, 0.82, 0],
+                "training": [1.02, 0.60, 0],
+                "evaluation": [3.08, -0.44, 0],
+                "improvement": [-1.62, -1.42, 0],
+            }
+            return {
+                key: vector_from_param(raw_positions.get(key), vector_from_param(value))
+                for key, value in defaults.items()
+            }
+
+        def workflow_loop_source_id(step):
+            source_id = step.params.get("source_id")
+            if source_id:
+                return source_id
+            for prior_id in reversed(list(object_registry.keys())):
+                obj = object_registry.get(prior_id)
+                if hasattr(obj, "workflow_loop_nodes"):
+                    return prior_id
+            return None
+
+        def register_workflow_loop(step_id, zone_name, obj):
+            register_object(step_id, zone_name, obj)
+
+        def get_workflow_loop_source(source_id, zone_name):
+            if source_id and source_id in object_registry:
+                return object_registry[source_id]
+            active = active_objects.get(zone_name)
+            if active is not None and hasattr(active, "workflow_loop_nodes"):
+                return active
+            for obj in reversed(list(object_registry.values())):
+                if hasattr(obj, "workflow_loop_nodes"):
+                    return obj
+            return None
+
+        def workflow_loop_node(key, params=None):
+            params = params or {}
+            positions = workflow_loop_positions_for(params)
+            labels = {
+                "data": "DATA",
+                "preprocessing": "PREPROCESSING",
+                "training": "TRAINING",
+                "evaluation": "EVALUATION",
+                "improvement": "IMPROVEMENT",
+            }
+            pos = positions[key]
+            radius = params.get("node_radius", 0.38)
+            halo = Circle(radius=radius + 0.12, stroke_color=SECONDARY, stroke_width=1.0)
+            halo.set_stroke(opacity=0.14)
+            halo.move_to(pos)
+            ring = Circle(radius=radius, stroke_color=SECONDARY, stroke_width=2.25)
+            ring.set_fill("#0c1624", opacity=0.64)
+            ring.move_to(pos)
+            dot = Dot(pos, radius=0.040, color=SECONDARY).set_opacity(0.62)
+            label = Text(labels[key], font_size=18, color=TEXT_MAIN, weight=MEDIUM)
+            fit_width = 1.34 if key in {"preprocessing", "improvement"} else 1.10
+            if label.width > fit_width:
+                label.scale(fit_width / label.width)
+            label.next_to(ring, DOWN, buff=0.18)
+            label.set_opacity(0.90)
+            node = VGroup(halo, ring, dot, label)
+            node.workflow_key = key
+            return node
+
+        def workflow_loop_arrow(from_key, to_key, params=None, curved=False, reverse=False):
+            params = params or {}
+            positions = workflow_loop_positions_for(params)
+            radius = params.get("node_radius", 0.38)
+            start = positions[from_key]
+            end = positions[to_key]
+            direction = end - start
+            norm = np.linalg.norm(direction)
+            unit = direction / norm if norm else RIGHT
+            start = start + unit * (radius + 0.08)
+            end = end - unit * (radius + 0.10)
+            if curved:
+                angle = params.get("loop_angle", -TAU * 0.18 if reverse else -TAU * 0.11)
+                arrow = CurvedArrow(start, end, angle=angle, color=SECONDARY, stroke_width=1.8, tip_length=0.13)
+            else:
+                arrow = Arrow(
+                    start,
+                    end,
+                    buff=0.0,
+                    color=SECONDARY,
+                    stroke_width=1.8,
+                    tip_length=0.13,
+                    max_stroke_width_to_length_ratio=10,
+                )
+            arrow.set_opacity(0.82)
+            return arrow
+
         def unique_objects_from_ids(ids):
             seen = set()
             objects = []
@@ -369,6 +468,78 @@ class JsonDrivenScene(MovingCameraScene):
             step_zone_map[source_id] = zone_name
             active_objects[zone_name] = obj
 
+        workflow_loop_positions = {
+            "data": np.array([-3.65, 0.62, 0.0]),
+            "preprocessing": np.array([-1.35, 0.85, 0.0]),
+            "training": np.array([1.05, 0.62, 0.0]),
+            "evaluation": np.array([3.05, -0.34, 0.0]),
+            "improvement": np.array([-1.85, -1.35, 0.0]),
+        }
+        workflow_loop_labels = {
+            "data": "DATA",
+            "preprocessing": "PREPROCESSING",
+            "training": "TRAINING",
+            "evaluation": "EVALUATION",
+            "improvement": "IMPROVEMENT",
+        }
+
+        def workflow_loop_node(key, warning=False):
+            pos = workflow_loop_positions[key]
+            radius = 0.38
+            color = "#E8A838" if warning else "#56D7E6"
+            fill = "#1a1006" if warning else "#0c1624"
+            halo = Circle(radius=radius + 0.13, stroke_color=color, stroke_width=1.0)
+            halo.set_stroke(opacity=0.12 if not warning else 0.24)
+            halo.move_to(pos)
+            ring = Circle(radius=radius, stroke_color=color, stroke_width=2.25)
+            ring.set_fill(fill, opacity=0.62 if not warning else 0.70)
+            ring.move_to(pos)
+            center_dot = Dot(pos, radius=0.040, color=color).set_opacity(0.58)
+            label = Text(workflow_loop_labels[key], font_size=18, color=TEXT_MAIN, weight=MEDIUM)
+            if label.width > 1.55:
+                label.scale(1.55 / label.width)
+            label.next_to(ring, DOWN, buff=0.17)
+            label.set_opacity(0.88)
+            node = VGroup(halo, ring, center_dot, label)
+            node.workflow_key = key
+            return node
+
+        def workflow_loop_arrow(from_key, to_key, curved=False, reverse=False):
+            start = workflow_loop_positions[from_key]
+            end = workflow_loop_positions[to_key]
+            direction = end - start
+            length = np.linalg.norm(direction)
+            if length == 0:
+                return VGroup()
+            unit = direction / length
+            start = start + unit * 0.48
+            end = end - unit * 0.48
+            if curved:
+                arrow = CurvedArrow(
+                    start,
+                    end,
+                    angle=-TAU * 0.19 if reverse else -TAU * 0.10,
+                    color="#56D7E6",
+                    stroke_width=2.0,
+                    tip_length=0.16,
+                )
+                arrow.set_opacity(0.72)
+                return arrow
+            arrow = Arrow(start, end, buff=0.0, color="#9FB7C9", stroke_width=2.0, tip_length=0.14, max_stroke_width_to_length_ratio=10)
+            arrow.set_opacity(0.72)
+            return arrow
+
+        def get_workflow_loop_source(source_id, fallback_zone="center"):
+            workflow_obj = object_registry.get(source_id)
+            if workflow_obj is None:
+                workflow_obj = active_objects.get(fallback_zone)
+            return workflow_obj
+
+        def register_workflow_loop(step_id, zone_name, workflow_obj):
+            object_registry[step_id] = workflow_obj
+            step_zone_map[step_id] = zone_name
+            active_objects[zone_name] = workflow_obj
+
         def apply_manual_rule_display_color(obj, color):
             if hasattr(obj, "submobjects") and len(obj.submobjects) >= 2:
                 card_shape = obj.submobjects[0]
@@ -415,6 +586,8 @@ class JsonDrivenScene(MovingCameraScene):
             "show_taxonomy_field",
             "show_workflow_cycle",
             "mutate_workflow_cycle",
+            "show_workflow_loop",
+            "mutate_workflow_loop",
             "mutate_road_ahead_field",
             "show_supervised_field",
             "mutate_supervised_field",
@@ -577,6 +750,227 @@ class JsonDrivenScene(MovingCameraScene):
                     current_time += run_time
                     register_object(step.id, step.zone, new_obj)
                     handled = True
+
+                elif step.action == "show_workflow_loop":
+                    merged_params = dict(step.params)
+                    new_obj = build_object(
+                        {
+                            "id": step.id,
+                            "action": step.action,
+                            "params": merged_params,
+                            "zone": step.zone,
+                        }
+                    )
+                    existing = active_objects.get(step.zone)
+                    if existing is not None:
+                        self.play(FadeOut(existing), run_time=min(0.25, run_time * 0.25))
+                        clear_zone(step.zone)
+                    node = list(new_obj)[0] if len(new_obj) else new_obj
+                    ring = node[1] if hasattr(node, "__len__") and len(node) > 1 else node
+                    halo = node[0] if hasattr(node, "__len__") and len(node) > 0 else None
+                    dot = node[2] if hasattr(node, "__len__") and len(node) > 2 else None
+                    anims = [Create(ring)]
+                    if halo is not None:
+                        anims.append(FadeIn(halo))
+                    if dot is not None:
+                        anims.append(FadeIn(dot, scale=1.15))
+                    self.add(new_obj)
+                    self.play(AnimationGroup(*anims, lag_ratio=0.12), run_time=run_time)
+                    current_time += run_time
+                    register_workflow_loop(step.id, step.zone, new_obj)
+                    handled = True
+
+                elif step.action == "mutate_workflow_loop":
+                    source_id = workflow_loop_source_id(step)
+                    workflow_obj = get_workflow_loop_source(source_id, step.zone)
+                    if workflow_obj is None:
+                        print(f"[mutate_workflow_loop] WARNING: source_id={source_id} not found. Skipping.")
+                        handled = True
+                        continue
+
+                    if not hasattr(workflow_obj, "workflow_loop_nodes"):
+                        workflow_obj.workflow_loop_nodes = {}
+                    if not hasattr(workflow_obj, "workflow_loop_arrows"):
+                        workflow_obj.workflow_loop_arrows = {}
+                    if not hasattr(workflow_obj, "workflow_loop_effects"):
+                        workflow_obj.workflow_loop_effects = VGroup()
+
+                    mode = step.params.get("mode", "pulse_all")
+                    nodes = workflow_obj.workflow_loop_nodes
+                    arrows = workflow_obj.workflow_loop_arrows
+
+                    if mode == "label_data":
+                        data_node = nodes.get("data")
+                        if data_node is not None:
+                            label = Text("DATA", font_size=20, color=TEXT_MAIN, weight=MEDIUM)
+                            label.next_to(data_node[1], DOWN, buff=0.18)
+                            label.set_opacity(0.0)
+                            data_node.add(label)
+                            self.add(label)
+                            self.play(
+                                AnimationGroup(label.animate.set_opacity(0.90), Indicate(data_node[1], color="#56D7E6", scale_factor=1.06), lag_ratio=0.0),
+                                run_time=run_time,
+                            )
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+                        register_workflow_loop(step.id, step.zone, workflow_obj)
+                        handled = True
+
+                    elif mode == "data_noise":
+                        data_node = nodes.get("data")
+                        if data_node is not None:
+                            center = data_node[1].get_center()
+                            offsets = [
+                                np.array([0.15, 0.11, 0]),
+                                np.array([-0.16, 0.06, 0]),
+                                np.array([0.07, -0.16, 0]),
+                                np.array([-0.06, 0.18, 0]),
+                                np.array([0.19, -0.05, 0]),
+                            ]
+                            specks = VGroup(*[Dot(center + off, radius=0.025, color="#AEB8C5").set_opacity(0.0) for off in offsets])
+                            slash = Line(center + LEFT * 0.20 + DOWN * 0.17, center + RIGHT * 0.20 + DOWN * 0.11, color="#E8A838", stroke_width=1.5).set_opacity(0.0)
+                            effect = VGroup(specks, slash)
+                            self.add(effect)
+                            self.play(
+                                AnimationGroup(*[s.animate.set_opacity(0.55) for s in specks], slash.animate.set_opacity(0.50), lag_ratio=0.10),
+                                run_time=run_time * 0.55,
+                            )
+                            self.play(effect.animate.set_opacity(0.22), run_time=run_time * 0.45)
+                            data_node.add(effect)
+                            workflow_obj.workflow_loop_effects.add(effect)
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+                        register_workflow_loop(step.id, step.zone, workflow_obj)
+                        handled = True
+
+                    elif mode in {"add_preprocessing", "add_training", "add_evaluation_neutral", "add_improvement_bend"}:
+                        spec = {
+                            "add_preprocessing": ("data", "preprocessing", False),
+                            "add_training": ("preprocessing", "training", False),
+                            "add_evaluation_neutral": ("training", "evaluation", True),
+                            "add_improvement_bend": ("evaluation", "improvement", True),
+                        }[mode]
+                        from_key, to_key, curved = spec
+                        new_arrow = workflow_loop_arrow(from_key, to_key, step.params, curved=curved)
+                        new_node = workflow_loop_node(to_key, step.params)
+                        arrows[f"{from_key}_{to_key}"] = new_arrow
+                        nodes[to_key] = new_node
+                        workflow_obj.add(new_arrow, new_node)
+                        if from_key == "data" and "data" in nodes:
+                            noise = getattr(nodes["data"], "noise_specks", None)
+                            if noise is not None:
+                                noise.set_opacity(0.10)
+                        node_ring = new_node[1] if len(new_node) > 1 else new_node
+                        node_label = new_node[3] if len(new_node) > 3 else None
+                        self.add(new_arrow, new_node)
+                        node_parts = [Create(node_ring), FadeIn(new_node[0]), FadeIn(new_node[2])]
+                        if node_label is not None:
+                            node_parts.append(FadeIn(node_label, shift=UP * 0.03))
+                        self.play(Create(new_arrow), run_time=run_time * 0.42, rate_func=rate_functions.ease_out_sine)
+                        self.play(AnimationGroup(*node_parts, lag_ratio=0.0), run_time=run_time * 0.38)
+                        if to_key == "training":
+                            center = node_ring.get_center()
+                            dots = VGroup(
+                                Dot(center + LEFT * 0.18 + UP * 0.08, radius=0.026, color="#AEB8C5"),
+                                Dot(center + RIGHT * 0.17 + UP * 0.04, radius=0.026, color="#AEB8C5"),
+                                Dot(center + DOWN * 0.17, radius=0.026, color="#AEB8C5"),
+                            )
+                            self.add(dots)
+                            self.play(AnimationGroup(*[d.animate.move_to(center + (d.get_center() - center) * 0.18) for d in dots], lag_ratio=0.05), run_time=run_time * 0.20)
+                            self.play(FadeOut(dots), run_time=run_time * 0.10)
+                            current_time += run_time * 0.20 + run_time * 0.10
+                        else:
+                            self.wait(run_time * 0.20)
+                            current_time += run_time * 0.20
+                        current_time += run_time * 0.80
+                        register_workflow_loop(step.id, step.zone, workflow_obj)
+                        handled = True
+
+                    elif mode == "evaluation_warning":
+                        eval_node = nodes.get("evaluation")
+                        if eval_node is not None:
+                            ring = eval_node[1]
+                            halo = eval_node[0]
+                            warn = Circle(radius=0.58, stroke_color="#E8A838", stroke_width=1.6).move_to(ring.get_center()).set_stroke(opacity=0.0)
+                            cue = VGroup(
+                                Line(ring.get_center() + LEFT * 0.18 + DOWN * 0.04, ring.get_center() + LEFT * 0.02 + UP * 0.12, color="#56D7E6", stroke_width=1.6),
+                                Line(ring.get_center() + RIGHT * 0.03 + UP * 0.11, ring.get_center() + RIGHT * 0.21 + DOWN * 0.10, color="#E8A838", stroke_width=1.8),
+                            ).set_opacity(0.0)
+                            self.add(warn, cue)
+                            self.play(
+                                AnimationGroup(
+                                    ring.animate.set_stroke(color="#E8A838", width=2.8).set_fill(color="#1a1006", opacity=0.72),
+                                    halo.animate.set_stroke(color="#E8A838", opacity=0.24),
+                                    warn.animate.set_stroke(opacity=0.34),
+                                    cue.animate.set_opacity(0.86),
+                                    lag_ratio=0.0,
+                                ),
+                                run_time=run_time * 0.72,
+                            )
+                            self.play(warn.animate.set_stroke(opacity=0.16), run_time=run_time * 0.28)
+                            eval_node.add(warn, cue)
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+                        register_workflow_loop(step.id, step.zone, workflow_obj)
+                        handled = True
+
+                    elif mode == "feedback_motion":
+                        improve_node = nodes.get("improvement")
+                        data_node = nodes.get("data")
+                        if improve_node is not None and data_node is not None:
+                            path = CurvedArrow(
+                                workflow_loop_positions_for(step.params)["improvement"] + LEFT * 0.06 + UP * 0.47,
+                                workflow_loop_positions_for(step.params)["data"] + DOWN * 0.47,
+                                angle=-TAU * 0.18,
+                                color="#56D7E6",
+                                stroke_width=1.5,
+                                tip_length=0.12,
+                            ).set_opacity(0.0)
+                            dot = Dot(workflow_loop_positions_for(step.params)["improvement"], radius=0.035, color="#56D7E6")
+                            self.add(path, dot)
+                            self.play(path.animate.set_opacity(0.28), run_time=run_time * 0.22)
+                            self.play(MoveAlongPath(dot, path), run_time=run_time * 0.58, rate_func=rate_functions.ease_in_out_sine)
+                            self.play(FadeOut(dot), path.animate.set_opacity(0.16), run_time=run_time * 0.20)
+                            workflow_obj.add(path)
+                            workflow_obj.workflow_loop_effects.add(path)
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+                        register_workflow_loop(step.id, step.zone, workflow_obj)
+                        handled = True
+
+                    elif mode == "close_loop":
+                        if "improvement_data" not in arrows:
+                            loop_arrow = workflow_loop_arrow("improvement", "data", step.params, curved=True, reverse=True)
+                            arrows["improvement_data"] = loop_arrow
+                            workflow_obj.add(loop_arrow)
+                            self.add(loop_arrow)
+                            self.play(Create(loop_arrow), run_time=run_time * 0.72, rate_func=rate_functions.ease_out_sine)
+                            pulse_targets = list(nodes.values()) + list(arrows.values())
+                            self.play(AnimationGroup(*[Indicate(obj, color="#56D7E6", scale_factor=1.025) for obj in pulse_targets], lag_ratio=0.03), run_time=run_time * 0.28)
+                            current_time += run_time
+                        else:
+                            self.wait(run_time)
+                            current_time += run_time
+                        register_workflow_loop(step.id, step.zone, workflow_obj)
+                        handled = True
+
+                    elif mode == "final_hold":
+                        self.wait(run_time)
+                        current_time += run_time
+                        register_workflow_loop(step.id, step.zone, workflow_obj)
+                        handled = True
+
+                    else:
+                        print(f"[mutate_workflow_loop] WARNING: unknown mode={mode}. Skipping.")
+                        handled = True
 
                 elif step.action == "show_workflow_cycle":
                     # ── Build the cycle diagram object ────────────────────

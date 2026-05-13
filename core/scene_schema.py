@@ -51,6 +51,8 @@ AllowedAction = Literal[
     "show_workflow_cycle",
     "mutate_workflow_cycle",
     "show_workflow_pipeline",
+    "show_workflow_loop",
+    "mutate_workflow_loop",
     "show_road_ahead_field",
     "mutate_road_ahead_field",
     "show_supervised_field",

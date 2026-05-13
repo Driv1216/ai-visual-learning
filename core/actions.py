@@ -2755,6 +2755,37 @@ def make_workflow_pipeline(params, zone):
     return group
 
 
+def make_workflow_loop(params, zone):
+    """Scene 7 persistent workflow loop seed.
+
+    The renderer handles progressive mutations for this object. This builder only
+    creates the initial unlabeled node so normal object construction remains
+    schema-compatible and isolated from the older workflow-cycle/card systems.
+    """
+    node_pos = _as_vector(params.get("data_pos", [-3.65, 0.62, 0]))
+    node_radius = params.get("node_radius", 0.38)
+
+    halo = Circle(radius=node_radius + 0.12, stroke_color=SECONDARY, stroke_width=1.0)
+    halo.set_stroke(opacity=0.16)
+    halo.move_to(node_pos)
+
+    ring = Circle(radius=node_radius, stroke_color=SECONDARY, stroke_width=2.4)
+    ring.set_fill("#0c1624", opacity=0.62)
+    ring.move_to(node_pos)
+
+    center_dot = Dot(node_pos, radius=0.045, color=SECONDARY).set_opacity(0.65)
+    node = VGroup(halo, ring, center_dot)
+    node.workflow_key = "data"
+
+    root = VGroup(node)
+    root.workflow_loop_nodes = {"data": node}
+    root.workflow_loop_arrows = {}
+    root.workflow_loop_effects = VGroup()
+    root.workflow_loop_params = params
+    place_in_zone(root, zone)
+    return root
+
+
 def make_road_ahead_field(params, zone):
     horizon_y = params.get("horizon_y", -0.18)
     line_count = params.get("line_count", 5)
@@ -4212,6 +4243,9 @@ def build_object(step_dict):
 
     if action == "show_workflow_pipeline":
         return make_workflow_pipeline(params, zone)
+
+    if action == "show_workflow_loop":
+        return make_workflow_loop(params, zone)
 
     if action == "show_road_ahead_field":
         return make_road_ahead_field(params, zone)

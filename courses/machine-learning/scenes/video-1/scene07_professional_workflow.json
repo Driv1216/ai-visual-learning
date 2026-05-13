@@ -68,175 +68,144 @@
   ],
   "visual_timeline": [
     {
-      "id": "v7_pipeline_intro",
+      "id": "v7_loop_start",
       "anchor": "s7_01",
       "offset": 0.0,
-      "action": "show_workflow_pipeline",
+      "action": "show_workflow_loop",
       "zone": "center",
       "transition_in": "fade",
       "transition_out": "fade",
       "persist": true,
-      "duration": 1.0,
+      "duration": 1.05,
       "params": {
-        "stage": "intro",
-        "show_heading": true,
-        "heading": "Machine learning is a workflow"
+        "stage": "start_unlabeled",
+        "node_radius": 0.38
       }
     },
     {
-      "id": "v7_data",
+      "id": "v7_loop_data_label",
       "anchor": "s7_02",
       "offset": 0.0,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 0.9,
+      "duration": 0.85,
       "params": {
-        "stage": "data"
+        "mode": "label_data"
       }
     },
     {
-      "id": "v7_messy_data",
+      "id": "v7_loop_data_noise",
       "anchor": "s7_03",
       "offset": 0.15,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 1.0,
+      "duration": 1.05,
       "params": {
-        "stage": "messy"
+        "mode": "data_noise"
       }
     },
     {
-      "id": "v7_clean",
+      "id": "v7_loop_preprocessing",
       "anchor": "s7_04",
       "offset": 0.0,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 1.1,
+      "duration": 1.15,
       "params": {
-        "stage": "clean"
+        "mode": "add_preprocessing"
       }
     },
     {
-      "id": "v7_train",
+      "id": "v7_loop_training",
       "anchor": "s7_05",
       "offset": 0.0,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 1.1,
+      "duration": 1.25,
       "params": {
-        "stage": "train"
+        "mode": "add_training"
       }
     },
     {
-      "id": "v7_eval",
+      "id": "v7_loop_evaluation",
       "anchor": "s7_06",
       "offset": 0.0,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 1.1,
+      "duration": 1.10,
       "params": {
-        "stage": "eval"
+        "mode": "add_evaluation_neutral"
       }
     },
     {
-      "id": "v7_overfit",
+      "id": "v7_loop_overfitting_warning",
       "anchor": "s7_07",
       "offset": 0.25,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 1.2,
+      "duration": 1.20,
       "params": {
-        "stage": "overfit"
+        "mode": "evaluation_warning"
       }
     },
     {
-      "id": "v7_improve",
+      "id": "v7_loop_improvement",
       "anchor": "s7_08",
       "offset": 0.0,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 1.1,
+      "duration": 1.15,
       "params": {
-        "stage": "improve"
+        "mode": "add_improvement_bend"
       }
     },
     {
-      "id": "v7_monitor",
+      "id": "v7_loop_feedback",
       "anchor": "s7_09",
       "offset": 0.0,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 1.1,
+      "duration": 1.10,
       "params": {
-        "stage": "monitor"
+        "mode": "feedback_motion"
       }
     },
     {
-      "id": "v7_loop",
+      "id": "v7_loop_close",
       "anchor": "s7_10",
-      "offset": 0.3,
-      "action": "show_workflow_pipeline",
+      "offset": 0.2,
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 1.4,
+      "duration": 1.35,
       "params": {
-        "stage": "loop"
+        "mode": "close_loop"
       }
     },
     {
-      "id": "v7_final",
+      "id": "v7_loop_final_hold",
       "anchor": "s7_11",
       "offset": 0.0,
-      "action": "show_workflow_pipeline",
+      "action": "mutate_workflow_loop",
       "zone": "center",
-      "transition_in": "transform",
-      "transition_out": "fade",
       "persist": true,
-      "duration": 0.9,
+      "duration": 2.2,
       "params": {
-        "stage": "final"
+        "mode": "final_hold"
       }
-    },
-    {
-      "id": "v7_final_hold",
-      "anchor": "s7_11",
-      "offset": 1.1,
-      "action": "hold",
-      "zone": "center",
-      "persist": true,
-      "duration": 1.6,
-      "params": {}
     }
   ],
   "notes": {
-    "tone": "clean, professional, readable — a pipeline that becomes a loop",
-    "pacing": "Each narration beat transforms the full pipeline state once. The scene avoids cumulative node mutation so no duplicate circles or clutter can persist.",
-    "animation_guidelines": "Use large rounded workflow cards instead of circles. On-screen labels are short: DATA, CLEAN, TRAIN, EVAL, IMPROVE. Amber is reserved for the overfitting/evaluation warning. The final loop is a restrained return path below the cards, not a giant arc."
+    "tone": "professional, kinetic, restrained — one workflow diagram grows into a loop",
+    "pacing": "The scene starts with one unlabeled node, then mutates the same persistent diagram beat by beat. Future nodes are not shown early, and the full diagram is never replaced.",
+    "animation_guidelines": "Use a persistent node-and-arrow loop, not cards and not the old circular-cycle system. Labels sit outside the nodes for readability. EVALUATION is the only amber warning beat. The final return arrow closes the loop in a controlled way without a giant decorative arc."
   }
 }
