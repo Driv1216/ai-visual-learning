@@ -855,7 +855,7 @@ class JsonDrivenScene(MovingCameraScene):
                             "add_improvement_bend": ("evaluation", "improvement", True),
                         }[mode]
                         from_key, to_key, curved = spec
-                        new_arrow = workflow_loop_arrow(from_key, to_key, step.params, curved=curved)
+                        new_arrow = workflow_loop_arrow(from_key, to_key, step.params, curved)
                         new_node = workflow_loop_node(to_key, step.params)
                         arrows[f"{from_key}_{to_key}"] = new_arrow
                         nodes[to_key] = new_node
