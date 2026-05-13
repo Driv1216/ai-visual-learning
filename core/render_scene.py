@@ -855,8 +855,8 @@ class JsonDrivenScene(MovingCameraScene):
                             "add_improvement_bend": ("evaluation", "improvement", True),
                         }[mode]
                         from_key, to_key, curved = spec
-                        new_arrow = workflow_loop_arrow(from_key, to_key, step.params, curved)
-                        new_node = workflow_loop_node(to_key, step.params)
+                        new_arrow = workflow_loop_arrow(from_key, to_key, curved=curved)
+                        new_node = workflow_loop_node(to_key)
                         arrows[f"{from_key}_{to_key}"] = new_arrow
                         nodes[to_key] = new_node
                         workflow_obj.add(new_arrow, new_node)
@@ -948,7 +948,7 @@ class JsonDrivenScene(MovingCameraScene):
 
                     elif mode == "close_loop":
                         if "improvement_data" not in arrows:
-                            loop_arrow = workflow_loop_arrow("improvement", "data", step.params, curved=True, reverse=True)
+                            loop_arrow = workflow_loop_arrow("improvement", "data", curved=True, reverse=True)
                             arrows["improvement_data"] = loop_arrow
                             workflow_obj.add(loop_arrow)
                             self.add(loop_arrow)
