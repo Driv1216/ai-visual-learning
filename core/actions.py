@@ -2786,160 +2786,95 @@ def make_workflow_loop(params, zone):
 
 
 def make_road_ahead_field(params, zone):
-    """Scene 8 ending field: rigid rule fragments give way to learned structure.
+    """Scene 8 ending field: one luminous point creates its own trail.
 
-    This intentionally keeps the existing action name for compatibility, but the
-    visual is no longer a literal road.  It is an abstract transition from
-    explicit instructions to examples organizing into a learned path.
+    The public action name remains road-ahead for compatibility, but the visual
+    is intentionally minimal: a point, its attached halo, and the trail produced
+    by its motion.  No rule fragments, example dots, horizons, or field glows are
+    created here.
     """
-    rule_color = params.get("rule_color", "#9CA8B8")
-    data_color = params.get("data_color", "#6FD7FF")
-    path_color = params.get("learned_path_color", "#8EE6FF")
-    ambient_color = params.get("ambient_color", "#172033")
     point_color = params.get("point_color", "#F8FBFF")
+    trail_color = params.get("trail_color", params.get("learned_path_color", "#8EE6FF"))
+    trail_width = params.get("trail_width", 2.15)
+    segment_count = max(8, int(params.get("trail_segments", 64)))
 
-    frame_width = config.frame_width
-    frame_height = config.frame_height
+    path_points = [_as_vector(p) for p in params.get("path_points", params.get("learned_path_points", [
+        [-2.45, -0.12, 0.0], [-1.42, 0.08, 0.0], [-0.54, -0.17, 0.0],
+        [0.42, 0.10, 0.0], [1.35, 0.34, 0.0], [2.34, 0.43, 0.0],
+    ]))]
+    if len(path_points) < 2:
+        path_points = [np.array([-2.45, -0.12, 0.0]), np.array([2.34, 0.43, 0.0])]
 
-    upper_ambient = Rectangle(
-        width=frame_width + 0.6,
-        height=frame_height + 0.4,
-        stroke_width=0,
-        fill_color=ambient_color,
-        fill_opacity=params.get("upper_ambient_opacity", 0.0),
-    )
-    upper_ambient.move_to(ORIGIN)
+    trail_path = VMobject(color=trail_color)
+    trail_path.set_points_smoothly(path_points)
+    trail_path.set_stroke(width=0, opacity=0.0)
 
-    opening_glow = Ellipse(
-        width=params.get("opening_width", frame_width * 0.68),
-        height=params.get("opening_height", 2.6),
-        stroke_width=0,
-        fill_color=params.get("opening_color", "#203655"),
-        fill_opacity=params.get("opening_opacity", 0.0),
-    )
-    opening_glow.move_to(np.array([params.get("opening_x", 0.22), params.get("opening_y", 0.84), 0.0]))
+    sample_points = [trail_path.point_from_proportion(i / segment_count) for i in range(segment_count + 1)]
+    trail_segments = VGroup()
+    for index in range(segment_count):
+        segment = Line(
+            sample_points[index],
+            sample_points[index + 1],
+            color=trail_color,
+            stroke_width=trail_width,
+        )
+        segment.set_stroke(opacity=0.0)
+        trail_segments.add(segment)
 
-    opening_glow_inner = Ellipse(
-        width=params.get("opening_inner_width", frame_width * 0.42),
-        height=params.get("opening_inner_height", 1.46),
-        stroke_width=0,
-        fill_color=params.get("opening_inner_color", params.get("opening_color", "#203655")),
-        fill_opacity=params.get("opening_inner_opacity", 0.0),
-    )
-    opening_glow_inner.move_to(np.array([params.get("opening_inner_x", 0.72), params.get("opening_inner_y", 0.98), 0.0]))
+    point_start = _as_vector(params.get("point_start", path_points[0]))
+    point = Dot(point_start, radius=params.get("point_radius", 0.064), color=point_color)
+    point.set_opacity(params.get("point_opacity", 0.92))
 
-    # Rigid instruction/rule fragments: left-weighted, aligned, slightly broken.
-    rule_fragments = VGroup()
-    rule_specs = params.get("rule_specs") or [
-        [-3.75, 1.10, 0.92], [-3.42, 0.78, 0.58], [-3.68, 0.44, 0.78],
-        [-3.22, 0.06, 0.46], [-3.82, -0.32, 0.88], [-3.36, -0.68, 0.62],
-        [-2.88, 0.92, 0.34], [-2.78, 0.18, 0.28], [-2.92, -0.52, 0.36],
-    ]
-    for index, spec in enumerate(rule_specs):
-        x, y, length = spec
-        jitter = 0.035 * ((index % 3) - 1)
-        start = np.array([x - length / 2, y + jitter, 0.0])
-        end = np.array([x + length / 2, y - jitter, 0.0])
-        frag = Line(start, end, color=rule_color, stroke_width=params.get("rule_width", 1.15))
-        frag.set_stroke(opacity=params.get("rule_opacity", 0.34) * (0.76 + 0.05 * (index % 4)))
-        rule_fragments.add(frag)
-
-    # Example/data points begin scattered, then renderer organizes them into a curve.
-    scatter_positions = params.get("example_scatter") or [
-        [-1.72, -1.08, 0.0], [-1.25, -0.34, 0.0], [-0.78, -0.88, 0.0],
-        [-0.30, -0.18, 0.0], [0.12, -0.64, 0.0], [0.48, 0.08, 0.0],
-        [0.86, -0.42, 0.0], [1.26, 0.24, 0.0], [1.72, -0.10, 0.0],
-        [2.05, 0.54, 0.0], [-0.98, 0.34, 0.0], [0.66, 0.72, 0.0],
-    ]
-    organized_positions = params.get("example_organized") or [
-        [-1.70, -1.04, 0.0], [-1.34, -0.80, 0.0], [-0.96, -0.52, 0.0],
-        [-0.58, -0.24, 0.0], [-0.18, -0.02, 0.0], [0.24, 0.15, 0.0],
-        [0.66, 0.31, 0.0], [1.08, 0.48, 0.0], [1.50, 0.66, 0.0],
-        [1.92, 0.86, 0.0], [-0.92, -0.04, 0.0], [0.92, 0.78, 0.0],
-    ]
-    example_dots = VGroup()
-    example_targets = []
-    for index, pos in enumerate(scatter_positions):
-        dot = Dot(_as_vector(pos), radius=params.get("example_radius", 0.038), color=data_color)
-        dot.set_opacity(params.get("example_opacity", 0.30) * (0.82 + 0.04 * (index % 4)))
-        example_dots.add(dot)
-        if index < len(organized_positions):
-            example_targets.append(_as_vector(organized_positions[index]))
-        else:
-            example_targets.append(_as_vector(pos))
-
-    path_points = [_as_vector(p) for p in params.get("learned_path_points", [
-        [-1.78, -1.06, 0.0], [-0.86, -0.34, 0.0], [0.08, 0.06, 0.0],
-        [0.98, 0.42, 0.0], [1.98, 0.92, 0.0],
-    ])]
-    learned_path = VMobject(color=path_color)
-    learned_path.set_points_smoothly(path_points)
-    learned_path.set_stroke(width=params.get("learned_path_width", 2.3), opacity=params.get("learned_path_opacity", 0.0))
-    learned_path_glow = VMobject(color=params.get("learned_path_glow_color", "#8EE6FF"))
-    learned_path_glow.set_points_smoothly(path_points)
-    learned_path_glow.set_stroke(width=params.get("learned_path_glow_width", 10.0), opacity=params.get("learned_path_glow_opacity", 0.0))
-
-    point_start = _as_vector(params.get("point_start", [-1.72, -1.16, 0.0]))
-    point = Dot(point_start, radius=params.get("point_radius", 0.060), color=point_color)
-    point.set_opacity(params.get("point_opacity", 0.0))
-    point_halo = Circle(radius=params.get("point_halo_radius", 0.20), color=point_color, stroke_width=1.05)
+    point_halo = Circle(radius=params.get("point_halo_radius", 0.17), color=point_color, stroke_width=1.0)
     point_halo.move_to(point_start)
-    point_halo.set_stroke(opacity=params.get("point_halo_opacity", 0.0))
+    point_halo.set_stroke(opacity=params.get("point_halo_opacity", 0.10))
     point_halo.set_fill(point_color, opacity=0.0)
 
-    field = VGroup(
-        upper_ambient,
-        opening_glow,
-        opening_glow_inner,
-        rule_fragments,
-        example_dots,
-        learned_path_glow,
-        learned_path,
-        point_halo,
-        point,
-    )
-    field.rule_fragments = rule_fragments
-    field.example_dots = example_dots
-    field.example_targets = example_targets
-    field.learned_path = learned_path
-    field.learned_path_glow = learned_path_glow
-    field.opening_glow = opening_glow
-    field.opening_glow_inner = opening_glow_inner
-    field.upper_ambient = upper_ambient
+    field = VGroup(trail_segments, point_halo, point)
+    field.trail_path = trail_path
+    field.trail_segments = trail_segments
+    field.trail_sample_points = sample_points
+    field.trail_path_points = path_points
+    field.trail_progress = 0.0
+    field.trail_brightness = params.get("trail_initial_brightness", 1.0)
+    field.trail_color = trail_color
+    field.trail_width = trail_width
+    field.trail_origin_opacity = params.get("trail_origin_opacity", 0.24)
+    field.trail_endpoint_opacity = params.get("trail_endpoint_opacity", 0.78)
     field.point = point
     field.point_halo = point_halo
-    field.learned_path_points = path_points
 
-    # Backward-compatible aliases used by the existing scene JSON/action names.
-    field.road_rule_fragments = rule_fragments
-    field.road_example_dots = example_dots
-    field.road_example_targets = example_targets
-    field.road_learned_path = learned_path
-    field.road_learned_path_glow = learned_path_glow
-    field.road_opening_glow = opening_glow
-    field.road_opening_glow_inner = opening_glow_inner
-    field.road_upper_ambient = upper_ambient
+    # Compatibility aliases for the existing renderer/JSON action names.
     field.road_point = point
     field.road_point_halo = point_halo
+    field.road_trail_path = trail_path
+    field.road_trail_segments = trail_segments
+    field.road_trail_sample_points = sample_points
     field.road_path_points = path_points
-    field.road_lower_lines = rule_fragments
+    field.road_rule_fragments = VGroup()
+    field.road_example_dots = VGroup()
+    field.road_example_targets = []
+    field.road_learned_path = trail_path
+    field.road_learned_path_glow = None
+    field.road_opening_glow = None
+    field.road_opening_glow_inner = None
+    field.road_upper_ambient = None
+    field.road_lower_lines = VGroup()
     field.road_path_bands = VGroup()
     field.road_path_edges = VGroup()
     field.road_path_fill = None
-    field.road_path_glow = learned_path_glow
-    field.road_uncertainty_particles = example_dots
-    field.road_horizon_glow = learned_path_glow
-    field.road_horizon_bloom = opening_glow
-    field.road_horizon_core = learned_path
+    field.road_path_glow = None
+    field.road_uncertainty_particles = VGroup()
+    field.road_horizon_glow = None
+    field.road_horizon_bloom = None
+    field.road_horizon_core = trail_path
     field.road_horizon_left = None
     field.road_horizon_right = None
-    field.road_horizon_y = params.get("conceptual_threshold_y", 0.55)
-    field.road_horizon_half_width = 2.2
-    field.road_horizon_color = path_color
-    field.road_line_color = data_color
+    field.road_horizon_y = params.get("conceptual_threshold_y", 0.0)
+    field.road_horizon_half_width = 0.0
+    field.road_horizon_color = trail_color
+    field.road_line_color = trail_color
 
-    # Full-scene coordinates are authored in world space; only reposition for
-    # non-full zones so mutation paths remain aligned with the field geometry.
     if zone != "full":
         place_in_zone(field, zone)
     return field
